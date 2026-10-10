@@ -20,6 +20,7 @@ TWITCH_TOKEN = "https://id.twitch.tv/oauth2/token"
 TWITCH_API = "https://api.twitch.tv/helix"
 XMLTV_TNT = "https://xmltvfr.fr/xmltv/xmltv_tnt.xml.gz"
 RADIOFRANCE_API = "https://openapi.radiofrance.fr/v1/graphql"
+FRANCETVPRO = "https://www.francetvpro.fr/contenu-de-presse"
 
 DELAI = 20  # secondes
 

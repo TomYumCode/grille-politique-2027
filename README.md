@@ -16,6 +16,7 @@ python3 -m grille init            # crée data/grille.sqlite si besoin et lit la
 python3 -m grille verifier-acces  # teste le guide XMLTV et les API Radio France, YouTube et Twitch
 python3 -m grille collecter-tv    # télécharge le guide TV, garde le politique, écrit en base, affiche la grille
 python3 -m grille collecter-tv --motifs   # idem, avec la règle qui a retenu chaque émission
+python3 -m grille collecter-annonces # invités annoncés dans les communiqués de France Télévisions
 python3 -m grille collecter-radio    # grille des stations Radio France (France Inter, franceinfo, France Culture)
 python3 -m grille collecter-youtube  # directs YouTube programmés et en cours des chaînes suivies
 python3 -m grille collecter-twitch   # chaînes Twitch en direct et plannings publiés
@@ -131,6 +132,15 @@ image de profil Twitch, balise `<icon>` du guide TV ; une radio prend le logo de
 chaîne YouTube du même nom. Sans logo, la page affiche les
 initiales. Pour imposer un logo, ajouter `logo: "https://…"` à la ligne de la chaîne
 dans `config/chaines.yaml`.
+
+## Invités annoncés
+
+Le guide télévision ne donne souvent que le titre d'une émission (« Franc-jeu »).
+Chaque heure, la collecte lit aussi les communiqués de presse de France Télévisions
+(francetvpro.fr), qui annoncent l'invité quelques jours avant : « FRANC-JEU — Roland
+Lescure — Dimanche 11 octobre à 13h20 ». L'invité s'ajoute alors à l'émission du même
+jour et de la même heure (à 30 minutes près). Les autres chaînes (TF1, M6, BFMTV…)
+n'ont pas de page équivalente repérée pour l'instant.
 
 ## Doublons entre chaînes
 

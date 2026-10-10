@@ -15,7 +15,7 @@ import ssl
 from datetime import datetime, timedelta
 from email.message import EmailMessage
 
-from grille import db, fusion
+from grille import affichage, db
 from grille.config import Configuration
 from grille.tv import PARIS
 
@@ -23,7 +23,8 @@ JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre",
         "novembre", "décembre"]
 PLATEFORMES = {"tv": "TV", "radio": "Radio", "youtube": "YouTube", "twitch": "Twitch", "web": "Web"}
-SOURCES = {"tv": "Télévision", "radio": "Radio France", "youtube": "YouTube", "twitch": "Twitch"}
+SOURCES = {"tv": "Télévision", "radio": "Radio France", "youtube": "YouTube", "twitch": "Twitch",
+           "annonces": "Invités annoncés (France Télévisions)"}
 JOURS_TEMPS_FORTS = 3
 
 
@@ -44,10 +45,10 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
     maintenant = maintenant.astimezone(PARIS)
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
     candidats = {c["nom"] for c in config.candidats}
-    aujourdhui = fusion.fusionner(db.lister(connexion, maintenant, minuit + timedelta(days=1)))
+    aujourdhui = affichage.emissions(connexion, maintenant, minuit + timedelta(days=1))
     a_venir = [
-        e for e in fusion.fusionner(db.lister(connexion, minuit + timedelta(days=1),
-                                              minuit + timedelta(days=1 + JOURS_TEMPS_FORTS)))
+        e for e in affichage.emissions(connexion, minuit + timedelta(days=1),
+                                       minuit + timedelta(days=1 + JOURS_TEMPS_FORTS))
         if temps_fort(e, candidats) and datetime.fromisoformat(e["debut"]) >= minuit + timedelta(days=1)
     ]
     return {

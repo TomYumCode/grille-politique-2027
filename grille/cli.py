@@ -12,7 +12,7 @@ from pathlib import Path
 
 import requests
 
-from grille import acces, config, courriel, db, fusion, page, radio, tv, twitch, youtube
+from grille import acces, affichage, annonces, config, courriel, db, page, radio, tv, twitch, youtube
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre",
@@ -150,6 +150,22 @@ def _etape_radio(conf, connexion, maintenant, args) -> bool:
     return True
 
 
+def _etape_annonces(conf, connexion, maintenant, args) -> bool:
+    print("Invités annoncés (communiqués de France Télévisions) :")
+    rapport = annonces.collecter(conf, requests.Session(), connexion, maintenant)
+    db.noter_collecte(connexion, "annonces", maintenant, not rapport.interrompu, len(rapport.retenues),
+                      rapport.anomalies, rapport.interrompu)
+    if rapport.interrompu:
+        print(f"  ERREUR {rapport.interrompu}")
+        return False
+    print(f"  {rapport.pages_lues} pages lues, {rapport.cartes} communiqués, {len(rapport.retenues)} annonces d'invités à venir")
+    for anomalie in rapport.anomalies:
+        print(f"  ATTENTION {anomalie}")
+    for a in rapport.retenues:
+        print(f"  {a.jour} {a.heure or '--:--'}  {a.titre[:60]:<60} → {', '.join(a.invites)}")
+    return True
+
+
 def _etape_youtube(conf, connexion, maintenant, args) -> bool:
     print("YouTube :")
     rapport = youtube.collecter(conf, requests.Session(), connexion, maintenant)
@@ -194,8 +210,10 @@ def _etape_twitch(conf, connexion, maintenant, args) -> bool:
     return not rapport.interrompu
 
 
-ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch}
-NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch"}
+ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch,
+          "annonces": _etape_annonces}
+NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch",
+        "annonces": "avec invités annoncés"}
 
 
 def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
@@ -213,10 +231,11 @@ def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
             print(f"  ERREUR inattendue ({type(e).__name__} : {e})")
             db.noter_collecte(connexion, p, maintenant, False, 0, [], f"erreur inattendue : {type(e).__name__} : {e}")
             reussites.append(False)
-    emissions = [e for e in db.lister(connexion, maintenant, fin) if e["plateforme"] in plateformes]
-    emissions = fusion.fusionner(emissions)
+    # Les annonces complètent les émissions des autres sources : après elles, toute la grille.
+    affichees = [p for p in plateformes if p in courriel.PLATEFORMES] or None
+    emissions = affichage.emissions(connexion, maintenant, fin, affichees)
     connexion.close()
-    ou = NOMS[plateformes[0]] if len(plateformes) == 1 else "toutes sources"
+    ou = NOMS[plateformes[0]] if len(plateformes) == 1 and affichees else "toutes sources"
     print(f"\nÉmissions politiques {ou}, aujourd'hui et les 7 jours suivants : {len(emissions)}")
     afficher_grille(emissions)
     return 0 if all(reussites) else 1
@@ -224,6 +243,10 @@ def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
 
 def cmd_collecter_tv(args: argparse.Namespace) -> int:
     return _collecter(args, ["tv"])
+
+
+def cmd_collecter_annonces(args: argparse.Namespace) -> int:
+    return _collecter(args, ["annonces"])
 
 
 def cmd_collecter_radio(args: argparse.Namespace) -> int:
@@ -239,7 +262,7 @@ def cmd_collecter_twitch(args: argparse.Namespace) -> int:
 
 
 def cmd_collecter(args: argparse.Namespace) -> int:
-    return _collecter(args, ["tv", "radio", "youtube", "twitch"])
+    return _collecter(args, ["tv", "radio", "youtube", "twitch", "annonces"])
 
 
 def _generer_page(args: argparse.Namespace) -> Path | None:
@@ -371,7 +394,7 @@ def cmd_attente_7h(args: argparse.Namespace) -> int:
 def cmd_lister(args: argparse.Namespace) -> int:
     connexion = db.ouvrir(args.base)
     maintenant, fin = _horizon()
-    emissions = fusion.fusionner(db.lister(connexion, maintenant, fin))
+    emissions = affichage.emissions(connexion, maintenant, fin)
     connexion.close()
     print(f"Émissions politiques, aujourd'hui et les 7 jours suivants : {len(emissions)}")
     afficher_grille(emissions)
@@ -404,10 +427,11 @@ def main(argv: list[str] | None = None) -> int:
     collecte.add_argument("--motifs", action="store_true", help="affiche la règle qui a retenu chaque émission")
     collecte.set_defaults(func=cmd_collecter_tv)
     for nom, func, aide in [
+        ("collecter-annonces", cmd_collecter_annonces, "invités annoncés dans les communiqués de France Télévisions"),
         ("collecter-radio", cmd_collecter_radio, "grille des stations Radio France (France Inter, franceinfo…)"),
         ("collecter-youtube", cmd_collecter_youtube, "directs YouTube programmés et en cours des chaînes suivies"),
         ("collecter-twitch", cmd_collecter_twitch, "chaînes Twitch en direct et plannings publiés"),
-        ("collecter", cmd_collecter, "télévision, radio, YouTube et Twitch à la suite, chacun indépendamment"),
+        ("collecter", cmd_collecter, "télévision, radio, YouTube, Twitch et invités annoncés, chacun indépendamment"),
     ]:
         sp = sous.add_parser(nom, help=aide)
         sp.add_argument("--motifs", action="store_true", help="affiche la règle qui a retenu chaque émission")

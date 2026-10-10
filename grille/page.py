@@ -12,7 +12,7 @@ import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from grille import db, fusion
+from grille import affichage, db
 from grille.config import Configuration
 from grille.tv import JOURS_AFFICHES, PARIS
 
@@ -26,7 +26,7 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     maintenant = maintenant.astimezone(PARIS)
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
     emissions = [{k: e[k] for k in CHAMPS + ("sources",) if k in e}
-                 for e in fusion.fusionner(db.lister(connexion, minuit, minuit + timedelta(days=JOURS_AFFICHES)))]
+                 for e in affichage.emissions(connexion, minuit, minuit + timedelta(days=JOURS_AFFICHES))]
     presents = {nom for e in emissions for nom in e["invites"]}
     chaines = {s["chaine"] for e in emissions for s in e.get("sources") or [e]}
     # Logo imposé dans chaines.yaml d'abord, sinon celui fourni par la source.

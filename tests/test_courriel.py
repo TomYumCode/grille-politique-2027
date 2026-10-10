@@ -48,6 +48,7 @@ def test_etat_des_sources(connexion):
     db.noter_collecte(connexion, "youtube", MAINTENANT - timedelta(hours=30), True, 2, [])
     db.noter_collecte(connexion, "youtube", MAINTENANT - timedelta(hours=1), False, 0, [], "quota épuisé")
     db.noter_collecte(connexion, "radio", MAINTENANT - timedelta(hours=1), True, 1, [])
+    db.noter_collecte(connexion, "annonces", MAINTENANT - timedelta(hours=1), True, 1, [])
     alertes = db.etat_des_sources(connexion, MAINTENANT, courriel.SOURCES)
     assert alertes == [
         "Télévision : chaîne absente du guide : M6",

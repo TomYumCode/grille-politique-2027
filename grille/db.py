@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 5
+VERSION_SCHEMA = 6
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -58,6 +58,17 @@ CREATE INDEX IF NOT EXISTS collectes_horodatage ON collectes (horodatage);
 CREATE TABLE IF NOT EXISTS envois (
     jour        TEXT PRIMARY KEY,                 -- AAAA-MM-JJ, heure de Paris
     envoye_le   TEXT NOT NULL
+);
+
+-- Version 6 (lot 6) : invités annoncés par communiqué de presse, appliqués à l'affichage.
+CREATE TABLE IF NOT EXISTS annonces (
+    id          TEXT PRIMARY KEY,                 -- identifiant du communiqué
+    titre       TEXT NOT NULL,
+    jour        TEXT NOT NULL,                    -- AAAA-MM-JJ
+    heure       TEXT NOT NULL DEFAULT '',         -- HH:MM ou vide
+    invites     TEXT NOT NULL DEFAULT '[]',
+    url         TEXT NOT NULL,
+    vu_le       TEXT NOT NULL
 );
 
 -- Version 4 : logo de chaque chaîne (adresse d'image fournie par la source).
@@ -245,6 +256,22 @@ def noter_logos(connexion: sqlite3.Connection, logos: dict[str, str], maintenant
         [(chaine, url or "", horodatage) for chaine, url in logos.items()],
     )
     connexion.commit()
+
+
+def noter_annonces(connexion: sqlite3.Connection, annonces: list[dict], maintenant: datetime) -> None:
+    """Mémorise les annonces d'invités ; oublie celles de plus de 8 jours."""
+    vu_le = maintenant.isoformat(timespec="seconds")
+    connexion.executemany(
+        "INSERT OR REPLACE INTO annonces VALUES (:id, :titre, :jour, :heure, :invites, :url, :vu_le)",
+        [{**a, "invites": json.dumps(a["invites"], ensure_ascii=False), "vu_le": vu_le} for a in annonces],
+    )
+    connexion.execute("DELETE FROM annonces WHERE jour < ?", ((maintenant - timedelta(days=8)).date().isoformat(),))
+    connexion.commit()
+
+
+def annonces(connexion: sqlite3.Connection) -> list[dict]:
+    lignes = connexion.execute("SELECT id, titre, jour, heure, invites, url FROM annonces").fetchall()
+    return [{"id": i, "titre": t, "jour": j, "heure": h, "invites": json.loads(n), "url": u} for i, t, j, h, n, u in lignes]
 
 
 def logos(connexion: sqlite3.Connection, avec_vides: bool = False) -> dict[str, str]:

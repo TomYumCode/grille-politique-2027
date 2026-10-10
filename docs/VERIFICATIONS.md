@@ -129,3 +129,21 @@ Radios privées (RTL, Europe 1, RMC, Sud Radio, Radio Nova) : aucune API publiqu
 grille trouvée ; sites non joignables depuis l'environnement de développement. Elles
 restent suivies par leurs chaînes YouTube. Radio Nova : pseudo `@RADIONOVAChannel`
 relevé sur un annuaire de radios (OnlineRadioBox), marqué « à confirmer ».
+
+## Invités annoncés (10 octobre 2026)
+
+Sites testés depuis GitHub Actions (non joignables depuis l'environnement de
+développement), par une tâche de sonde temporaire :
+
+- `france.tv/france-2/franc-jeu/` : HTTP 200, mais seulement les émissions passées
+  (« Franc-jeu — Invité : Gabriel Attal (Renaissance) »), rien sur la prochaine.
+- `francetvpro.fr/contenu-de-presse` : HTTP 200, liste des communiqués de presse, les
+  plus récents d'abord, une douzaine par page (`?page=0`, `1`…), sans flux RSS. Chaque
+  carte : `h4.card__title` (lignes séparées par `<br>`), `div.card__date` (« Dimanche
+  11 octobre à 13h20 sur France 2, France Inter et france.tv »), `div.card__text`
+  (résumé). Le 10 octobre : 48 cartes lues sur 4 pages, dont « FRANC-JEU / Roland
+  Lescure / Invité de Benjamin Duhamel » et « LES 4 VÉRITÉS / Laure Lavalette /
+  Invitée de Francis Letellier ». Les filtres par chaîne (`/france-2/all`) ne
+  contiennent pas Franc-jeu, classé sous « france.tv la plateforme ».
+- `programme-tv.net` et `telerama.fr` : adresses essayées en 404.
+- Extrait enregistré : `tests/reponses/francetvpro_liste.html`.

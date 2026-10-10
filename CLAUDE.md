@@ -12,9 +12,9 @@ demandé, puis s'arrêter pour faire vérifier le critère « Terminé quand ».
 
 - Python 3.11 ou plus ; dépendances dans `requirements.txt` ; tests : `python -m pytest`.
 - Configuration modifiable sans code : `config/chaines.yaml` (une ligne par chaîne) et `config/politique.yaml`.
-- Base SQLite `data/grille.sqlite` (ignorée par Git), table `emissions`, `chaines_resolues` (identifiants YouTube), `collectes` (comptes rendus), `envois` (emails envoyés) et `logos` (`grille/db.py`). Heures en ISO 8601, fuseau Europe/Paris.
+- Base SQLite `data/grille.sqlite` (ignorée par Git), table `emissions`, `chaines_resolues` (identifiants YouTube), `collectes` (comptes rendus), `envois` (emails envoyés), `logos` et `annonces` (`grille/db.py`). Heures en ISO 8601, fuseau Europe/Paris.
 - Collecteurs : `grille/tv.py` (lot 2), `grille/youtube.py` et `grille/twitch.py` (lot 3), `grille/radio.py` (API Radio France, après le lot 5). Filtre politique commun : `grille/filtre.py`.
-- Dédoublonnage (lot 6) : `grille/fusion.py`, appliqué à l'affichage (page, email, `lister`), jamais en base.
+- Lot 6, appliqué à l'affichage (`grille/affichage.py` : page, email, `lister`), jamais en base : invités annoncés par les communiqués de France Télévisions (`grille/annonces.py`, table `annonces`), puis dédoublonnage (`grille/fusion.py`).
 - Page web (lot 4) : `grille/page.py` intègre les données dans `grille/modele_page/index.html` ; sortie dans `site/` (ignoré par Git). Aperçu : `python -m grille apercu`.
 - En ligne (lot 5) : `.github/workflows/collecte.yml` (chaque heure, publie la page) et `courriel.yml` (7 h, Paris). Base sur la branche `donnees` (`.github/scripts/base.sh`), jamais dans `main`.
 - Secrets en local : fichier `.env` (modèle `.env.exemple`), ignoré par Git.
