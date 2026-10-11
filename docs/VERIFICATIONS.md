@@ -104,6 +104,12 @@ mot de passe d'application.
 Heure de l'email : GitHub programme en UTC. 7 h à Paris = 5 h UTC en été, 6 h UTC
 en hiver ; deux déclenchements à 4 h 30 et 5 h 30 UTC, puis attente jusqu'à 7 h.
 
+
+Validation (11 octobre 2026), d'après la base de la branche `donnees` et les journaux
+GitHub Actions : table `envois` = 2026-10-10 07:00:14 et 2026-10-11 07:00:13 (heure de
+Paris) ; 27 collectes horaires réussies du 10 octobre 7 h 31 au 11 octobre 7 h 32, toutes
+suivies de la publication Pages ; « quota consommé : 142 unités » par collecte.
+
 ## Radios (10 octobre 2026)
 
 API ouverte de Radio France (portail developers.radiofrance.fr, gratuite, usage non
