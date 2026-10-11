@@ -34,6 +34,7 @@ class Rapport:
     anomalies: list[str] = field(default_factory=list)
     a_confirmer: dict[str, bool] = field(default_factory=dict)
     interrompu: str = ""
+    douteux: int = 0
 
 
 def _date(valeur: str | None) -> datetime | None:
@@ -125,6 +126,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     except requests.RequestException as e:
         rapport.interrompu = f"API Twitch inaccessible ({e})"
 
+    rapport.douteux = db.noter_douteux(connexion, filtre.douteux, maintenant)
     a_ecrire = [{k: v for k, v in e.items() if k != "motif"} for e in rapport.retenues]
     couvertes = set() if rapport.interrompu else couvertes
     rapport.annulees = db.enregistrer_collecte(connexion, a_ecrire, "twitch", couvertes, maintenant)
@@ -137,6 +139,7 @@ def _retenir(rapport: Rapport, filtre: FiltrePolitique, chaine: Chaine, id_: str
              debut: datetime, fin: datetime | None, etat: str) -> None:
     decision = filtre.decider(chaine, titre, categorie_jeu)
     if decision is None:
+        filtre.noter_douteux(id_, "twitch", chaine, titre, categorie_jeu, debut)
         return
     rapport.retenues.append({
         "id": id_,

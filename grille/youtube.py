@@ -41,6 +41,7 @@ class Rapport:
     a_confirmer: dict[str, bool] = field(default_factory=dict)  # nom → chaîne trouvée ?
     unites: int = 0  # quota consommé
     interrompu: str = ""
+    douteux: int = 0  # nouveaux cas douteux
 
 
 class ClientYouTube:
@@ -195,6 +196,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
         rapport.interrompu = f"API YouTube inaccessible ({e})"
 
     rapport.unites = client.unites
+    rapport.douteux = db.noter_douteux(connexion, filtre.douteux, maintenant)
     a_ecrire = [{k: v for k, v in e.items() if k != "motif"} for e in rapport.retenues]
     # Collecte interrompue : on écrit ce qu'on a, mais on n'annule rien.
     rapport.annulees = db.enregistrer_collecte(
@@ -222,6 +224,8 @@ def _emission(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: 
     titre = video["snippet"].get("title", "")
     decision = filtre.decider(chaine, titre, video["snippet"].get("description", ""))
     if decision is None:
+        filtre.noter_douteux(f"youtube:{video['id']}", "youtube", chaine, titre,
+                             video["snippet"].get("description", ""), debut)
         return None
     if etat == "live":
         etat_emission = "en direct"

@@ -47,6 +47,7 @@ class Rapport:
     retenues: list[dict] = field(default_factory=list)
     annulees: int = 0
     chaines_absentes: list[str] = field(default_factory=list)
+    douteux: int = 0  # nouveaux cas douteux (émissions écartées qui pourraient être politiques)
 
 
 def lire_date(valeur: str) -> datetime:
@@ -152,6 +153,8 @@ def collecter(config: Configuration, chemin: Path, connexion, maintenant: dateti
             titre = f"{p.titre} — {p.sous_titre}" if p.sous_titre else p.titre
             decision = filtre.decider(chaine, p.titre, f"{p.sous_titre}\n{p.description}")
             if decision is None:
+                filtre.noter_douteux(f"tv:{p.chaine_xmltv}:{p.debut.strftime('%Y%m%d%H%M')}", "tv", chaine, titre,
+                                     p.description, p.debut)
                 continue
             rapport.retenues.append(
                 {
@@ -171,6 +174,7 @@ def collecter(config: Configuration, chemin: Path, connexion, maintenant: dateti
             )
 
     db.noter_logos(connexion, {chaines_tv[x].nom: url for x, url in icones.items()}, maintenant)
+    rapport.douteux = db.noter_douteux(connexion, filtre.douteux, maintenant)
     rapport.chaines_absentes = sorted(c.nom for x, c in chaines_tv.items() if x not in chaines_vues)
     couvertes = {chaines_tv[x].nom for x in chaines_vues}
     a_ecrire = [{k: v for k, v in e.items() if k != "motif"} for e in rapport.retenues]

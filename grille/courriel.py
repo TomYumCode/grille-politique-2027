@@ -26,6 +26,8 @@ PLATEFORMES = {"tv": "TV", "radio": "Radio", "youtube": "YouTube", "twitch": "Tw
 SOURCES = {"tv": "Télévision", "radio": "Radio France", "youtube": "YouTube", "twitch": "Twitch",
            "web": "Agendas des partis", "annonces": "Invités annoncés (France Télévisions)"}
 JOURS_TEMPS_FORTS = 3
+EXEMPLES_DOUTEUX = 10
+NOMS_SOURCES = {"tv": "télévision", "radio": "radio", "youtube": "YouTube", "twitch": "Twitch"}
 
 
 class ConfigurationEmailIncomplete(Exception):
@@ -39,6 +41,28 @@ def _jour(d: datetime) -> str:
 def temps_fort(e: dict, candidats: set[str]) -> bool:
     """Débats, meetings, et toute émission où un candidat est annoncé."""
     return e["categorie"] in ("débat", "meeting") or any(nom in candidats for nom in e["invites"])
+
+
+def mesure_douteux(connexion, maintenant: datetime) -> dict:
+    """Cas douteux vus pour la première fois ces dernières 24 h : nombre, répartition, exemples à venir."""
+    cas = db.douteux_depuis(connexion, maintenant - timedelta(hours=24))
+    par_source: dict[str, int] = {}
+    for c in cas:
+        par_source[c["source"]] = par_source.get(c["source"], 0) + 1
+    a_venir = [c for c in cas if datetime.fromisoformat(c["debut"]) >= maintenant]
+    # Exemples variés : un motif différent d'abord, puis le reste.
+    exemples, motifs = [], set()
+    for c in a_venir:
+        if c["motif"] not in motifs:
+            exemples.append(c)
+            motifs.add(c["motif"])
+    exemples += [c for c in a_venir if c not in exemples]
+    return {"nombre": len(cas), "par_source": par_source,
+            "exemples": sorted(exemples[:EXEMPLES_DOUTEUX], key=lambda c: c["debut"])}
+
+
+def _repartition(d: dict) -> str:
+    return ", ".join(f"{n} {NOMS_SOURCES.get(s, s)}" for s, n in sorted(d["par_source"].items(), key=lambda x: -x[1]))
 
 
 def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
@@ -56,6 +80,7 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
         "aujourdhui": aujourdhui,
         "temps_forts": a_venir,
         "alertes": db.etat_des_sources(connexion, maintenant, SOURCES),
+        "douteux": mesure_douteux(connexion, maintenant),
         "adresse_page": os.environ.get("ADRESSE_PAGE", ""),
     }
 
@@ -79,6 +104,13 @@ def texte(c: dict) -> str:
     parties += [_ligne_texte(e) for e in c["aujourdhui"]] or ["  Aucune émission politique annoncée."]
     parties += ["", f"TEMPS FORTS DES {JOURS_TEMPS_FORTS} PROCHAINS JOURS ({len(c['temps_forts'])})"]
     parties += [_ligne_texte(e, avec_jour=True) for e in c["temps_forts"]] or ["  Aucun débat ni meeting annoncé."]
+    d = c.get("douteux")
+    if d and d["nombre"]:
+        parties += ["", f"MESURE — CAS DOUTEUX DES DERNIÈRES 24 H : {d['nombre']} ({_repartition(d)})",
+                    "  Émissions écartées qui pourraient être politiques : Claude les jugerait si le classement",
+                    "  par modèle était activé. Exemples :"]
+        parties += [f"  {_jour(datetime.fromisoformat(x['debut']))} {x['debut'][11:16]}  {x['chaine']} — {x['titre']}"
+                    f"  ({x['motif']})" for x in d["exemples"]]
     if c["alertes"]:
         parties += ["", "ÉTAT DES SOURCES"] + [f"  ! {a}" for a in c["alertes"]]
     if c["adresse_page"]:
@@ -126,6 +158,18 @@ def page_html(c: dict) -> str:
         section(f"Temps forts des {JOURS_TEMPS_FORTS} prochains jours", [_ligne_html(e, True) for e in c["temps_forts"]],
                 "Aucun débat ni meeting annoncé."),
     ]
+    d = c.get("douteux")
+    if d and d["nombre"]:
+        morceaux.append(
+            '<h2 style="font-size:15px;text-transform:uppercase;color:#5b6470;margin:24px 0 4px">'
+            f'Mesure — cas douteux des dernières 24 h : {d["nombre"]}</h2>'
+            f'<p style="font-size:13px;color:#5b6470;margin:0 0 6px">{html.escape(_repartition(d))}. '
+            "Émissions écartées qui pourraient être politiques : Claude les jugerait si le classement par modèle "
+            "était activé. Exemples :</p><ul style=\"font-size:13px;padding-left:18px\">"
+            + "".join(f"<li>{html.escape(_jour(datetime.fromisoformat(x['debut'])))} {x['debut'][11:16]} · "
+                      f"{html.escape(x['chaine'])} — <b>{html.escape(x['titre'])}</b> "
+                      f"<span style=\"color:#5b6470\">({html.escape(x['motif'])})</span></li>" for x in d["exemples"])
+            + "</ul>")
     if c["alertes"]:
         morceaux.append('<h2 style="font-size:15px;text-transform:uppercase;color:#b3261e;margin:24px 0 4px">État des sources</h2><ul>'
                         + "".join(f"<li>{html.escape(a)}</li>" for a in c["alertes"]) + "</ul>")
