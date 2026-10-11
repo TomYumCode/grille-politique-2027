@@ -12,7 +12,7 @@ from pathlib import Path
 
 import requests
 
-from grille import acces, affichage, annonces, config, courriel, db, page, radio, tv, twitch, youtube
+from grille import acces, affichage, agendas, annonces, config, courriel, db, page, radio, tv, twitch, youtube
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre",
@@ -133,6 +133,11 @@ def _etape_tv(conf, connexion, maintenant, args) -> bool:
 def _etape_radio(conf, connexion, maintenant, args) -> bool:
     print("Radio France :")
     rapport = radio.collecter(conf, requests.Session(), connexion, maintenant)
+    if rapport.interrompu == radio.SANS_CLE:
+        # Clé demandée mais pas encore reçue : une ligne de rappel dans l'email, pas une panne.
+        print(f"  en attente : {rapport.interrompu}")
+        db.noter_collecte(connexion, "radio", maintenant, True, 0, ["clé Radio France pas encore en place"])
+        return True
     db.noter_collecte(connexion, "radio", maintenant, not rapport.interrompu, len(rapport.retenues),
                       rapport.anomalies, rapport.interrompu)
     if rapport.interrompu:
@@ -163,6 +168,23 @@ def _etape_annonces(conf, connexion, maintenant, args) -> bool:
         print(f"  ATTENTION {anomalie}")
     for a in rapport.retenues:
         print(f"  {a.jour} {a.heure or '--:--'}  {a.titre[:60]:<60} → {', '.join(a.invites)}")
+    return True
+
+
+def _etape_agendas(conf, connexion, maintenant, args) -> bool:
+    print("Agendas des partis et des candidats :")
+    rapport = agendas.collecter(conf, requests.Session(), connexion, maintenant)
+    db.noter_collecte(connexion, "web", maintenant, not rapport.interrompu, len(rapport.retenues),
+                      rapport.anomalies, rapport.interrompu)
+    if rapport.interrompu:
+        print(f"  ERREUR {rapport.interrompu}")
+        return False
+    print(f"  {rapport.agendas_lus} agendas lus, {rapport.rendez_vous} rendez-vous à venir ; "
+          f"{_resume(rapport.retenues)}, {rapport.annulees} passés en « annulé »")
+    for anomalie in rapport.anomalies:
+        print(f"  ATTENTION {anomalie}")
+    if args.motifs:
+        _motifs(rapport.retenues)
     return True
 
 
@@ -211,9 +233,9 @@ def _etape_twitch(conf, connexion, maintenant, args) -> bool:
 
 
 ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch,
-          "annonces": _etape_annonces}
+          "annonces": _etape_annonces, "web": _etape_agendas}
 NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch",
-        "annonces": "avec invités annoncés"}
+        "annonces": "avec invités annoncés", "web": "dans les agendas"}
 
 
 def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
@@ -249,6 +271,10 @@ def cmd_collecter_annonces(args: argparse.Namespace) -> int:
     return _collecter(args, ["annonces"])
 
 
+def cmd_collecter_agendas(args: argparse.Namespace) -> int:
+    return _collecter(args, ["web"])
+
+
 def cmd_collecter_radio(args: argparse.Namespace) -> int:
     return _collecter(args, ["radio"])
 
@@ -262,7 +288,7 @@ def cmd_collecter_twitch(args: argparse.Namespace) -> int:
 
 
 def cmd_collecter(args: argparse.Namespace) -> int:
-    return _collecter(args, ["tv", "radio", "youtube", "twitch", "annonces"])
+    return _collecter(args, ["tv", "radio", "youtube", "twitch", "web", "annonces"])
 
 
 def _generer_page(args: argparse.Namespace) -> Path | None:
@@ -427,11 +453,12 @@ def main(argv: list[str] | None = None) -> int:
     collecte.add_argument("--motifs", action="store_true", help="affiche la règle qui a retenu chaque émission")
     collecte.set_defaults(func=cmd_collecter_tv)
     for nom, func, aide in [
+        ("collecter-agendas", cmd_collecter_agendas, "agendas publiés par les partis et les candidats"),
         ("collecter-annonces", cmd_collecter_annonces, "invités annoncés dans les communiqués de France Télévisions"),
         ("collecter-radio", cmd_collecter_radio, "grille des stations Radio France (France Inter, franceinfo…)"),
         ("collecter-youtube", cmd_collecter_youtube, "directs YouTube programmés et en cours des chaînes suivies"),
         ("collecter-twitch", cmd_collecter_twitch, "chaînes Twitch en direct et plannings publiés"),
-        ("collecter", cmd_collecter, "télévision, radio, YouTube, Twitch et invités annoncés, chacun indépendamment"),
+        ("collecter", cmd_collecter, "toutes les sources (télévision, radio, YouTube, Twitch, agendas, invités annoncés), chacune indépendamment"),
     ]:
         sp = sous.add_parser(nom, help=aide)
         sp.add_argument("--motifs", action="store_true", help="affiche la règle qui a retenu chaque émission")

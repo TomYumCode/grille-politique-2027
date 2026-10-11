@@ -46,6 +46,9 @@ class Rapport:
     interrompu: str = ""
 
 
+SANS_CLE = "secret RADIOFRANCE_API_KEY absent"
+
+
 class ErreurRadioFrance(Exception):
     pass
 
@@ -82,7 +85,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     if not stations:
         return rapport
     if not cle:
-        rapport.interrompu = "secret RADIOFRANCE_API_KEY absent"
+        rapport.interrompu = SANS_CLE
         return rapport
     maintenant = maintenant.astimezone(PARIS)
     fin_horizon = datetime.combine(maintenant.date() + timedelta(days=JOURS_AFFICHES), datetime.min.time(), PARIS)

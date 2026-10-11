@@ -12,7 +12,8 @@
 #   twitch  : https://www.twitch.tv/identifiant
 #   tv      : identifiant XMLTV du guide xmltvfr.fr (ex. France2.fr)
 #   radio   : code de station de l'API Radio France (ex. FRANCEINTER)
-#   web     : adresse du flux RSS ou de la page de programmation
+#   web     : page d'agenda d'un parti ou d'un candidat (lue seulement si un lecteur existe pour ce site :
+#             rassemblementnational.fr, upr.fr ; voir grille/agendas.py)
 # Champ facultatif « direct » : page pour regarder en direct, ou liste de pages entre crochets.
 # Champ facultatif « logo » : adresse d'une image, à la place du logo fourni par la source.
 
@@ -45,6 +46,13 @@ chaines:
 
 # Radios privées (RTL, Europe 1, RMC, Sud Radio, Radio Nova) : pas d'API publique de
 # grille ; leurs directs filmés sont suivis par leurs chaînes YouTube ci-dessous.
+
+# --- Agendas des partis et des candidats (meetings, passages dans les médias) ---
+# Relevés le 11 octobre 2026. Sans agenda lisible : LFI (actionpopulaire.fr) et Reconquête
+# (ericzemmour.fr), protégés contre les programmes ; Renaissance, LR, Les Écologistes (pas
+# d'agenda) ; edouardphilippe.fr/agenda (vide ce jour-là, lecteur à écrire quand il se remplira).
+- {plateforme: web, nom: "Rassemblement National", adresse: "https://rassemblementnational.fr/agenda", categorie: "Agenda de parti"}
+- {plateforme: web, nom: "UPR", adresse: "https://upr.fr/agenda", categorie: "Agenda de parti"}
 
 # --- Chaînes prioritaires (fournies le 7 octobre 2026) ---
 - {plateforme: twitch, nom: "BackSeat (Jean Massiet)", adresse: "https://www.twitch.tv/jeanmassiet", categorie: "Décryptage"}
@@ -95,8 +103,9 @@ chaines:
 - {plateforme: youtube, nom: "RTL", adresse: "https://www.youtube.com/@rtl_france", categorie: "Radio privée, généraliste"}
 - {plateforme: youtube, nom: "RMC", adresse: "https://www.youtube.com/@RMC", categorie: "Radio privée, généraliste"}
 - {plateforme: youtube, nom: "Sud Radio", adresse: "https://www.youtube.com/@SudRadioOfficiel", categorie: "Radio privée, généraliste"}
-# Ajoutée le 10 octobre 2026 : émission politique « 2027 raisons de voter ». Pseudo relevé sur un annuaire de radios.
-- {plateforme: youtube, nom: "Radio Nova", adresse: "https://www.youtube.com/@RADIONOVAChannel", categorie: "Radio privée, culture", a_confirmer: true}
+# Ajoutée le 10 octobre 2026 : émission politique « 2027 raisons de voter ». @RADIONOVAChannel (annuaire de radios)
+# introuvable le 11 octobre ; youtube.com/radionova d’après la recherche, à confirmer par la collecte.
+- {plateforme: youtube, nom: "Radio Nova", adresse: "https://www.youtube.com/@radionova", categorie: "Radio privée, culture", a_confirmer: true}
 - {plateforme: youtube, nom: "Quotidien", adresse: "https://www.youtube.com/@QuotidienTMC", categorie: "Talk-show"}
 - {plateforme: youtube, nom: "Le Figaro TV", adresse: "https://www.youtube.com/@LeFigaroTV", categorie: "Presse, droite"}
 - {plateforme: youtube, nom: "Le Figaro", adresse: "https://www.youtube.com/@LeFigaro", categorie: "Presse, droite"}

@@ -16,6 +16,7 @@ python3 -m grille init            # crée data/grille.sqlite si besoin et lit la
 python3 -m grille verifier-acces  # teste le guide XMLTV et les API Radio France, YouTube et Twitch
 python3 -m grille collecter-tv    # télécharge le guide TV, garde le politique, écrit en base, affiche la grille
 python3 -m grille collecter-tv --motifs   # idem, avec la règle qui a retenu chaque émission
+python3 -m grille collecter-agendas  # agendas des partis (meetings, passages dans les médias)
 python3 -m grille collecter-annonces # invités annoncés dans les communiqués de France Télévisions
 python3 -m grille collecter-radio    # grille des stations Radio France (France Inter, franceinfo, France Culture)
 python3 -m grille collecter-youtube  # directs YouTube programmés et en cours des chaînes suivies
@@ -132,6 +133,19 @@ image de profil Twitch, balise `<icon>` du guide TV ; une radio prend le logo de
 chaîne YouTube du même nom. Sans logo, la page affiche les
 initiales. Pour imposer un logo, ajouter `logo: "https://…"` à la ligne de la chaîne
 dans `config/chaines.yaml`.
+
+## Agendas des partis
+
+Les lignes `plateforme: web` de `config/chaines.yaml` sont des pages d'agenda de partis.
+Aujourd'hui : Rassemblement national (meetings et passages des cadres dans les médias,
+« Andréa Kotarac sur BFMTV à 17 h ») et UPR (réunions publiques de François Asselineau).
+Seuls les rendez-vous qui citent un candidat ou une personnalité suivie sont gardés.
+Un passage dans un média rejoint l'émission de la chaîne à cette heure si elle est dans
+la grille ; sinon il s'affiche seul, avec l'étiquette « Agenda ».
+
+Chaque site demande son propre lecteur (`grille/agendas.py`). Sans agenda lisible le
+11 octobre 2026 : LFI et Reconquête (sites protégés contre les programmes), Renaissance,
+LR, Les Écologistes (pas d'agenda), Édouard Philippe (agenda vide ce jour-là).
 
 ## Invités annoncés
 

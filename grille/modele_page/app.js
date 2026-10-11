@@ -5,7 +5,7 @@
 
 const DONNEES = JSON.parse(document.getElementById("donnees").textContent);
 const CATEGORIES = ["débat", "interview", "meeting", "analyse"];
-const PLATEFORMES = { tv: "TV", radio: "Radio", youtube: "YouTube", twitch: "Twitch", web: "Web" };
+const PLATEFORMES = { tv: "TV", radio: "Radio", youtube: "YouTube", twitch: "Twitch", web: "Agenda" };
 // Plateformes connues avant que les filtres mémorisés ne retiennent la liste (sans la radio).
 const PLATEFORMES_ANCIENNES = ["tv", "youtube", "twitch", "web"];
 const CLASSE_CATEGORIE = { "débat": "cat-debat", interview: "cat-interview", meeting: "cat-meeting", analyse: "cat-analyse" };
@@ -121,6 +121,8 @@ function nomLien(url, e) {
   if (url.includes("youtube.com")) return "YouTube";
   if (url.includes("twitch.tv")) return "Twitch";
   if (e.plateforme === "radio") return url.includes("/podcasts/") ? "Émission" : "Écouter";
+  // Agenda d'un parti : page de l'événement, ou direct de la chaîne pour un passage média.
+  if (e.plateforme === "web") return url.includes("direct") ? "Direct " + e.chaine : "Détails";
   if (url.includes("lcp")) return "Direct LCP / Public Sénat";
   return e.plateforme === "tv" ? "Direct " + e.chaine : "Regarder";
 }

@@ -147,3 +147,19 @@ développement), par une tâche de sonde temporaire :
   contiennent pas Franc-jeu, classé sous « france.tv la plateforme ».
 - `programme-tv.net` et `telerama.fr` : adresses essayées en 404.
 - Extrait enregistré : `tests/reponses/francetvpro_liste.html`.
+
+## Agendas des partis (11 octobre 2026)
+
+Sondés depuis GitHub Actions (pages d'accueil, puis liens « agenda » trouvés) :
+
+| Site | Résultat |
+| --- | --- |
+| rassemblementnational.fr/agenda | lisible : jour, mois, heure, titre (« Andréa Kotarac sur BFM »), type (« Medias »), phrase (« … sera l'invité de BFMTV le dimanche 11 octobre 2026 à 17h. ») |
+| upr.fr/agenda | lisible : sections par mois (`id="2026-10"`), cartes `article.AgendaEventCard` (jour, titre, « 15:00 – 18:00 », description, lien) ; attributs `data-astro-cid-…` sur chaque balise |
+| edouardphilippe.fr/agenda | page présente, « Aucun événement à venir » |
+| actionpopulaire.fr/agenda/national (LFI), ericzemmour.fr/agenda, pcf.fr | HTTP 403, page « Just a moment… » (protection Cloudflare) |
+| parti-renaissance.fr, republicains.fr, lesecologistes.fr, lutte-ouvriere.org | pas de page d'agenda (404) ; Renaissance publie seulement des pages d'inscription par événement (utilisateur.parti-renaissance.fr/evenement/…) |
+| horizonsleparti.fr/category/agenda | réunions locales de militants, grands événements passés |
+
+Essai réel du collecteur le 11 octobre : 4 passages médias RN et la réunion publique de
+François Asselineau du 18 octobre retenus ; réunions de délégations UPR écartées.

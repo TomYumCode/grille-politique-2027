@@ -11,7 +11,7 @@ def test_configuration_du_depot_sans_anomalie():
     # Le nombre exact varie au fil des ajouts et retraits dans chaines.yaml.
     assert sum(c.plateforme == "tv" for c in conf.chaines) == 11
     assert len(conf.chaines) > 100
-    assert {c.plateforme for c in conf.chaines} == {"tv", "radio", "youtube", "twitch"}
+    assert {c.plateforme for c in conf.chaines} == {"tv", "radio", "youtube", "twitch", "web"}
     assert "Mélenchon" in conf.noms_a_reperer()
 
 
