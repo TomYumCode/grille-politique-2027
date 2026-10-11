@@ -77,7 +77,12 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .grille { padding: 8px 16px 32px; max-width: 760px; margin: 0 auto; touch-action: pan-y; }
 .section-titre { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); margin: 16px 0 6px; }
 .section-titre.direct { color: var(--direct); }
-.heure { font-size: .95rem; font-weight: 700; margin: 18px 0 6px; color: var(--discret); }
+/* Séparateur de tranche horaire : discret, pour ne pas être pris pour l'heure de diffusion. */
+.heure {
+  display: flex; align-items: center; gap: 8px; margin: 18px 0 6px;
+  font-size: .8rem; font-weight: 600; color: var(--discret);
+}
+.heure::after { content: ""; flex: 1; border-top: 1px solid var(--bord); }
 .carte {
   background: var(--carte); border: 1px solid var(--bord); border-radius: 12px;
   padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--ombre);
