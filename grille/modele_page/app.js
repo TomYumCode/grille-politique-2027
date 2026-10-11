@@ -168,6 +168,13 @@ function carte(e, maintenant) {
     bas);
 }
 
+// Séparateur d'une tranche d'une heure : « Entre 14 h et 15 h ». L'heure de diffusion
+// exacte est sur chaque carte ; le séparateur ne fait que regrouper.
+function libelleTranche(h) {
+  const nom = (x) => (x === 0 || x === 24 ? "minuit" : x + " h");
+  return "Entre " + nom(h) + " et " + nom(h + 1);
+}
+
 function afficherJours(aujourdhui) {
   const nav = document.getElementById("jours");
   nav.replaceChildren();
@@ -209,7 +216,7 @@ function afficherGrille(aujourdhui) {
     const heure = e.debut.slice(11, 13);
     if (heure !== heureCourante) {
       heureCourante = heure;
-      main.append(el("h3", { classe: "heure", texte: Number(heure) + " h" }));
+      main.append(el("h3", { classe: "heure", texte: libelleTranche(Number(heure)) }));
     }
     main.append(carte(e, maintenant));
   }
