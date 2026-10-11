@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 6
+VERSION_SCHEMA = 7
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -69,6 +69,19 @@ CREATE TABLE IF NOT EXISTS annonces (
     invites     TEXT NOT NULL DEFAULT '[]',
     url         TEXT NOT NULL,
     vu_le       TEXT NOT NULL
+);
+
+-- Version 7 (lot 6) : cas douteux, émissions écartées par les filtres qui pourraient
+-- être politiques ; mesurés avant de décider du classement par modèle.
+CREATE TABLE IF NOT EXISTS douteux (
+    id          TEXT PRIMARY KEY,                 -- même identifiant que la table emissions
+    source      TEXT NOT NULL,                    -- tv, radio, youtube, twitch
+    chaine      TEXT NOT NULL,
+    titre       TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    debut       TEXT NOT NULL,
+    motif       TEXT NOT NULL,
+    vu_le       TEXT NOT NULL                     -- première fois que la collecte l'a vu
 );
 
 -- Version 4 : logo de chaque chaîne (adresse d'image fournie par la source).
@@ -272,6 +285,30 @@ def noter_annonces(connexion: sqlite3.Connection, annonces: list[dict], maintena
 def annonces(connexion: sqlite3.Connection) -> list[dict]:
     lignes = connexion.execute("SELECT id, titre, jour, heure, invites, url FROM annonces").fetchall()
     return [{"id": i, "titre": t, "jour": j, "heure": h, "invites": json.loads(n), "url": u} for i, t, j, h, n, u in lignes]
+
+
+def noter_douteux(connexion: sqlite3.Connection, cas: list[dict], maintenant: datetime) -> int:
+    """Mémorise les cas douteux jamais vus (un cas déjà connu garde sa première date) ;
+    renvoie le nombre de nouveaux. Oublie ceux diffusés il y a plus de 30 jours."""
+    vu_le = maintenant.isoformat(timespec="seconds")
+    avant = connexion.total_changes
+    connexion.executemany(
+        "INSERT OR IGNORE INTO douteux VALUES (:id, :source, :chaine, :titre, :description, :debut, :motif, :vu_le)",
+        [{**c, "vu_le": vu_le} for c in cas],
+    )
+    nouveaux = connexion.total_changes - avant
+    connexion.execute("DELETE FROM douteux WHERE debut < ?", ((maintenant - timedelta(days=30)).isoformat(),))
+    connexion.commit()
+    return nouveaux
+
+
+def douteux_depuis(connexion: sqlite3.Connection, depuis: datetime) -> list[dict]:
+    """Cas douteux vus pour la première fois depuis `depuis`, par heure de diffusion."""
+    connexion.row_factory = sqlite3.Row
+    lignes = [dict(r) for r in connexion.execute("SELECT * FROM douteux WHERE vu_le >= ? ORDER BY debut",
+                                                  (depuis.isoformat(timespec="seconds"),))]
+    connexion.row_factory = None
+    return lignes
 
 
 def logos(connexion: sqlite3.Connection, avec_vides: bool = False) -> dict[str, str]:

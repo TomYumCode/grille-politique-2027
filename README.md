@@ -22,6 +22,7 @@ python3 -m grille collecter-radio    # grille des stations Radio France (France 
 python3 -m grille collecter-youtube  # directs YouTube programmés et en cours des chaînes suivies
 python3 -m grille collecter-twitch   # chaînes Twitch en direct et plannings publiés
 python3 -m grille collecter       # toutes les sources à la suite ; si l'une tombe, les autres continuent
+python3 -m grille douteux         # cas douteux des dernières 24 h (mesure avant le classement par Claude)
 python3 -m grille lister          # affiche la grille enregistrée (aujourd'hui et les 7 jours suivants)
 python3 -m grille chercher-tv "Franc-jeu"   # trouve une émission dans le guide TV et dit si elle est retenue
 python3 -m grille page            # génère la page web dans le dossier site/
@@ -163,6 +164,16 @@ sur Twitch, un meeting sur la chaîne du candidat et sur celle du parti) ne fait
 qu'une carte, avec un logo et un bouton par diffuseur. Règle : chaînes différentes,
 débuts à moins de 20 minutes d'écart, et titres qui concordent (`grille/fusion.py`).
 La base garde chaque diffusion séparément : la fusion se fait à l'affichage.
+
+## Cas douteux (mesure avant le classement par Claude)
+
+Une émission écartée par les deux filtres mais qui pourrait être politique est notée
+comme « cas douteux » : émission à invités (« C à vous », « Quotidien »…), mot comme
+« gouvernement » ou « ministre », parti au nom trop courant (« Renaissance »). Rien
+n'est ajouté à la grille : l'email du matin donne seulement leur nombre sur 24 heures
+et dix exemples, pour décider si le classement par Claude vaut la peine. Le premier
+jour compte toute la semaine à venir ; les jours suivants, seulement les nouveautés.
+Les listes se règlent dans `config/politique.yaml`, rubrique `cas_douteux:`.
 
 ## Régler le filtre politique
 

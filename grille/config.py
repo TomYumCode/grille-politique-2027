@@ -55,6 +55,8 @@ class Configuration:
     mots_cles: list[str]
     mots_cles_titre: list[str] = field(default_factory=list)
     tv_heures_masquees: tuple[int, int] | None = None  # (de, a) : début dans [de, a[ → ignoré
+    # Cas douteux à mesurer : {"mots": [...], "emissions_a_invites": [...]}.
+    cas_douteux: dict = field(default_factory=dict)
     anomalies: list[str] = field(default_factory=list)
 
     def noms_a_reperer(self) -> list[str]:
@@ -176,6 +178,11 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
             raise ErreurConfig("politique.yaml : « tv_heures_masquees: » doit s'écrire {de: 1, a: 6}") from e
         if not (0 <= masque[0] < masque[1] <= 24):
             raise ErreurConfig("politique.yaml : « tv_heures_masquees: » doit aller d'une heure à une heure plus tardive, entre 0 et 24")
+    cas_douteux = politique.get("cas_douteux") or {}
+    if not isinstance(cas_douteux, dict) or not all(
+            isinstance(cas_douteux.get(r) or [], list) and all(isinstance(m, str) for m in cas_douteux.get(r) or [])
+            for r in ("mots", "emissions_a_invites")):
+        raise ErreurConfig("politique.yaml : « cas_douteux: » doit contenir des listes de textes « mots: » et « emissions_a_invites: »")
     liste_blanche = politique.get("liste_blanche") or {}
     if not isinstance(liste_blanche, dict):
         raise ErreurConfig("politique.yaml : « liste_blanche: » doit contenir des rubriques")
@@ -197,5 +204,6 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         mots_cles=mots_cles,
         mots_cles_titre=mots_cles_titre,
         tv_heures_masquees=masque,
+        cas_douteux=cas_douteux,
         anomalies=anomalies,
     )

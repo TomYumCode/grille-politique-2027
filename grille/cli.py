@@ -117,7 +117,7 @@ def _etape_tv(conf, connexion, maintenant, args) -> bool:
     print(
         f"  {rapport.lus} programmes lus sur les chaînes configurées, {rapport.dans_l_horizon} à venir "
         f"(dont {rapport.masques} de nuit ignorés) ; "
-        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé »"
+        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé » ; {rapport.douteux} nouveaux cas douteux"
     )
     for nom in rapport.chaines_absentes:
         print(f"  ATTENTION chaîne absente du guide : {nom}")
@@ -146,7 +146,7 @@ def _etape_radio(conf, connexion, maintenant, args) -> bool:
     print(
         f"  {rapport.stations_lues} stations lues, {rapport.programmes} programmes à venir "
         f"(dont {rapport.masques} de nuit ignorés) ; "
-        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé »"
+        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé » ; {rapport.douteux} nouveaux cas douteux"
     )
     for anomalie in rapport.anomalies:
         print(f"  ATTENTION {anomalie}")
@@ -198,7 +198,8 @@ def _etape_youtube(conf, connexion, maintenant, args) -> bool:
         return False
     print(
         f"  {rapport.chaines_lues} chaînes lues, {rapport.videos_examinees} vidéos examinées ; "
-        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé » ; quota consommé : {rapport.unites} unités"
+        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé » ; quota consommé : {rapport.unites} unités ; "
+        f"{rapport.douteux} nouveaux cas douteux"
     )
     if rapport.interrompu:
         print(f"  ERREUR collecte interrompue : {rapport.interrompu}")
@@ -220,7 +221,8 @@ def _etape_twitch(conf, connexion, maintenant, args) -> bool:
         return False
     print(
         f"  {rapport.chaines_lues} chaînes lues, {rapport.en_direct} en direct, {rapport.creneaux} créneaux à venir ; "
-        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé », {rapport.directs_finis} directs terminés"
+        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé », {rapport.directs_finis} directs terminés ; "
+        f"{rapport.douteux} nouveaux cas douteux"
     )
     if rapport.interrompu:
         print(f"  ERREUR collecte interrompue : {rapport.interrompu}")
@@ -417,6 +419,22 @@ def cmd_attente_7h(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_douteux(args: argparse.Namespace) -> int:
+    """Cas douteux vus pour la première fois pendant les dernières heures (mesure avant Claude)."""
+    connexion = db.ouvrir(args.base)
+    maintenant = datetime.now(tv.PARIS)
+    cas = db.douteux_depuis(connexion, maintenant - timedelta(hours=args.heures))
+    connexion.close()
+    print(f"Cas douteux vus pour la première fois ces {args.heures} dernières heures : {len(cas)}")
+    for source, n in sorted(Counter(c["source"] for c in cas).items(), key=lambda x: -x[1]):
+        print(f"  {n:4d} {courriel.NOMS_SOURCES.get(source, source)}")
+    for source, n in sorted(Counter(c["motif"] for c in cas).items(), key=lambda x: -x[1])[:15]:
+        print(f"  motif {source} : {n}")
+    for c in cas[: args.nombre]:
+        print(f"  {c['debut'][:16]}  {c['chaine'][:20]:<20} {c['titre'][:60]:<60} ({c['motif']})")
+    return 0
+
+
 def cmd_lister(args: argparse.Namespace) -> int:
     connexion = db.ouvrir(args.base)
     maintenant, fin = _horizon()
@@ -464,6 +482,10 @@ def main(argv: list[str] | None = None) -> int:
         sp.add_argument("--motifs", action="store_true", help="affiche la règle qui a retenu chaque émission")
         sp.set_defaults(func=func)
     sous.add_parser("lister", help="affiche la grille enregistrée en base").set_defaults(func=cmd_lister)
+    p_douteux = sous.add_parser("douteux", help="cas douteux récents (émissions écartées qui pourraient être politiques)")
+    p_douteux.add_argument("--heures", type=int, default=24, help="depuis combien d'heures (24 par défaut)")
+    p_douteux.add_argument("--nombre", type=int, default=40, help="nombre d'exemples affichés")
+    p_douteux.set_defaults(func=cmd_douteux)
     p_courriel = sous.add_parser("courriel", help="envoie l'email du matin (une fois par jour)")
     p_courriel.add_argument("--apercu", type=Path, help="écrit l'email dans ce fichier HTML au lieu de l'envoyer")
     p_courriel.add_argument("--forcer", action="store_true", help="envoie même si l'email du jour est déjà parti")

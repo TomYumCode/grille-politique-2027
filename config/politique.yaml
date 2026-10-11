@@ -169,3 +169,42 @@ mots_cles_titre:
 # presque toujours des rediffusions nocturnes. « de: 1, a: 6 » masque de 1 h à 5 h 59.
 # Supprimer la rubrique pour tout garder.
 tv_heures_masquees: {de: 1, a: 6}
+
+# Cas douteux (lot 6, étape 1 : mesure seulement, rien n'est ajouté à la grille).
+# Émissions écartées par les deux filtres mais qui pourraient être politiques : elles
+# seraient soumises à Claude si le classement par modèle est activé. L'email du matin
+# en donne le nombre et quelques exemples. Les partis « ambigu » s'y ajoutent d'office.
+cas_douteux:
+  # Mots cherchés dans le titre et la description.
+  mots:
+    - "politique"
+    - "politiques"
+    - "gouvernement"
+    - "ministre"
+    - "ministres"
+    - "député"
+    - "députée"
+    - "députés"
+    - "sénateur"
+    - "sénatrice"
+    - "Sénat"
+    - "Assemblée nationale"
+    - "Élysée"
+    - "Matignon"
+    - "élection"
+    - "élections"
+    - "primaire de la gauche"
+  # Émissions à invités dont le guide ne nomme souvent pas l'invité (début du titre).
+  emissions_a_invites:
+    - "C à vous"
+    - "C ce soir"
+    - "C l'hebdo"
+    - "C dans l'air"
+    - "Quotidien"
+    - "28 minutes"
+    - "Le grand enjeu"
+    - "L'heure des pros"
+    - "Les grandes gueules"
+    - "En toute franchise"
+    - "24h Pujadas"
+    - "BFM Politique"

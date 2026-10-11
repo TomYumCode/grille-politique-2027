@@ -44,6 +44,7 @@ class Rapport:
     annulees: int = 0
     anomalies: list[str] = field(default_factory=list)
     interrompu: str = ""
+    douteux: int = 0
 
 
 SANS_CLE = "secret RADIOFRANCE_API_KEY absent"
@@ -133,6 +134,8 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
             description = f"{description}\n{diffusion.get('standFirst') or ''}"
             decision = filtre.decider(chaine, titre_filtre, description)
             if decision is None:
+                filtre.noter_douteux(f"radio:{station}:{debut:%Y%m%d%H%M}", "radio", chaine, titre_complet,
+                                     description, debut)
                 continue
             # Direct de la station d'abord, puis la page de la diffusion (réécoute).
             liens = list(chaine.direct)
@@ -153,6 +156,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
                 "motif": decision.motif,
             })
 
+    rapport.douteux = db.noter_douteux(connexion, filtre.douteux, maintenant)
     if not couvertes:
         rapport.interrompu = "API Radio France inaccessible : " + "; ".join(rapport.anomalies)
         rapport.anomalies = []
