@@ -51,3 +51,47 @@ def test_emission_limitee_a_une_chaine(politique):
     f, chaines = politique
     assert f.decider(chaines["BFMTV"], "Face-à-Face", "").filtre == "liste blanche"
     assert f.decider(chaines["France 5"], "Face à face avec les requins", "") is None
+
+
+@pytest.mark.parametrize(
+    "chaine, titre, description, sous_titre, presents, cites",
+    [
+        # Commentaires d'actualité sur Twitch : les noms sont des sujets.
+        ("Clemovitch (Clément Viktorovitch)",
+         "Glucksmann : la surprise ? Mélenchon : sa proposition choc pour la jeunesse | Le Café Rhétorique", "", "",
+         [], ["Jean-Luc Mélenchon", "Raphaël Glucksmann"]),
+        ("BackSeat (Jean Massiet)", "GLUCKSMANN ÉLU PRÉSIDENT DE LA RÉPUBLIQUE (ah non pas encore) - !Backseat", "", "",
+         [], ["Raphaël Glucksmann"]),
+        ("Hugo au Perchoir", "Réaction au meeting de Mélenchon", "", "", [], ["Jean-Luc Mélenchon"]),
+        # Interviews, invités, meetings : présents.
+        ("CNews", "L'interview", "", "Jean-Luc Mélenchon", ["Jean-Luc Mélenchon"], []),
+        ("Hugo au Perchoir", "Interview de Jordan Bardella", "", "", ["Jordan Bardella"], []),
+        ("La France insoumise", "Meeting de Jean-Luc Mélenchon à Clermont-Ferrand", "", "", ["Jean-Luc Mélenchon"], []),
+        ("France 2", "Franc-jeu", "", "Gabriel Attal", ["Gabriel Attal"], []),
+        ("France 2", "Les quatre vérités", "Invitée : Laure Lavalette. Elle répond aux attaques de Gabriel Attal.", "",
+         ["Laure Lavalette"], ["Gabriel Attal"]),
+        ("France 5", "C à vous", "Avec Gabriel Attal et Marine Tondelier, puis Bruno Retailleau en duplex.", "",
+         ["Gabriel Attal", "Bruno Retailleau", "Marine Tondelier"], []),
+        ("BFMTV", "Face à face", "Apolline de Malherbe reçoit Jordan Bardella.", "", ["Jordan Bardella"], []),
+        # Émission d'interview sans nom dans le titre : la première personne du résumé.
+        ("Radio Classique", "L’invité de la matinale", "Marine Tondelier, candidate des Écologistes", "",
+         ["Marine Tondelier"], []),
+        # Sa propre chaîne.
+        ("Jean-Luc Mélenchon", "Le peuple au pouvoir", "", "", ["Jean-Luc Mélenchon"], []),
+    ],
+)
+def test_presents_ou_cites(politique, chaine, titre, description, sous_titre, presents, cites):
+    f, chaines = politique
+    decision = f.decider(chaines[chaine], titre, description, sous_titre=sous_titre)
+    assert (sorted(decision.invites), sorted(decision.cites)) == (sorted(presents), sorted(cites))
+
+
+def test_rediffusion_d_un_meeting(politique):
+    """CNews titre « L'interview — Jean-Luc Mélenchon » la rediffusion de son meeting."""
+    f, chaines = politique
+    decision = f.decider(chaines["CNews"], "L'interview", "Rediffusion du meeting de Jean-Luc Mélenchon à Clermont-Ferrand.",
+                         sous_titre="Jean-Luc Mélenchon")
+    assert decision.categorie == "meeting"
+    assert f.decider(chaines["CNews"], "L'interview", "Au lendemain de son meeting, il répond à nos questions.",
+                     sous_titre="Jean-Luc Mélenchon").categorie == "interview"
+    assert f.decider(chaines["Hugo au Perchoir"], "Réaction au meeting de Mélenchon", "").categorie == "analyse"

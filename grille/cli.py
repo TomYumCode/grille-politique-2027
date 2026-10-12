@@ -67,6 +67,8 @@ def afficher_grille(emissions: list[dict]) -> None:
             jour_courant = debut.date()
             print(f"\n{JOURS[debut.weekday()].capitalize()} {debut.day} {MOIS[debut.month - 1]}")
         invites = f" — avec {', '.join(e['invites'])}" if e["invites"] else ""
+        if e.get("cites"):
+            invites += f" — cités : {', '.join(e['cites'])}"
         etat = f" [{e['statut']}]" if e["statut"] != "annoncé" else ""
         plateforme = courriel.PLATEFORMES[e["plateforme"]]
         aussi = f"  [aussi : {', '.join(s['chaine'] for s in e['sources'][1:])}]" if e.get("sources") else ""

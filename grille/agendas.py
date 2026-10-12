@@ -183,6 +183,8 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
                 "chaine": chaine,
                 "categorie": categorie,
                 "invites": decision.invites,
+                "cites": decision.cites,
+                "resume": rdv.description,
                 "lien": liens,
                 "statut": statut(rdv.debut, rdv.fin, maintenant),
                 "filtre": decision.filtre,

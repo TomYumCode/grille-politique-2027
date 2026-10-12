@@ -184,7 +184,7 @@ Avancement :
 
 - [x] Lots 1 à 4 : validés les 8 et 9 octobre 2026.
 - [x] Lot 5 : validé le 11 octobre 2026. Emails partis à 7 h 00 le samedi 10 et le dimanche 11, un seul par jour ; 27 collectes horaires réussies d'affilée du samedi 7 h 31 au dimanche 7 h 32, page publiée à chaque fois ; quota YouTube d'environ 142 unités par collecte.
-- [ ] Lot 6 : en cours. Fait : dédoublonnage (critère « Terminé quand » vérifié le 10 octobre sur les Questions au gouvernement LCP + Twitch), invités annoncés par France Télévisions, agendas RN et UPR. Reste : classement des cas ambigus par l'API Claude (étape 1 lancée le 11 octobre 2026 : mesure gratuite du nombre de cas douteux dans l'email du matin, avant toute décision), autres sites.
+- [ ] Lot 6 : en cours. Fait : dédoublonnage (critère « Terminé quand » vérifié le 10 octobre sur les Questions au gouvernement LCP + Twitch), invités annoncés par France Télévisions, agendas RN et UPR, personnes présentes distinguées des personnes seulement citées (12 octobre 2026). Reste : classement des cas ambigus par l'API Claude (étape 1 lancée le 11 octobre 2026 : mesure gratuite du nombre de cas douteux dans l'email du matin, avant toute décision), autres sites.
 
 Consigne à placer en tête du projet dans Claude Code : écrire un test par collecteur à partir d'une réponse enregistrée de la source, pour repérer tout de suite un changement de format.
 

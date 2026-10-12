@@ -94,6 +94,8 @@ def _ligne_texte(e: dict, avec_jour: bool = False) -> str:
     debut = datetime.fromisoformat(e["debut"])
     quand = (_jour(debut) + " " if avec_jour else "") + f"{debut:%H:%M}"
     invites = f" — avec {', '.join(e['invites'])}" if e["invites"] else ""
+    if e.get("cites"):
+        invites += f" — il est question de {', '.join(e['cites'])}"
     lien = "".join(f"\n      {url}" for url in e["lien"])
     return f"  {quand}  {diffuseurs(e)} · {e['categorie']}\n    {e['titre']}{invites}{lien}"
 
@@ -128,6 +130,9 @@ def _ligne_html(e: dict, avec_jour: bool = False) -> str:
     if e["lien"]:
         titre = f'<a href="{html.escape(e["lien"][0])}" style="color:#1f3a5f">{titre}</a>'
     invites = f'<div style="color:#5b6470;font-size:13px">Avec {html.escape(", ".join(e["invites"]))}</div>' if e["invites"] else ""
+    if e.get("cites"):
+        invites += ('<div style="color:#5b6470;font-size:13px;font-style:italic">Il est question de '
+                    f'{html.escape(", ".join(e["cites"]))}</div>')
     # Émission fusionnée : un lien par autre diffuseur, sous le titre.
     autres = [f'<a href="{html.escape(src["lien"][0])}" style="color:#1f3a5f">{html.escape(src["chaine"])}'
               + (f' ({html.escape(src["precision"])})' if src.get("precision") else "") + "</a>"

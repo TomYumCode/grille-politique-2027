@@ -97,6 +97,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .chaine { font-weight: 600; }
 .titre-emission { font-size: 1rem; font-weight: 600; margin: 4px 0 2px; overflow-wrap: anywhere; }
 .invites { font-size: .85rem; color: var(--discret); margin: 0; }
+.cites { font-size: .8rem; color: var(--discret); font-style: italic; margin: 0; }
 .ligne-bas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
 .categorie { font-size: .75rem; font-weight: 700; color: var(--couleur); text-transform: uppercase; letter-spacing: .03em; margin-right: auto; }
 .regarder {
