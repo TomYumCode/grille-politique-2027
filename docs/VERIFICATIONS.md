@@ -169,3 +169,20 @@ Sondés depuis GitHub Actions (pages d'accueil, puis liens « agenda » trouvés
 
 Essai réel du collecteur le 11 octobre : 4 passages médias RN et la réunion publique de
 François Asselineau du 18 octobre retenus ; réunions de délégations UPR écartées.
+
+## Radios privées (12 octobre 2026)
+
+Sites sondés depuis GitHub Actions :
+
+| Site | Résultat |
+| --- | --- |
+| rtl.fr/grille/JJ-MM-AAAA | une page par jour, environ deux semaines à l'avance (≈ 1,4 Mo) ; cartes `div.programme-card` (`programme-card__time` « 07h00 - 09h00 », `programme-card__title`, `programme-card__description`) et chroniques `li.programme-card__chronique` (`programme-card__chronique-time` « 07h40 », `-title`, `-description`) ; après minuit, la page continue sur le lendemain |
+| europe1.fr/grille-des-programmes | semaine type sans dates ni invités : panneaux `section#panel-lundi`… ; `horaires-item-programme` / `title-item-programme`, `horaires-item-chronique` / `title-item-chronique` |
+| sudradio.fr/programmes (`?week=1` : semaine suivante) | un panneau par jour titré `h2.sud_planning_titre_jour` « lundi 12 octobre » ; `li.sud_planning_ligne` (`program-start`, `program-end`, `sud_planning_program_name`, `sud_planning_extrait` « Au programme : … ») et chroniques `article.sud_podcast_chronique` (`sud_podcast_chronique_hour`, lien, description) ; la semaine suivante peut être vide |
+| rmc.bfmtv.com/grille-radio/, radioclassique.fr/grille-des-programmes/ | pages présentes, structure non relevée |
+| nova.fr | pas de grille ; podcasts (podcasts.nova.fr/radio-nova-2027-raisons-de-voter) |
+
+Essai réel du collecteur : 3 radios, 5 pages, 604 programmes à venir, 23 retenus (L'invité
+RTL de 7h40, Face à Fogiel, La Grande interview Europe 1 - CNews, L'invité politique Sud
+Radio, Le grand débat des Vraies Voix…), aucun journal retenu. Extraits réels dans
+`tests/reponses/radio_rtl.html`, `radio_europe1.html`, `radio_sudradio.html`.

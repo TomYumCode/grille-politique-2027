@@ -68,6 +68,13 @@ def test_sudradio():
     assert titres["Le journal de 7h"].description.startswith("Glucksmann remporte la primaire")
 
 
+def test_semaine_suivante_vide_n_est_pas_une_panne():
+    assert radios_privees.lire_sudradio('<ul class="sud_planning_jour"></ul>', "https://www.sudradio.fr/programmes?week=1",
+                                        date(2026, 10, 12)) == []
+    with pytest.raises(radios_privees.PageIllisible):
+        radios_privees.lire_sudradio("<html>travaux</html>", "https://www.sudradio.fr/programmes", date(2026, 10, 12))
+
+
 def test_collecte(conf, tmp_path):
     connexion = db.ouvrir(tmp_path / "g.sqlite")
     session = SessionHtml({"https://www.rtl.fr/grille": RTL, "https://www.europe1.fr": EUROPE1,

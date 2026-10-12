@@ -181,6 +181,9 @@ def lire_sudradio(contenu: str, adresse: str, aujourdhui: date) -> list[Programm
     (« sud_deb_chronique », titre, description)."""
     jours = list(re.finditer(r'(?s)<h2 class="sud_planning_titre_jour">(.*?)</h2>', contenu))
     if not jours:
+        # La semaine suivante peut être encore vide ; sans trace de la grille, la page a changé.
+        if "sud_planning" in contenu:
+            return []
         raise PageIllisible("aucun jour dans la grille")
     resultat = []
     for i, j in enumerate(jours):

@@ -145,6 +145,7 @@ liste_blanche:
     # Radios privées (titres des grilles des sites).
     - {titre: "La Grande interview", chaine: "Europe 1"}
     - {titre: "La semaine politique", chaine: "Europe 1"}
+    - {titre: "L'interview politique", chaine: "Europe 1"}
     - {titre: "L'invité RTL", chaine: "RTL"}
     - {titre: "Face à Fogiel", chaine: "RTL"}
     - {titre: "L'invité politique", chaine: "Sud Radio"}
