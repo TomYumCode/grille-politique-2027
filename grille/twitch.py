@@ -150,6 +150,8 @@ def _retenir(rapport: Rapport, filtre: FiltrePolitique, chaine: Chaine, id_: str
         "chaine": chaine.nom,
         "categorie": decision.categorie,
         "invites": decision.invites,
+        "cites": decision.cites,
+        "resume": "",
         "lien": [chaine.adresse],
         "statut": etat,
         "filtre": decision.filtre,

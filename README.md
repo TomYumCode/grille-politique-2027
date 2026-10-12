@@ -170,6 +170,28 @@ Lescure — Dimanche 11 octobre à 13h20 ». L'invité s'ajoute alors à l'émis
 jour et de la même heure (à 30 minutes près). Les autres chaînes (TF1, M6, BFMTV…)
 n'ont pas de page équivalente repérée pour l'instant.
 
+## Présents ou seulement cités
+
+Une carte distingue les personnes présentes (« Avec Gabriel Attal ») de celles dont il
+est seulement question (« Il est question de Raphaël Glucksmann », en italique), comme
+dans un commentaire d'actualité sur Twitch : « Glucksmann : la surprise ? ». Une personne
+est présente si (`FiltrePolitique.presences` dans `grille/filtre.py`) :
+
+- un mot autour de son nom le dit : « avec », « invité(e) », « reçoit », « face à »,
+  « interview de », « meeting de », « … répond », « … sera l'invité »… ;
+- ou l'émission est une interview, un débat ou un meeting (d'après son titre, ou une
+  émission de la liste blanche) et la nomme dans son titre (« L'interview — Jean-Luc
+  Mélenchon », « Franc-jeu — Gabriel Attal ») ;
+- ou, dans une interview sans nom dans le titre, c'est la première personne du résumé
+  (« L'invité de la matinale » : « Anne Goscinny, co-auteure… ») ;
+- ou c'est sa propre chaîne, ou un agenda de parti ou un communiqué l'annonce.
+
+Un titre de commentaire (« réaction », « décryptage », « débrief »…) ne rend personne
+présent. Un résumé qui parle de rediffusion ou de retransmission d'un meeting classe
+l'émission en « meeting », même titrée « L'interview ». Le filtre « Candidat » de la page
+montre les deux ; l'email ne met en avant (temps forts) que les émissions où un candidat
+est présent. Le résumé donné par la source est gardé en base (colonne `resume`).
+
 ## Doublons entre chaînes
 
 Une même diffusion vue sur plusieurs chaînes (Questions au gouvernement sur LCP et

@@ -67,7 +67,7 @@ function sources(e) {
 function visible(e) {
   const s = sources(e);
   return etat.categories.has(e.categorie) && s.some((x) => etat.plateformes.has(x.plateforme))
-    && (!etat.candidat || e.invites.includes(etat.candidat))
+    && (!etat.candidat || e.invites.includes(etat.candidat) || (e.cites || []).includes(etat.candidat))
     && (!etat.chaine || s.some((x) => x.chaine === etat.chaine));
 }
 
@@ -165,6 +165,8 @@ function carte(e, maintenant) {
     haut,
     el("p", { classe: "titre-emission", texte: e.titre }),
     e.invites.length ? el("p", { classe: "invites", texte: "Avec " + e.invites.join(", ") }) : null,
+    // Personnes seulement citées (sujet d'un commentaire), sans être sur le plateau.
+    (e.cites || []).length ? el("p", { classe: "cites", texte: "Il est question de " + e.cites.join(", ") }) : null,
     bas);
 }
 

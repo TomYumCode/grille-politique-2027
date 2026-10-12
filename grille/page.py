@@ -20,7 +20,8 @@ from grille.tv import JOURS_AFFICHES, PARIS
 
 MODELE = Path(__file__).resolve().parent / "modele_page"
 SORTIE = Path(__file__).resolve().parent.parent / "site"
-CHAMPS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "categorie", "invites", "lien", "statut", "filtre")
+CHAMPS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "categorie", "invites", "cites", "lien", "statut",
+          "filtre")
 
 
 def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
@@ -29,7 +30,8 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
     emissions = [{k: e[k] for k in CHAMPS + ("sources",) if k in e}
                  for e in affichage.emissions(connexion, minuit, minuit + timedelta(days=JOURS_AFFICHES))]
-    presents = Counter(nom for e in emissions for nom in e["invites"])
+    # Émissions où le candidat est présent ou seulement cité.
+    presents = Counter(nom for e in emissions for nom in e["invites"] + e.get("cites", []))
     chaines = {s["chaine"] for e in emissions for s in e.get("sources") or [e]}
     # Logo imposé dans chaines.yaml d'abord, sinon celui fourni par la source.
     logos = {nom: url for nom, url in db.logos(connexion).items() if nom in chaines}

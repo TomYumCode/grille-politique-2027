@@ -127,12 +127,13 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
             # Le nom de l'émission sert la liste blanche (« Questions politiques ») ; le titre
             # de la diffusion nomme souvent l'invité (« Gabriel Attal, invité de 8h20 »).
             if emission and titre and emission.casefold() not in titre.casefold():
-                titre_complet, titre_filtre, description = f"{emission} — {titre}", emission, titre
+                titre_complet, titre_filtre, sous_titre = f"{emission} — {titre}", emission, titre
             else:
                 titre_complet = titre_filtre = titre or emission
-                description = ""
-            description = f"{description}\n{diffusion.get('standFirst') or ''}"
-            decision = filtre.decider(chaine, titre_filtre, description)
+                sous_titre = ""
+            resume = diffusion.get("standFirst") or ""
+            description = f"{sous_titre}\n{resume}"
+            decision = filtre.decider(chaine, titre_filtre, resume, sous_titre=sous_titre)
             if decision is None:
                 filtre.noter_douteux(f"radio:{station}:{debut:%Y%m%d%H%M}", "radio", chaine, titre_complet,
                                      description, debut)
@@ -150,6 +151,8 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
                 "chaine": chaine.nom,
                 "categorie": decision.categorie,
                 "invites": decision.invites,
+                "cites": decision.cites,
+                "resume": resume,
                 "lien": liens,
                 "statut": statut(debut, fin, maintenant),
                 "filtre": decision.filtre,

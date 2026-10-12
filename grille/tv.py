@@ -151,7 +151,7 @@ def collecter(config: Configuration, chemin: Path, connexion, maintenant: dateti
             rapport.dans_l_horizon += 1
             chaine = chaines_tv[p.chaine_xmltv]
             titre = f"{p.titre} — {p.sous_titre}" if p.sous_titre else p.titre
-            decision = filtre.decider(chaine, p.titre, f"{p.sous_titre}\n{p.description}")
+            decision = filtre.decider(chaine, p.titre, p.description, sous_titre=p.sous_titre)
             if decision is None:
                 filtre.noter_douteux(f"tv:{p.chaine_xmltv}:{p.debut.strftime('%Y%m%d%H%M')}", "tv", chaine, titre,
                                      p.description, p.debut)
@@ -166,6 +166,8 @@ def collecter(config: Configuration, chemin: Path, connexion, maintenant: dateti
                     "chaine": chaine.nom,
                     "categorie": decision.categorie,
                     "invites": decision.invites,
+                    "cites": decision.cites,
+                    "resume": p.description,
                     "lien": list(chaine.direct),
                     "statut": statut(p.debut, p.fin, maintenant),
                     "filtre": decision.filtre,
@@ -208,7 +210,7 @@ def chercher(config: Configuration, chemin: Path, texte: str, maintenant: dateti
             elif config.tv_heures_masquees and config.tv_heures_masquees[0] <= p.debut.hour < config.tv_heures_masquees[1]:
                 verdict = "masquée (programme de nuit)"
             else:
-                decision = filtre.decider(chaine, p.titre, f"{p.sous_titre}\n{p.description}")
+                decision = filtre.decider(chaine, p.titre, p.description, sous_titre=p.sous_titre)
                 verdict = f"RETENUE : {decision.filtre}, {decision.motif}" if decision else "écartée : aucun mot-clé"
             resultats.append({"debut": p.debut, "chaine": chaine.nom if chaine else p.chaine_xmltv, "titre": p.titre,
                               "sous_titre": p.sous_titre, "description": p.description, "verdict": verdict})

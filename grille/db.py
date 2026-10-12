@@ -3,8 +3,9 @@
 Conventions de stockage :
 - `debut`, `fin`, `vu_le` : texte ISO 8601 avec décalage, fuseau Europe/Paris
   (ex. 2027-03-15T21:00:00+01:00) ; `fin` peut être NULL.
-- `invites` et `lien` : listes JSON, pour qu'une émission fusionnée porte
-  plusieurs liens (télévision + YouTube, par exemple).
+- `invites`, `cites` et `lien` : listes JSON, pour qu'une émission fusionnée porte
+  plusieurs liens (télévision + YouTube, par exemple). `invites` : personnes présentes
+  (invitées, interviewées, en meeting) ; `cites` : personnes seulement citées.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 7
+VERSION_SCHEMA = 8
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -31,7 +32,10 @@ CREATE TABLE IF NOT EXISTS emissions (
     statut      TEXT NOT NULL DEFAULT 'annoncé'
                 CHECK (statut IN ('annoncé', 'en direct', 'terminé', 'annulé')),
     filtre      TEXT CHECK (filtre IN ('liste blanche', 'mots-clés', 'modèle')),
-    vu_le       TEXT NOT NULL
+    vu_le       TEXT NOT NULL,
+    -- Version 8 : personnes seulement citées, et résumé donné par la source (500 caractères).
+    cites       TEXT NOT NULL DEFAULT '[]',
+    resume      TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS emissions_debut ON emissions (debut);
 
@@ -98,10 +102,20 @@ def ouvrir(chemin: Path = CHEMIN_BASE) -> sqlite3.Connection:
     chemin.parent.mkdir(parents=True, exist_ok=True)
     connexion = sqlite3.connect(chemin)
     connexion.executescript(SCHEMA)
+    _ajouter_colonnes(connexion)
     _accepter_la_radio(connexion)
     connexion.execute(f"PRAGMA user_version = {VERSION_SCHEMA}")
     connexion.commit()
     return connexion
+
+
+def _ajouter_colonnes(connexion: sqlite3.Connection) -> None:
+    """Version 8 : colonnes « cites » et « resume », ajoutées en fin de table (les émissions
+    déjà en base n'ont personne de cité ni de résumé jusqu'à la collecte suivante)."""
+    colonnes = {r[1] for r in connexion.execute("PRAGMA table_info(emissions)")}
+    for nom, definition in (("cites", "TEXT NOT NULL DEFAULT '[]'"), ("resume", "TEXT NOT NULL DEFAULT ''")):
+        if nom not in colonnes:
+            connexion.execute(f"ALTER TABLE emissions ADD COLUMN {nom} {definition}")
 
 
 def _accepter_la_radio(connexion: sqlite3.Connection) -> None:
@@ -143,14 +157,19 @@ def enregistrer_collecte(
     for e in emissions:
         connexion.execute(
             """
-            INSERT INTO emissions (id, titre, debut, fin, plateforme, chaine, categorie, invites, lien, statut, filtre, vu_le)
-            VALUES (:id, :titre, :debut, :fin, :plateforme, :chaine, :categorie, :invites, :lien, :statut, :filtre, :vu_le)
+            INSERT INTO emissions (id, titre, debut, fin, plateforme, chaine, categorie, invites, lien, statut, filtre,
+                                   vu_le, cites, resume)
+            VALUES (:id, :titre, :debut, :fin, :plateforme, :chaine, :categorie, :invites, :lien, :statut, :filtre,
+                    :vu_le, :cites, :resume)
             ON CONFLICT (id) DO UPDATE SET
                 titre = excluded.titre, debut = excluded.debut, fin = excluded.fin, chaine = excluded.chaine,
                 categorie = excluded.categorie, invites = excluded.invites, lien = excluded.lien,
-                statut = excluded.statut, filtre = excluded.filtre, vu_le = excluded.vu_le
+                statut = excluded.statut, filtre = excluded.filtre, vu_le = excluded.vu_le,
+                cites = excluded.cites, resume = excluded.resume
             """,
             {**e, "invites": json.dumps(e["invites"], ensure_ascii=False),
+             "cites": json.dumps(e.get("cites") or [], ensure_ascii=False),
+             "resume": " ".join((e.get("resume") or "").split())[:500],
              "lien": json.dumps(e["lien"], ensure_ascii=False), "vu_le": vu_le},
         )
     ids_vus = {e["id"] for e in emissions}
@@ -179,7 +198,7 @@ def lister(connexion: sqlite3.Connection, depuis: datetime, jusqua: datetime) ->
         debut = datetime.fromisoformat(e["debut"])
         fin = datetime.fromisoformat(e["fin"]) if e["fin"] else debut
         if fin > depuis and debut < jusqua:
-            e["invites"], e["lien"] = json.loads(e["invites"]), json.loads(e["lien"])
+            e["invites"], e["cites"], e["lien"] = json.loads(e["invites"]), json.loads(e["cites"]), json.loads(e["lien"])
             resultat.append(e)
     return sorted(resultat, key=lambda e: (datetime.fromisoformat(e["debut"]), e["chaine"]))
 

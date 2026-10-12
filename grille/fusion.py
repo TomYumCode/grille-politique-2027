@@ -83,6 +83,7 @@ def fusionner(emissions: list[dict]) -> list[dict]:
         membres = [tete] + [m for m in groupe if m is not tete]
         fusion = dict(tete)
         fusion["invites"] = list(dict.fromkeys(nom for m in membres for nom in m["invites"]))
+        fusion["cites"] = list(dict.fromkeys(nom for m in membres for nom in m.get("cites") or []))
         fusion["lien"] = list(dict.fromkeys(url for m in membres for url in m["lien"]))
         if any(m["statut"] == "en direct" for m in membres):
             fusion["statut"] = "en direct"

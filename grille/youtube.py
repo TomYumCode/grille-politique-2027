@@ -242,6 +242,8 @@ def _emission(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: 
         "chaine": chaine.nom,
         "categorie": decision.categorie,
         "invites": decision.invites,
+        "cites": decision.cites,
+        "resume": video["snippet"].get("description", ""),
         "lien": [f"https://www.youtube.com/watch?v={video['id']}"],
         "statut": etat_emission,
         "filtre": decision.filtre,
