@@ -199,18 +199,21 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
 def rattacher(emissions: list[dict]) -> list[dict]:
     """Passage média annoncé par un agenda (plateforme « web ») : s'il tombe pendant une émission
     de la même chaîne (télévision ou radio), l'invité rejoint cette émission et le rendez-vous
-    n'est pas affiché à part."""
+    n'est pas affiché à part. Entre une matinale et sa chronique d'invité (« RTL Matin » 7 h–9 h,
+    « L'invité RTL de 7h40 »), c'est la plus courte, donc la plus précise, qui le reçoit."""
     diffusions = [e for e in emissions if e["plateforme"] in ("tv", "radio")]
     ajouts: dict[str, list[str]] = {}
     absorbes = set()
     for rdv in (e for e in emissions if e["plateforme"] == "web"):
         debut = datetime.fromisoformat(rdv["debut"])
+        candidates = []
         for e in diffusions:
             d = datetime.fromisoformat(e["debut"])
             f = datetime.fromisoformat(e["fin"]) if e["fin"] else d + timedelta(minutes=30)
             if e["chaine"] == rdv["chaine"] and d - timedelta(minutes=10) <= debut < f:
-                ajouts.setdefault(e["id"], []).extend(rdv["invites"])
-                absorbes.add(rdv["id"])
-                break
+                candidates.append((f - d, e["id"]))
+        if candidates:
+            ajouts.setdefault(min(candidates)[1], []).extend(rdv["invites"])
+            absorbes.add(rdv["id"])
     return [dict(e, invites=list(dict.fromkeys(e["invites"] + ajouts[e["id"]]))) if e["id"] in ajouts else e
             for e in emissions if e["id"] not in absorbes]

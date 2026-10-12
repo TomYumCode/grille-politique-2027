@@ -144,6 +144,9 @@ liste_blanche:
     - {titre: "Face à face", chaine: "BFMTV"}
     # Radios privées (titres des grilles des sites).
     - {titre: "La Grande interview", chaine: "Europe 1"}
+    - {titre: "La semaine politique", chaine: "Europe 1"}
+    - {titre: "L'invité RTL", chaine: "RTL"}
+    - {titre: "Face à Fogiel", chaine: "RTL"}
     - {titre: "L'invité politique", chaine: "Sud Radio"}
     # LCP le lundi soir (titre du guide : « LCP-Lundi c'est politique »), aussi sur Twitch.
     - "Lundi c'est politique"
@@ -219,3 +222,4 @@ cas_douteux:
     - "Apolline Matin"
     - "Le Grand Matin"
     - "Parlons vrai chez Bourdin"
+    - "L'invité"

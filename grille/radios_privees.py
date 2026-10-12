@@ -112,6 +112,8 @@ def lire_rtl(contenu: str, adresse: str, jour: date) -> list[Programme]:
             continue
         bornes = _texte(horaires.group(1)).split("-")
         debut = horloge(_heure(bornes[0]))
+        if debut is None:
+            continue
         fin_h = _heure(bornes[1]) if len(bornes) > 1 else None
         fin = datetime.combine(debut.date(), fin_h, PARIS) if fin_h else None
         if fin and fin <= debut:
