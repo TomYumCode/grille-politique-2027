@@ -155,6 +155,8 @@ liste_blanche:
     - {titre: "L'invité RTL", chaine: "RTL"}
     - {titre: "Face à Fogiel", chaine: "RTL"}
     - {titre: "L'invité politique", chaine: "Sud Radio"}
+    # Interview de 8 h 30, diffusée aussi sur BFMTV (les deux se fusionnent à l'affichage).
+    - {titre: "Face à face", chaine: "RMC"}
     # LCP le lundi soir (titre du guide : « LCP-Lundi c'est politique »), aussi sur Twitch.
     - "Lundi c'est politique"
     - {titre: "LCP-Lundi c'est politique", chaine: "LCP / Public Sénat"}

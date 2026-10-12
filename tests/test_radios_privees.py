@@ -1,4 +1,4 @@
-"""Radios privées, à partir d'extraits réels des grilles de RTL, Europe 1 et Sud Radio."""
+"""Radios privées, à partir d'extraits réels des grilles de RTL, Europe 1, Sud Radio, RMC et Radio Classique."""
 
 from datetime import date, datetime
 
@@ -12,6 +12,8 @@ from tests.session_factice import REPONSES
 RTL = (REPONSES / "radio_rtl.html").read_text(encoding="utf-8")
 EUROPE1 = (REPONSES / "radio_europe1.html").read_text(encoding="utf-8")
 SUDRADIO = (REPONSES / "radio_sudradio.html").read_text(encoding="utf-8")
+RMC = (REPONSES / "radio_rmc.html").read_text(encoding="utf-8")
+RADIOCLASSIQUE = (REPONSES / "radio_radioclassique.html").read_text(encoding="utf-8")
 MAINTENANT = datetime(2026, 10, 12, 6, 30, tzinfo=PARIS)  # lundi
 
 
@@ -68,6 +70,32 @@ def test_sudradio():
     assert titres["Le journal de 7h"].description.startswith("Glucksmann remporte la primaire")
 
 
+def test_rmc_grille_de_la_semaine():
+    p = radios_privees.lire_rmc(RMC, "https://rmc.bfmtv.com/grille-radio/", date(2026, 10, 12))
+    face = [x for x in p if x.titre == "Face à Face"]
+    # Du lundi au vendredi ; une émission finit quand la suivante commence.
+    assert [x.debut.isoformat() for x in face][:2] == ["2026-10-12T08:29:00+02:00", "2026-10-13T08:29:00+02:00"]
+    assert face[0].fin.isoformat() == "2026-10-12T08:51:00+02:00"
+    assert face[0].lien == "https://www.bfmtv.com/replay-emissions/l-interview/"
+    # La carte de l'émission en cours (classe « current ») n'est pas oubliée.
+    assert any(x.titre == "Super Moscato Show" and x.debut.isoformat() == "2026-10-12T15:00:00+02:00" for x in p)
+    assert max(x.debut for x in p).date() == date(2026, 10, 18)
+    with pytest.raises(radios_privees.PageIllisible):
+        radios_privees.lire_rmc("<html>travaux</html>", "https://rmc.bfmtv.com/grille-radio/", date(2026, 10, 12))
+
+
+def test_radioclassique():
+    p = {x.titre: x for x in radios_privees.lire_radioclassique(
+        RADIOCLASSIQUE, "https://www.radioclassique.fr/grille-des-programmes/2026-10-13/", date(2026, 10, 13))}
+    invite = p["L’invité de la matinale"]
+    assert (invite.debut.isoformat(), invite.fin.isoformat()) == ("2026-10-13T08:15:00+02:00", "2026-10-13T08:30:00+02:00")
+    assert invite.description.startswith("Anne Goscinny")
+    assert p["La matinale de Radio Classique"].fin.isoformat() == "2026-10-13T09:00:00+02:00"
+    # Heure donnée en UTC dans la page : minuit à Paris.
+    assert p["Les disques de légendes"].debut.isoformat() == "2026-10-13T00:00:00+02:00"
+    assert p["Votre soirée Classique"].fin.isoformat() == "2026-10-14T00:00:00+02:00"
+
+
 def test_semaine_suivante_vide_n_est_pas_une_panne():
     assert radios_privees.lire_sudradio('<ul class="sud_planning_jour"></ul>', "https://www.sudradio.fr/programmes?week=1",
                                         date(2026, 10, 12)) == []
@@ -77,10 +105,14 @@ def test_semaine_suivante_vide_n_est_pas_une_panne():
 
 def test_collecte(conf, tmp_path):
     connexion = db.ouvrir(tmp_path / "g.sqlite")
+    # L'invité de la matinale de Radio Classique, ce jour-là, est une candidate.
+    radioclassique = RADIOCLASSIQUE.replace("Anne Goscinny, co-auteure", "Marine Tondelier, candidate des Écologistes")
     session = SessionHtml({"https://www.rtl.fr/grille": RTL, "https://www.europe1.fr": EUROPE1,
-                           "https://www.sudradio.fr/programmes": SUDRADIO})
+                           "https://www.sudradio.fr/programmes": SUDRADIO, "https://rmc.bfmtv.com": RMC,
+                           "https://www.radioclassique.fr/grille-des-programmes/2026-10-13/": radioclassique})
     rapport = radios_privees.collecter(conf, session, connexion, MAINTENANT)
-    assert rapport.radios_lues == 3 and not rapport.interrompu
+    assert rapport.radios_lues == 5 and not rapport.interrompu
+    assert "https://www.radioclassique.fr/grille-des-programmes/2026-10-12/" in session.appels
     # RTL : aujourd'hui, demain et un jour suivant à tour de rôle ; Sud Radio : deux semaines.
     assert session.appels[:3] == ["https://www.rtl.fr/grille/12-10-2026", "https://www.rtl.fr/grille/13-10-2026",
                                   "https://www.rtl.fr/grille/14-10-2026"]
@@ -90,6 +122,9 @@ def test_collecte(conf, tmp_path):
     assert ("RTL", "Face à Fogiel") in titres
     assert ("Europe 1", "La Grande interview Europe 1 - CNews") in titres
     assert ("Sud Radio", "L'invité politique Sud Radio") in titres
+    assert ("RMC", "Face à Face") in titres
+    invite = next(e for e in rapport.retenues if e["chaine"] == "Radio Classique")
+    assert (invite["titre"], invite["invites"]) == ("L’invité de la matinale", ["Marine Tondelier"])
     # Un journal qui cite un candidat dans son résumé n'est pas une émission politique.
     assert ("Sud Radio", "Le journal de 7h") not in titres
     assert all(e["plateforme"] == "radio" for e in rapport.retenues)
