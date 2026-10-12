@@ -173,7 +173,7 @@ n'ont pas de page équivalente repérée pour l'instant.
 ## Présents ou seulement cités
 
 Une carte distingue les personnes présentes (« Avec Gabriel Attal ») de celles dont il
-est seulement question (« Il est question de Raphaël Glucksmann », en italique), comme
+est seulement question (« À propos de Raphaël Glucksmann », en italique), comme
 dans un commentaire d'actualité sur Twitch : « Glucksmann : la surprise ? ». Une personne
 est présente si (`FiltrePolitique.presences` dans `grille/filtre.py`) :
 

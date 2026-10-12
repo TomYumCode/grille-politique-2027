@@ -166,7 +166,7 @@ function carte(e, maintenant) {
     el("p", { classe: "titre-emission", texte: e.titre }),
     e.invites.length ? el("p", { classe: "invites", texte: "Avec " + e.invites.join(", ") }) : null,
     // Personnes seulement citées (sujet d'un commentaire), sans être sur le plateau.
-    (e.cites || []).length ? el("p", { classe: "cites", texte: "Il est question de " + e.cites.join(", ") }) : null,
+    (e.cites || []).length ? el("p", { classe: "cites", texte: "À propos de " + e.cites.join(", ") }) : null,
     bas);
 }
 
