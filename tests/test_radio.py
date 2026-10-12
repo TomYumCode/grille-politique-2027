@@ -1,7 +1,8 @@
 """Collecteur radio, à partir de réponses enregistrées de l'API Radio France."""
 
+import re
 import shutil
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -12,7 +13,8 @@ from grille.acces import RADIOFRANCE_API
 from grille.tv import PARIS
 from tests.session_factice import Reponse, Session, charger
 
-MAINTENANT = datetime(2027, 3, 27, 10, 0, tzinfo=PARIS)
+# À 6 h, la collecte lit aujourd'hui, demain et, à tour de rôle, le surlendemain (29 mars).
+MAINTENANT = datetime(2027, 3, 27, 6, 0, tzinfo=PARIS)
 API = charger("radiofrance_api.json")
 CLE = "cle-secrete-123"
 CHAINES = """\
@@ -59,6 +61,24 @@ def routeur(show_refuse=False, culture_en_panne=False):
     return repondre
 
 
+def test_une_requete_par_jour_et_au_plus_24_heures(conf, connexion):
+    session = Session(routeur())
+    radio.collecter(conf, session, connexion, MAINTENANT, cle=CLE)
+    bornes = [tuple(int(x) for x in re.findall(r"(?:start|end): (\d+)", c[2]["query"])) for c in session.appels]
+    assert len(bornes) == 2 * 3  # 2 stations × (aujourd'hui, demain, un jour suivant)
+    assert all(fin - debut < 24 * 3600 for debut, fin in bornes)
+    jours = sorted({datetime.fromtimestamp(debut, PARIS).date() for debut, _ in bornes})
+    assert [j.day for j in jours] == [27, 28, 29]
+
+
+def test_jour_de_25_heures():
+    """Passage à l'heure d'hiver : deux requêtes pour couvrir le jour entier."""
+    creneaux = radio.fenetres(date(2026, 10, 25))
+    assert len(creneaux) == 2 and creneaux[0][0].hour == 0 and creneaux[-1][1].day == 26
+    assert all(fin - debut < timedelta(hours=24) for debut, fin in creneaux)
+    assert len(radio.fenetres(date(2026, 10, 26))) == 1
+
+
 def _par_titre(rapport):
     return {e["titre"]: e for e in rapport.retenues}
 
@@ -100,7 +120,7 @@ def test_nom_d_emission_refuse(conf, connexion):
     # Sans le nom d'émission, « Édouard Philippe » est retenu par les mots-clés.
     assert {e["titre"] for e in rapport.retenues} == {
         "Édouard Philippe", "Marine Tondelier, invitée de 8h20", "La présidentielle vue des régions"}
-    assert len(session.appels) == 3  # un essai refusé, puis une requête par station
+    assert len(session.appels) == 1 + 2 * 3  # un essai refusé, puis une requête par station et par jour
 
 
 def test_station_en_panne_cle_masquee(conf, connexion):

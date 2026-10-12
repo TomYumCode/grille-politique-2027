@@ -1,8 +1,9 @@
 """Collecteur radio : grille des programmes de l'API ouverte de Radio France.
 
-Une requête GraphQL « grid » par station (France Inter, franceinfo, France Culture…)
-couvre aujourd'hui et les 7 jours suivants : 24 collectes × 3 stations = 72 requêtes
-par jour. La clé passe dans l'adresse (`?x-token=…`) : ne jamais afficher l'adresse
+Requête GraphQL « grid » par station (France Inter, franceinfo, France Culture…) et par
+jour : l'API refuse plus de 24 heures par requête. Chaque collecte lit aujourd'hui, demain
+et un des jours suivants à tour de rôle (chaque jour relu au moins toutes les 6 heures) :
+3 stations × 3 jours × 24 collectes = 216 requêtes par jour (limite : 1 000). La clé passe dans l'adresse (`?x-token=…`) : ne jamais afficher l'adresse
 complète, les journaux de GitHub sont publics.
 
 Forme de la requête reprise d'une intégration publique (voir docs/VERIFICATIONS.md) ;
@@ -15,7 +16,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import requests
 
@@ -23,9 +24,13 @@ from grille import db
 from grille.acces import RADIOFRANCE_API
 from grille.config import Configuration
 from grille.filtre import FiltrePolitique
+from grille.radios_privees import jours_a_lire
 from grille.tv import JOURS_AFFICHES, PARIS, statut
 
 DELAI = 30
+# L'API répond « You can't retrieve more than 24hours » au-delà.
+FENETRE_MAX = timedelta(hours=24) - timedelta(seconds=1)
+RESTE_MIN = timedelta(minutes=1)  # la dernière seconde du jour ne vaut pas une requête
 
 _ETAPES = """
     ... on DiffusionStep {{ id start end diffusion {{ id title standFirst url{show} }} }}
@@ -74,6 +79,19 @@ def lire_grille(session: requests.Session, cle: str, texte: str) -> list[dict]:
     return grille
 
 
+def fenetres(jour: date) -> list[tuple[datetime, datetime]]:
+    """Créneaux de requête couvrant un jour de Paris (deux le jour du passage à l'heure d'hiver, qui dure 25 h).
+    Calcul en heure universelle : entre deux heures de Paris, Python compte l'heure affichée, pas la durée."""
+    debut = datetime.combine(jour, datetime.min.time(), PARIS).astimezone(timezone.utc)
+    fin_du_jour = datetime.combine(jour + timedelta(days=1), datetime.min.time(), PARIS).astimezone(timezone.utc)
+    resultat = []
+    while fin_du_jour - debut >= RESTE_MIN:
+        fin = min(debut + FENETRE_MAX, fin_du_jour)
+        resultat.append((debut.astimezone(PARIS), fin.astimezone(PARIS)))
+        debut = fin
+    return resultat
+
+
 def _date(horodatage) -> datetime | None:
     return datetime.fromtimestamp(int(horodatage), PARIS) if horodatage else None
 
@@ -93,18 +111,24 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     filtre = FiltrePolitique(config)
     couvertes: set[str] = set()
     avec_emission = True
+    jours = set(jours_a_lire(maintenant))
 
     for chaine in stations:
         station = chaine.cle["station"]
+        grille = []
         try:
-            try:
-                grille = lire_grille(session, cle, requete(station, maintenant, fin_horizon, avec_emission))
-            except ErreurRadioFrance as e:
-                if not avec_emission or "show" not in str(e):
-                    raise
-                avec_emission = False
-                rapport.anomalies.append("Radio France : nom des émissions (« show ») refusé, titres seuls")
-                grille = lire_grille(session, cle, requete(station, maintenant, fin_horizon, False))
+            for jour in sorted(jours):
+                for debut_f, fin_f in fenetres(jour):
+                    try:
+                        etapes = lire_grille(session, cle, requete(station, debut_f, fin_f, avec_emission))
+                    except ErreurRadioFrance as e:
+                        if not avec_emission or "show" not in str(e):
+                            raise
+                        avec_emission = False
+                        rapport.anomalies.append("Radio France : nom des émissions (« show ») refusé, titres seuls")
+                        etapes = lire_grille(session, cle, requete(station, debut_f, fin_f, False))
+                    # Une étape à cheval sur deux créneaux n'est gardée qu'une fois : celui où elle commence.
+                    grille += [e for e in etapes if (d := _date(e.get("start"))) and debut_f <= d < fin_f]
         except (requests.RequestException, ValueError, ErreurRadioFrance) as e:
             # Une erreur réseau cite l'adresse, donc la clé : elle est masquée (base et journaux publics).
             rapport.anomalies.append(f"grille illisible : {chaine.nom} ({str(e).replace(cle, '***')})")
@@ -164,5 +188,6 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
         rapport.interrompu = "API Radio France inaccessible : " + "; ".join(rapport.anomalies)
         rapport.anomalies = []
     a_ecrire = [{k: v for k, v in e.items() if k != "motif"} for e in rapport.retenues]
-    rapport.annulees = db.enregistrer_collecte(connexion, a_ecrire, "radio", couvertes, maintenant)
+    # Seuls les jours relus peuvent voir des émissions passer en « annulé ».
+    rapport.annulees = db.enregistrer_collecte(connexion, a_ecrire, "radio", couvertes, maintenant, jours)
     return rapport

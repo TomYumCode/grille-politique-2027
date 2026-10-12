@@ -125,11 +125,18 @@ intégration publique qui l'utilise
 - `brands { id title }` liste les stations : FRANCEINTER, FRANCEINFO, FRANCECULTURE,
   FRANCEMUSIQUE, MOUV, FIP.
 
-Restent à vérifier avec la vraie clé : le champ `diffusion { show { title } }` (nom de
-l'émission ; le collecteur s'en passe et le signale s'il est refusé), la durée maximale
-couverte par une requête `grid` (le collecteur demande 8 jours), le quota, les adresses
-« direct » de `config/chaines.yaml` et la réponse enregistrée
-`tests/reponses/radiofrance_api.json`, reconstituée.
+Clé reçue le 12 octobre 2026 (courriel de Radio France) : limite de 1 000 requêtes par
+jour, clé en en-tête `X-Token` ou paramètre `x-token`. Avec la vraie clé :
+`verifier-acces` accepte la clé et reconnaît les 3 stations ; une requête `grid` de 8 jours
+est refusée (« You can't retrieve more than 24hours »). Le collecteur demande donc un jour
+par requête (moins d'une seconde sous 24 h ; deux requêtes le jour de 25 h du passage à
+l'heure d'hiver) : aujourd'hui, demain et un des jours suivants à tour de rôle, soit
+3 stations × 3 jours × 24 collectes = 216 requêtes par jour.
+
+Restent à vérifier : le champ `diffusion { show { title } }` (nom de l'émission ; le
+collecteur s'en passe et le signale s'il est refusé), les adresses « direct » de
+`config/chaines.yaml` et la réponse enregistrée `tests/reponses/radiofrance_api.json`,
+reconstituée.
 
 Radios privées (RTL, Europe 1, RMC, Sud Radio, Radio Nova) : aucune API publique de
 grille trouvée ; sites non joignables depuis l'environnement de développement. Elles

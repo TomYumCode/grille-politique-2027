@@ -280,7 +280,7 @@ def lire_radioclassique(contenu: str, adresse: str, jour: date) -> list[Programm
     return resultat
 
 
-def _jours_a_lire(maintenant: datetime) -> list[date]:
+def jours_a_lire(maintenant: datetime) -> list[date]:
     """Une page par jour : aujourd'hui et demain à chaque collecte, plus un des jours suivants
     à tour de rôle (chaque jour est relu au moins toutes les 6 heures ; pages lourdes)."""
     jour = maintenant.date()
@@ -289,11 +289,11 @@ def _jours_a_lire(maintenant: datetime) -> list[date]:
 
 
 def pages_rtl(adresse: str, maintenant: datetime) -> list[tuple[str, date]]:
-    return [(f"{adresse.rstrip('/')}/{j:%d-%m-%Y}", j) for j in _jours_a_lire(maintenant)]
+    return [(f"{adresse.rstrip('/')}/{j:%d-%m-%Y}", j) for j in jours_a_lire(maintenant)]
 
 
 def pages_radioclassique(adresse: str, maintenant: datetime) -> list[tuple[str, date]]:
-    return [(f"{adresse.rstrip('/')}/{j:%Y-%m-%d}/", j) for j in _jours_a_lire(maintenant)]
+    return [(f"{adresse.rstrip('/')}/{j:%Y-%m-%d}/", j) for j in jours_a_lire(maintenant)]
 
 
 def pages_semaine(adresse: str, maintenant: datetime) -> list[tuple[str, date]]:
