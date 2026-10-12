@@ -130,6 +130,7 @@ def enregistrer_collecte(
     plateforme: str,
     chaines_couvertes: set[str],
     maintenant: datetime,
+    jours: set | None = None,
 ) -> int:
     """Écrit les émissions d'une collecte et renvoie le nombre d'émissions passées en « annulé ».
 
@@ -159,6 +160,8 @@ def enregistrer_collecte(
             "SELECT id, debut, chaine FROM emissions WHERE plateforme = ? AND statut != 'annulé'", (plateforme,)
         )
         if id_ not in ids_vus and chaine in chaines_couvertes and datetime.fromisoformat(debut) > maintenant
+        # Source lue seulement pour certains jours (grille page par page) : on n'annule que ceux-là.
+        and (jours is None or datetime.fromisoformat(debut).date() in jours)
     ]
     connexion.executemany("UPDATE emissions SET statut = 'annulé', vu_le = ? WHERE id = ?", [(vu_le, i) for i in annulees])
     connexion.commit()

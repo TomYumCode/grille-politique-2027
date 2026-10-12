@@ -112,7 +112,7 @@ def verifier_twitch(config: Configuration, session: requests.Session) -> Resulta
 
 
 def verifier_radiofrance(config: Configuration, session: requests.Session) -> Resultat:
-    stations = [c.cle["station"] for c in config.chaines if c.plateforme == "radio"]
+    stations = [c.cle["station"] for c in config.chaines if c.plateforme == "radio" and "station" in c.cle]
     if not stations:
         return Resultat("Radio France", "non configuré", "aucune station radio dans chaines.yaml")
     cle = os.environ.get("RADIOFRANCE_API_KEY")

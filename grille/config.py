@@ -94,7 +94,10 @@ def analyser_adresse(plateforme: str, adresse: str) -> dict | None:
     if plateforme == "tv":
         return {"xmltv_id": adresse} if _XMLTV_ID.match(adresse) else None
     if plateforme == "radio":
-        return {"station": adresse} if _STATION.match(adresse) else None
+        # Code de station Radio France (API), ou adresse de la grille d'une radio privée.
+        if _STATION.match(adresse):
+            return {"station": adresse}
+        return {"url": adresse} if _WEB.match(adresse) else None
     if plateforme == "web":
         return {"url": adresse} if _WEB.match(adresse) else None
     return None

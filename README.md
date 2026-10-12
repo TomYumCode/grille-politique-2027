@@ -18,7 +18,7 @@ python3 -m grille collecter-tv    # télécharge le guide TV, garde le politique
 python3 -m grille collecter-tv --motifs   # idem, avec la règle qui a retenu chaque émission
 python3 -m grille collecter-agendas  # agendas des partis (meetings, passages dans les médias)
 python3 -m grille collecter-annonces # invités annoncés dans les communiqués de France Télévisions
-python3 -m grille collecter-radio    # grille des stations Radio France (France Inter, franceinfo, France Culture)
+python3 -m grille collecter-radio    # radios : Radio France (API) puis RTL, Europe 1, Sud Radio (grilles des sites)
 python3 -m grille collecter-youtube  # directs YouTube programmés et en cours des chaînes suivies
 python3 -m grille collecter-twitch   # chaînes Twitch en direct et plannings publiés
 python3 -m grille collecter       # toutes les sources à la suite ; si l'une tombe, les autres continuent
@@ -134,6 +134,17 @@ image de profil Twitch, balise `<icon>` du guide TV ; une radio prend le logo de
 chaîne YouTube du même nom. Sans logo, la page affiche les
 initiales. Pour imposer un logo, ajouter `logo: "https://…"` à la ligne de la chaîne
 dans `config/chaines.yaml`.
+
+## Radios privées
+
+RTL, Europe 1 et Sud Radio : grilles lues sur leurs sites (lignes `plateforme: radio` avec
+une adresse web dans `config/chaines.yaml`), émissions et chroniques à l'heure près
+(« L'invité RTL de 7h40 », « La Grande interview Europe 1 - CNews » à 8 h 10, « L'invité
+politique Sud Radio » à 8 h 30). Europe 1 ne publie qu'une semaine type, sans invités ;
+l'invité arrive par un agenda de parti (« … sera l'invité d'Europe 1 à 8h10 ») ou par le
+direct YouTube de la radio. Les résumés des sites ne servent au filtre que pour les
+créneaux d'invités : un journal qui cite un candidat n'entre pas dans la grille.
+RMC, Radio Classique et Radio Nova n'ont pas encore de lecteur.
 
 ## Agendas des partis
 

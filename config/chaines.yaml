@@ -11,7 +11,8 @@
 #   youtube : https://www.youtube.com/@pseudo, /channel/UC…, /user/…, /c/…
 #   twitch  : https://www.twitch.tv/identifiant
 #   tv      : identifiant XMLTV du guide xmltvfr.fr (ex. France2.fr)
-#   radio   : code de station de l'API Radio France (ex. FRANCEINTER)
+#   radio   : code de station de l'API Radio France (ex. FRANCEINTER), ou adresse de la grille d'une radio
+#             privée lue par grille/radios_privees.py (rtl.fr, europe1.fr, sudradio.fr)
 #   web     : page d'agenda d'un parti ou d'un candidat (lue seulement si un lecteur existe pour ce site :
 #             rassemblementnational.fr, upr.fr ; voir grille/agendas.py)
 # Champ facultatif « direct » : page pour regarder en direct, ou liste de pages entre crochets.
@@ -44,8 +45,12 @@ chaines:
 - {plateforme: radio, nom: "franceinfo", adresse: "FRANCEINFO", categorie: "Radio publique, info en continu", direct: "https://www.francetvinfo.fr/en-direct/radio.html"}
 - {plateforme: radio, nom: "France Culture", adresse: "FRANCECULTURE", categorie: "Radio publique, débats d'idées", direct: "https://www.radiofrance.fr/franceculture"}
 
-# Radios privées (RTL, Europe 1, RMC, Sud Radio, Radio Nova) : pas d'API publique de
-# grille ; leurs directs filmés sont suivis par leurs chaînes YouTube ci-dessous.
+# Radios privées : grilles lues sur les sites (relevées le 12 octobre 2026). Même nom que
+# la chaîne YouTube de la radio (logo commun, passages médias des agendas rattachés).
+# RMC, Radio Classique et Radio Nova : pas encore de lecteur ; suivies par YouTube.
+- {plateforme: radio, nom: "RTL", adresse: "https://www.rtl.fr/grille", categorie: "Radio privée"}
+- {plateforme: radio, nom: "Europe 1", adresse: "https://www.europe1.fr/grille-des-programmes", categorie: "Radio privée"}
+- {plateforme: radio, nom: "Sud Radio", adresse: "https://www.sudradio.fr/programmes", categorie: "Radio privée"}
 
 # --- Agendas des partis et des candidats (meetings, passages dans les médias) ---
 # Relevés le 11 octobre 2026. Sans agenda lisible : LFI (actionpopulaire.fr) et Reconquête
