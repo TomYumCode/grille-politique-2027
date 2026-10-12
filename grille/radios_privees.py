@@ -1,4 +1,4 @@
-"""Radios privées : grilles publiées sur les sites (RTL, Europe 1, Sud Radio).
+"""Radios privées : grilles publiées sur les sites (RTL, Europe 1, Sud Radio, RMC, Radio Classique).
 
 Lignes « radio » de chaines.yaml dont l'adresse est une page web (les codes de station
 Radio France passent par l'API, grille/radio.py). Un lecteur par site, choisi d'après
@@ -224,13 +224,76 @@ def lire_sudradio(contenu: str, adresse: str, aujourdhui: date) -> list[Programm
     return resultat
 
 
-def pages_rtl(adresse: str, maintenant: datetime) -> list[tuple[str, date]]:
+def lire_rmc(contenu: str, adresse: str, aujourdhui: date) -> list[Programme]:
+    """rmc.bfmtv.com/grille-radio : grille de la semaine, jours titrés « lundi »… (« day_title »)
+    puis un bloc « grille_programmes » par jour, dans le même ordre. Heure de début seule
+    (« 6:54 ») : une émission finit quand la suivante commence. Ni résumé ni invité."""
+    noms = [_texte(n).lower() for n in re.findall(r'(?s)class="day_title"[^>]*>(.*?)</h2>', contenu)]
+    blocs = re.split(r'<div class="grille_programmes">', contenu)[1:]
+    if not blocs or len(noms) != len(blocs) or any(n not in JOURS_SEMAINE for n in noms):
+        raise PageIllisible("jours de la grille introuvables")
+    resultat = []
+    for nom, bloc in zip(noms, blocs):
+        jour = aujourdhui + timedelta(days=(JOURS_SEMAINE.index(nom) - aujourdhui.weekday()) % 7)
+        horloge, du_jour = _Horloge(jour), []
+        for art in re.findall(r'(?s)<article class="grille_hours_content[^"]*">.*?</article>', bloc):
+            debut = horloge(_heure(_texte((re.search(r'(?s)grille_date">(.*?)</div>', art) or [None, ""])[1])))
+            titre = re.search(r'(?s)grille_title">(.*?)</h3>', art)
+            if debut is None or not titre:
+                continue
+            lien = re.search(r'<a href="([^"]+)"', art)
+            du_jour.append(Programme(_texte(titre.group(1)), debut, None, "", lien.group(1) if lien else adresse))
+        # La dernière émission du jour finit à minuit.
+        resultat += _chroniques_avec_fin(du_jour, datetime.combine(jour + timedelta(days=1), time(0, 0), PARIS))
+    return resultat
+
+
+def lire_radioclassique(contenu: str, adresse: str, jour: date) -> list[Programme]:
+    """radioclassique.fr/grille-des-programmes/AAAA-MM-JJ : une ligne par émission (« timeline__block__row »,
+    heure exacte dans datetime=), ses chroniques dedans (« sub_item ») ; animateur après « par »,
+    sujet ou invité du jour dans « episode_title » (« L'invité de la matinale » : Anne Goscinny…)."""
+    lignes = re.split(r'<div class="timeline__block__row ', contenu)[1:]
+    if not any("timeline__block_date" in l for l in lignes):
+        raise PageIllisible("aucune ligne de grille")
+
+    def lire(fragment: str) -> Programme | None:
+        quand = re.search(r'<time[^>]*datetime="([^"]+)"', fragment)
+        titre = re.search(r'(?s)<p>\s*<a href="([^"]+)"[^>]*>(.*?)</a>', fragment)
+        if not (quand and titre):
+            return None
+        sujet = re.search(r'(?s)episode_title">(.*?)</span>', fragment)
+        return Programme(_texte(titre.group(2)), datetime.fromisoformat(quand.group(1)).astimezone(PARIS), None,
+                         _texte(sujet.group(1) if sujet else ""), titre.group(1))
+
+    emissions = []
+    for ligne in lignes:
+        morceaux = re.split(r'<div class="timeline__block__content__sub_item">', ligne)
+        emission = lire(morceaux[0])
+        if emission:
+            emissions.append((emission, [c for c in map(lire, morceaux[1:]) if c]))
+    resultat = []
+    minuit = datetime.combine(jour + timedelta(days=1), time(0, 0), PARIS)
+    for i, (emission, chroniques) in enumerate(emissions):
+        emission.fin = emissions[i + 1][0].debut if i + 1 < len(emissions) else minuit
+        resultat.append(emission)
+        resultat += _chroniques_avec_fin(chroniques, emission.fin)
+    return resultat
+
+
+def _jours_a_lire(maintenant: datetime) -> list[date]:
     """Une page par jour : aujourd'hui et demain à chaque collecte, plus un des jours suivants
     à tour de rôle (chaque jour est relu au moins toutes les 6 heures ; pages lourdes)."""
-    racine = adresse.rstrip("/")
     jour = maintenant.date()
-    jours = [jour, jour + timedelta(days=1), jour + timedelta(days=2 + maintenant.hour % (JOURS_AFFICHES - 2))]
-    return [(f"{racine}/{j:%d-%m-%Y}", j) for j in dict.fromkeys(jours)]
+    return list(dict.fromkeys([jour, jour + timedelta(days=1),
+                               jour + timedelta(days=2 + maintenant.hour % (JOURS_AFFICHES - 2))]))
+
+
+def pages_rtl(adresse: str, maintenant: datetime) -> list[tuple[str, date]]:
+    return [(f"{adresse.rstrip('/')}/{j:%d-%m-%Y}", j) for j in _jours_a_lire(maintenant)]
+
+
+def pages_radioclassique(adresse: str, maintenant: datetime) -> list[tuple[str, date]]:
+    return [(f"{adresse.rstrip('/')}/{j:%Y-%m-%d}/", j) for j in _jours_a_lire(maintenant)]
 
 
 def pages_semaine(adresse: str, maintenant: datetime) -> list[tuple[str, date]]:
@@ -253,6 +316,8 @@ LECTEURS = {
     "rtl.fr": Lecteur(lire_rtl, pages_rtl, lambda j: [j]),
     "europe1.fr": Lecteur(lire_europe1, pages_semaine, lambda j: [j + timedelta(days=i) for i in range(7)]),
     "sudradio.fr": Lecteur(lire_sudradio, pages_sudradio, lambda j: []),  # dates lues dans la page
+    "radioclassique.fr": Lecteur(lire_radioclassique, pages_radioclassique, lambda j: [j]),
+    "rmc.bfmtv.com": Lecteur(lire_rmc, pages_semaine, lambda j: [j + timedelta(days=i) for i in range(7)]),
 }
 
 

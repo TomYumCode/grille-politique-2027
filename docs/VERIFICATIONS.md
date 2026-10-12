@@ -179,10 +179,12 @@ Sites sondés depuis GitHub Actions :
 | rtl.fr/grille/JJ-MM-AAAA | une page par jour, environ deux semaines à l'avance (≈ 1,4 Mo) ; cartes `div.programme-card` (`programme-card__time` « 07h00 - 09h00 », `programme-card__title`, `programme-card__description`) et chroniques `li.programme-card__chronique` (`programme-card__chronique-time` « 07h40 », `-title`, `-description`) ; après minuit, la page continue sur le lendemain |
 | europe1.fr/grille-des-programmes | semaine type sans dates ni invités : panneaux `section#panel-lundi`… ; `horaires-item-programme` / `title-item-programme`, `horaires-item-chronique` / `title-item-chronique` |
 | sudradio.fr/programmes (`?week=1` : semaine suivante) | un panneau par jour titré `h2.sud_planning_titre_jour` « lundi 12 octobre » ; `li.sud_planning_ligne` (`program-start`, `program-end`, `sud_planning_program_name`, `sud_planning_extrait` « Au programme : … ») et chroniques `article.sud_podcast_chronique` (`sud_podcast_chronique_hour`, lien, description) ; la semaine suivante peut être vide |
-| rmc.bfmtv.com/grille-radio/, radioclassique.fr/grille-des-programmes/ | pages présentes, structure non relevée |
+| rmc.bfmtv.com/grille-radio/ | semaine en cours, sans invités ni résumés : jours titrés `h2.day_title` (« lundi »…), puis un bloc `div.grille_programmes` par jour dans le même ordre ; `article.grille_hours_content` (classe `current` en plus pour l'émission en cours), `grille_date` « 6:54 » (début seul), `h3.grille_title`, lien vers les replays. Relevé le 12 octobre |
+| radioclassique.fr/grille-des-programmes/AAAA-MM-JJ/ | une page par jour, semaine précédente et suivante ; lignes `div.timeline__block__row` (`<time datetime="…+00:00">` en UTC, titre en lien, animateur « par … », `span.episode_title` : sujet ou invité du jour) et chroniques `timeline__block__content__sub_item` (« L'invité de la matinale » à 8 h 15). Relevé le 12 octobre |
 | nova.fr | pas de grille ; podcasts (podcasts.nova.fr/radio-nova-2027-raisons-de-voter) |
 
 Essai réel du collecteur : 3 radios, 5 pages, 604 programmes à venir, 23 retenus (L'invité
 RTL de 7h40, Face à Fogiel, La Grande interview Europe 1 - CNews, L'invité politique Sud
 Radio, Le grand débat des Vraies Voix…), aucun journal retenu. Extraits réels dans
-`tests/reponses/radio_rtl.html`, `radio_europe1.html`, `radio_sudradio.html`.
+`tests/reponses/radio_rtl.html`, `radio_europe1.html`, `radio_sudradio.html`, `radio_rmc.html`,
+`radio_radioclassique.html`.
