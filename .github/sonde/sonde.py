@@ -21,16 +21,8 @@ def extrait(nom, texte):
 
 h = requests.get("https://www.rtl.fr/grille/13-10-2026", headers=EN_TETES, timeout=30).text
 cartes = re.split(r'(?=<div class="programme-card[ "])', h)
-garde = [c for c in cartes[1:] if re.search(r"programme-card__title[^>]*>(RTL Matin|RTL Soir|Un jour, une vie)<", c)]
+garde = [c for c in cartes[1:] if re.search(r"programme-card__title[^>]*>(RTL Matin|Un jour, une vie)<", c)]
 extrait("rtl", leger("".join(garde))[:60000])
-h = requests.get("https://www.europe1.fr/grille-des-programmes", headers=EN_TETES, timeout=30).text
-i, j = h.find('id="panel-lundi"'), h.find('id="panel-mardi"')
-k = h.find("09h00 - 11h00", j)
-extrait("europe1", leger("<section\n" + h[i:k])[:60000])
-h = requests.get("https://www.sudradio.fr/programmes", headers=EN_TETES, timeout=30).text
-i = h.find('<h2 class="sud_planning_titre_jour">')
-lignes = re.split(r'(?=<li class="sud_planning_ligne)', h[i:])
-extrait("sudradio", leger(lignes[0][:400] + "".join(lignes[2:4]))[:60000])
 sys.stdout.flush()
 # En dernier : le journal ne garde que la fin de la sortie.
 subprocess.run([sys.executable, "-m", "grille", "--base", "/tmp/sonde.sqlite", "collecter-radio", "--motifs"])
