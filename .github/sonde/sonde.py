@@ -1,5 +1,4 @@
-"""Sonde temporaire : structure des grilles RMC et Radio Classique."""
-import collections
+"""Sonde temporaire : extraits réels des grilles RMC et Radio Classique pour les tests."""
 import re
 
 import requests
@@ -9,30 +8,22 @@ EN_TETES = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWeb
 
 
 def leger(h):
-    return re.sub(r"(?is)<(svg|picture|script|style|noscript)[^>]*>.*?</\1>|<(img|source|link|meta)[^>]*>", "", h)
+    h = re.sub(r"(?is)<(svg|picture|script|style|noscript)[^>]*>.*?</\1>|<(img|source|link|meta)[^>]*>|<!--.*?-->", "", h)
+    return re.sub(r"\s*\n\s*", "\n", h)
 
 
-for adresse in ("https://rmc.bfmtv.com/grille-radio/", "https://www.radioclassique.fr/grille-des-programmes/",
-                "https://www.radioclassique.fr/grille-des-programmes/mardi/"):
-    print(f"===== {adresse}")
-    try:
-        r = requests.get(adresse, headers=EN_TETES, timeout=30)
-    except requests.RequestException as e:
-        print("ERREUR", e)
-        continue
-    h = r.text
-    print("statut", r.status_code, "url finale", r.url, "taille", len(h))
-    print("json-ld", len(re.findall(r"application/ld\+json", h)), "__NEXT_DATA__", "__NEXT_DATA__" in h,
-          "nuxt", "__NUXT" in h)
-    classes = collections.Counter(c for attr in re.findall(r'class="([^"]+)"', h) for c in attr.split())
-    print("classes", [c for c, n in classes.most_common(80)])
-    liens = sorted(set(re.findall(r'href="([^"]*(?:grille|programme)[^"]*)"', h)))[:30]
-    print("liens grille", liens)
-    corps = leger(h)
-    heures = [m.start() for m in re.finditer(r"\b\d{1,2}[h:]\d{2}\b", corps)]
-    print("heures trouvées", len(heures))
-    if heures:
-        debut = max(0, heures[min(5, len(heures) - 1)] - 1500)
-        print("<<<EXTRAIT>>>")
-        print(re.sub(r"\n\s*\n+", "\n", corps[debut:debut + 7000]))
-        print("<<<FIN>>>")
+def extrait(nom, texte):
+    print(f"<<<EXTRAIT {nom}>>>")
+    print(texte)
+    print(f"<<<FIN {nom}>>>")
+
+
+h = requests.get("https://rmc.bfmtv.com/grille-radio/", headers=EN_TETES, timeout=30).text
+debut = h.find("grille_days")
+fin = h.rfind("grille_hours_content")
+print("RMC jours", re.findall(r'(?s)class="day_title[^"]*"[^>]*>(.*?)<', h)[:20])
+extrait("rmc", leger(h[max(0, h.rfind("<", 0, debut)):h.find("</article>", fin) + 10]))
+h = requests.get("https://www.radioclassique.fr/grille-des-programmes/2026-10-13/", headers=EN_TETES, timeout=30).text
+debut = h.find("timeline__block__row--headline")
+fin = h.rfind("timeline__block__row")
+extrait("radioclassique", leger(h[max(0, h.rfind("<div", 0, debut)):h.find("<!-- .timeline__block__row -->", fin) + 40]))
