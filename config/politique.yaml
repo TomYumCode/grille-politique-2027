@@ -24,22 +24,23 @@ candidats:
   - {nom: "François Asselineau", alias: ["Asselineau"], parti: "UPR", statut: "pressenti"}
   - {nom: "Jean Lassalle", alias: ["Lassalle"], parti: "", statut: "pressenti"}
   - {nom: "Nicolas Dupont-Aignan", alias: ["Dupont-Aignan"], parti: "Debout la France", statut: "à vérifier"}
-  # Primaire de la gauche (PS, Place publique, GRS) : 9 et 10 octobre 2026, second tour
-  # éventuel les 16 et 17 octobre. Mettre à jour les statuts après le résultat.
+  - {nom: "Raphaël Glucksmann", alias: ["Glucksmann"], parti: "Place publique", statut: "désigné (primaire de la gauche du 11 octobre 2026, 66 %)"}
   # Autres noms cités dans l'annexe ; statut à vérifier quand il est indiqué.
-  - {nom: "Marine Tondelier", alias: ["Tondelier"], parti: "Les Écologistes", statut: "déclarée, hors primaire PS"}
+  - {nom: "Marine Tondelier", alias: ["Tondelier"], parti: "Les Écologistes", statut: "déclarée"}
   - {nom: "Fabien Roussel", alias: ["Roussel"], parti: "PCF", statut: "déclaré (validé par le PCF le 6 septembre)"}
+  - {nom: "Karim Bouamrane", alias: ["Bouamrane"], parti: "Parti socialiste", statut: "déclaré (juin 2026), hors primaire"}
   - {nom: "Xavier Bertrand", alias: [], parti: "", statut: "à vérifier"}
-  - {nom: "Olivier Faure", alias: [], parti: "Parti socialiste", statut: "primaire de la gauche"}
-  - {nom: "Jérôme Guedj", alias: ["Guedj"], parti: "", statut: "primaire de la gauche"}
-  - {nom: "Ségolène Royal", alias: [], parti: "", statut: "primaire de la gauche"}
-  - {nom: "Raphaël Glucksmann", alias: ["Glucksmann"], parti: "Place publique", statut: "primaire de la gauche"}
-  - {nom: "Emmanuel Maurel", alias: ["Maurel"], parti: "Gauche républicaine et socialiste", statut: "primaire de la gauche"}
   - {nom: "Clémentine Autain", alias: ["Autain"], parti: "", statut: "primaire unitaire de gauche, à vérifier"}
   - {nom: "Bruno Le Maire", alias: [], parti: "", statut: "à vérifier"}
   - {nom: "Delphine Batho", alias: ["Batho"], parti: "", statut: "à vérifier"}
   - {nom: "Anasse Kazib", alias: ["Kazib"], parti: "Révolution Permanente", statut: "à vérifier"}
   - {nom: "Dominique de Villepin", alias: ["Villepin"], parti: "La France Humaniste", statut: "à vérifier"}
+  # Petites candidatures relevées le 12 octobre 2026 (lejdd.fr, touteleurope.eu, france24.com).
+  # Noms complets seulement : « Labib », « Egger », « Lalanne » seuls sont trop courants.
+  - {nom: "Selma Labib", alias: [], parti: "NPA-Révolutionnaires", statut: "désignée (juin 2026)"}
+  - {nom: "Clara Egger", alias: [], parti: "Solution démocratique", statut: "déclarée"}
+  - {nom: "Francis Lalanne", alias: [], parti: "France libre", statut: "déclaré (août 2026)"}
+  - {nom: "Lydie Massard", alias: [], parti: "Union démocratique bretonne", statut: "à vérifier"}
 
 # Personnalités non candidates mais à repérer comme invités.
 personnalites:
@@ -86,6 +87,11 @@ personnalites:
   - {nom: "Stanislas Rigault", alias: []}
   # Nathalie Arthaud : à confirmer.
   - {nom: "Jean-Pierre Mercier", alias: []}
+  # Battus à la primaire de la gauche du 11 octobre 2026 (gagnée par Raphaël Glucksmann).
+  - {nom: "Olivier Faure", alias: []}
+  - {nom: "Ségolène Royal", alias: []}
+  - {nom: "Jérôme Guedj", alias: ["Guedj"]}
+  - {nom: "Emmanuel Maurel", alias: ["Maurel"]}
 
 # « ambigu: true » : nom trop courant pour servir seul de mot-clé
 # (« Renaissance » attrape les documentaires sur la Renaissance italienne).

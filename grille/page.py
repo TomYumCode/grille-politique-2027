@@ -8,12 +8,14 @@ serveur d'application. Elle est régénérée après chaque collecte.
 from __future__ import annotations
 
 import json
+from collections import Counter
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from grille import affichage, db
 from grille.config import Configuration
+from grille.filtre import normaliser
 from grille.tv import JOURS_AFFICHES, PARIS
 
 MODELE = Path(__file__).resolve().parent / "modele_page"
@@ -27,7 +29,7 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
     emissions = [{k: e[k] for k in CHAMPS + ("sources",) if k in e}
                  for e in affichage.emissions(connexion, minuit, minuit + timedelta(days=JOURS_AFFICHES))]
-    presents = {nom for e in emissions for nom in e["invites"]}
+    presents = Counter(nom for e in emissions for nom in e["invites"])
     chaines = {s["chaine"] for e in emissions for s in e.get("sources") or [e]}
     # Logo imposé dans chaines.yaml d'abord, sinon celui fourni par la source.
     logos = {nom: url for nom, url in db.logos(connexion).items() if nom in chaines}
@@ -35,8 +37,9 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     return {
         "genere_le": maintenant.isoformat(timespec="seconds"),
         "jours": [(maintenant.date() + timedelta(days=i)).isoformat() for i in range(JOURS_AFFICHES)],
-        # Le filtre « candidat » ne propose que ceux qui apparaissent dans la grille.
-        "candidats": sorted((c["nom"] for c in config.candidats if c["nom"] in presents), key=str.casefold),
+        # Le filtre « candidat » propose tous les candidats suivis, avec leur nombre d'émissions.
+        "candidats": [{"nom": nom, "emissions": presents[nom]}
+                      for nom in sorted((c["nom"] for c in config.candidats), key=normaliser)],
         "logos": logos,
         "emissions": emissions,
     }

@@ -288,7 +288,17 @@ function preparerFiltres() {
     }
   }
   const choix = document.getElementById("filtre-candidat");
-  for (const nom of DONNEES.candidats) choix.append(el("option", { value: nom, texte: nom }));
+  // D'abord les candidats présents dans la grille (avec leur nombre d'émissions), puis les autres.
+  const presents = DONNEES.candidats.filter((c) => c.emissions > 0);
+  const absents = DONNEES.candidats.filter((c) => c.emissions === 0);
+  if (presents.length) {
+    choix.append(el("optgroup", { label: "Dans la grille" },
+      ...presents.map((c) => el("option", { value: c.nom, texte: `${c.nom} (${c.emissions})` }))));
+  }
+  if (absents.length) {
+    choix.append(el("optgroup", { label: "Aucune émission annoncée" },
+      ...absents.map((c) => el("option", { value: c.nom, texte: c.nom }))));
+  }
   choix.addEventListener("change", () => { etat.candidat = choix.value; ecrireStockage(); afficher(); });
   document.getElementById("tout-afficher").addEventListener("click", () => {
     CATEGORIES.forEach((c) => etat.categories.add(c));

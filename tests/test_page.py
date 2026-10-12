@@ -45,7 +45,10 @@ def test_page_generee_avec_les_emissions_du_jour_et_de_la_semaine(connexion, tmp
     donnees = _donnees_de(index)
     assert [e["id"] for e in donnees["emissions"]] == ["tv:matin", "tv:soir"]
     assert donnees["jours"][0] == "2027-03-15" and len(donnees["jours"]) == 8
-    assert donnees["candidats"] == ["Raphaël Glucksmann"]
+    # Tous les candidats suivis sont proposés, même sans émission (Marine Tondelier).
+    candidats = {c["nom"]: c["emissions"] for c in donnees["candidats"]}
+    assert candidats["Raphaël Glucksmann"] == 1 and candidats["Marine Tondelier"] == 0
+    assert len(candidats) == len(config.charger().candidats)
     assert donnees["emissions"][1]["titre"] == "Débat </script> piégé"
     for fichier in ("app.js", "style.css", "sw.js", "manifest.webmanifest", "icone-180.png", "icone-512.png", "robots.txt"):
         assert (tmp_path / "site" / fichier).exists()
