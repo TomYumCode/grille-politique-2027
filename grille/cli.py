@@ -12,7 +12,7 @@ from pathlib import Path
 
 import requests
 
-from grille import acces, affichage, agendas, annonces, config, courriel, db, page, radio, tv, twitch, youtube
+from grille import acces, affichage, agendas, annonces, config, courriel, db, page, radio, radios_privees, tv, twitch, youtube
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre",
@@ -131,29 +131,47 @@ def _etape_tv(conf, connexion, maintenant, args) -> bool:
 
 
 def _etape_radio(conf, connexion, maintenant, args) -> bool:
-    print("Radio France :")
-    rapport = radio.collecter(conf, requests.Session(), connexion, maintenant)
-    if rapport.interrompu == radio.SANS_CLE:
-        # Clé demandée mais pas encore reçue : une ligne de rappel dans l'email, pas une panne.
-        print(f"  en attente : {rapport.interrompu}")
-        db.noter_collecte(connexion, "radio", maintenant, True, 0, ["clé Radio France pas encore en place"])
-        return True
-    db.noter_collecte(connexion, "radio", maintenant, not rapport.interrompu, len(rapport.retenues),
-                      rapport.anomalies, rapport.interrompu)
-    if rapport.interrompu:
-        print(f"  ERREUR {rapport.interrompu}")
-        return False
-    print(
-        f"  {rapport.stations_lues} stations lues, {rapport.programmes} programmes à venir "
-        f"(dont {rapport.masques} de nuit ignorés) ; "
-        f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé » ; {rapport.douteux} nouveaux cas douteux"
-    )
-    for anomalie in rapport.anomalies:
-        print(f"  ATTENTION {anomalie}")
+    """Radio France (API, clé nécessaire) puis radios privées (grilles des sites), indépendamment."""
+    anomalies, retenues, erreurs = [], [], []
+    if any(c.plateforme == "radio" and "station" in c.cle for c in conf.chaines):
+        print("Radio France :")
+        rapport = radio.collecter(conf, requests.Session(), connexion, maintenant)
+        if rapport.interrompu == radio.SANS_CLE:
+            # Clé demandée mais pas encore reçue : une ligne de rappel dans l'email, pas une panne.
+            print(f"  en attente : {rapport.interrompu}")
+            anomalies.append("clé Radio France pas encore en place")
+        elif rapport.interrompu:
+            print(f"  ERREUR {rapport.interrompu}")
+            erreurs.append(rapport.interrompu)
+        else:
+            print(
+                f"  {rapport.stations_lues} stations lues, {rapport.programmes} programmes à venir "
+                f"(dont {rapport.masques} de nuit ignorés) ; "
+                f"{_resume(rapport.retenues)}, {rapport.annulees} passées en « annulé » ; {rapport.douteux} nouveaux cas douteux"
+            )
+        anomalies += rapport.anomalies
+        retenues += rapport.retenues
+    if any(c.plateforme == "radio" and "url" in c.cle for c in conf.chaines):
+        print("Radios privées :")
+        privees = radios_privees.collecter(conf, requests.Session(), connexion, maintenant)
+        if privees.interrompu:
+            print(f"  ERREUR {privees.interrompu}")
+            erreurs.append(privees.interrompu)
+        else:
+            print(
+                f"  {privees.radios_lues} radios lues ({privees.pages_lues} pages), {privees.programmes} programmes à venir "
+                f"(dont {privees.masques} de nuit ignorés) ; {_resume(privees.retenues)}, "
+                f"{privees.annulees} passées en « annulé » ; {privees.douteux} nouveaux cas douteux"
+            )
+        anomalies += privees.anomalies
+        retenues += privees.retenues
+    for anomalie in anomalies:
+        if "pas encore en place" not in anomalie:
+            print(f"  ATTENTION {anomalie}")
+    db.noter_collecte(connexion, "radio", maintenant, not erreurs, len(retenues), anomalies, "; ".join(erreurs))
     if args.motifs:
-        _motifs(rapport.retenues)
-    return True
-
+        _motifs(retenues)
+    return not erreurs
 
 def _etape_annonces(conf, connexion, maintenant, args) -> bool:
     print("Invités annoncés (communiqués de France Télévisions) :")

@@ -3,7 +3,7 @@ name: Sonde temporaire
 on:
   push:
     branches: [claude/busy-cerf-497c8s]
-    paths: [".github/sonde/**", ".github/workflows/sonde.yml"]
+    paths: [".github/sonde/**", ".github/workflows/sonde.yml", "grille/radios_privees.py"]
 permissions:
   contents: read
 jobs:
@@ -17,3 +17,5 @@ jobs:
           python-version: "3.13"
       - run: pip install -r requirements.txt
       - run: python .github/sonde/sonde.py
+        env:
+          PYTHONPATH: .

@@ -142,6 +142,9 @@ liste_blanche:
     - "Franc-jeu"
     # Titre trop courant pour toutes les chaînes : limité à la chaîne indiquée.
     - {titre: "Face à face", chaine: "BFMTV"}
+    # Radios privées (titres des grilles des sites).
+    - {titre: "La Grande interview", chaine: "Europe 1"}
+    - {titre: "L'invité politique", chaine: "Sud Radio"}
     # LCP le lundi soir (titre du guide : « LCP-Lundi c'est politique »), aussi sur Twitch.
     - "Lundi c'est politique"
     - {titre: "LCP-Lundi c'est politique", chaine: "LCP / Public Sénat"}
@@ -211,3 +214,8 @@ cas_douteux:
     - "En toute franchise"
     - "24h Pujadas"
     - "BFM Politique"
+    - "RTL Matin"
+    - "Europe 1 Matin"
+    - "Apolline Matin"
+    - "Le Grand Matin"
+    - "Parlons vrai chez Bourdin"

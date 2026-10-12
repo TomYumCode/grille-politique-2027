@@ -82,7 +82,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
               cle: str | None = None) -> Rapport:
     rapport = Rapport()
     cle = cle or os.environ.get("RADIOFRANCE_API_KEY")
-    stations = [c for c in config.chaines if c.plateforme == "radio"]
+    stations = [c for c in config.chaines if c.plateforme == "radio" and "station" in c.cle]
     if not stations:
         return rapport
     if not cle:
