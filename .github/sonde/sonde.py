@@ -1,4 +1,4 @@
-"""Sonde temporaire : extraits réels des grilles RMC et Radio Classique pour les tests."""
+"""Sonde temporaire : extrait réel de la grille Radio Classique pour les tests."""
 import re
 
 import requests
@@ -12,18 +12,15 @@ def leger(h):
     return re.sub(r"\s*\n\s*", "\n", h)
 
 
-def extrait(nom, texte):
-    print(f"<<<EXTRAIT {nom}>>>")
-    print(texte)
-    print(f"<<<FIN {nom}>>>")
-
-
-h = requests.get("https://rmc.bfmtv.com/grille-radio/", headers=EN_TETES, timeout=30).text
-debut = h.find("grille_days")
-fin = h.rfind("grille_hours_content")
-print("RMC jours", re.findall(r'(?s)class="day_title[^"]*"[^>]*>(.*?)<', h)[:20])
-extrait("rmc", leger(h[max(0, h.rfind("<", 0, debut)):h.find("</article>", fin) + 10]))
-h = requests.get("https://www.radioclassique.fr/grille-des-programmes/2026-10-13/", headers=EN_TETES, timeout=30).text
-debut = h.find("timeline__block__row--headline")
-fin = h.rfind("timeline__block__row")
-extrait("radioclassique", leger(h[max(0, h.rfind("<div", 0, debut)):h.find("<!-- .timeline__block__row -->", fin) + 40]))
+for adresse in ("https://www.radioclassique.fr/grille-des-programmes/2026-10-13/",
+                "https://www.radioclassique.fr/grille-des-programmes/2026-10-18/"):
+    r = requests.get(adresse, headers=EN_TETES, timeout=30)
+    h = r.text
+    print("=====", adresse, r.status_code, r.url, len(h), h.count("timeline__block__row"), h.count("episode_title"))
+    debut = h.find('<div class="timeline__block__row')
+    fin = h.rfind('<div class="timeline__block__row')
+    fin = h.find("<!-- .timeline__block__row -->", fin)
+    print("bornes", debut, fin)
+    print("<<<EXTRAIT>>>")
+    print(leger(h[debut:fin + 31]))
+    print("<<<FIN>>>")
