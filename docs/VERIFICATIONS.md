@@ -188,3 +188,9 @@ RTL de 7h40, Face à Fogiel, La Grande interview Europe 1 - CNews, L'invité pol
 Radio, Le grand débat des Vraies Voix…), aucun journal retenu. Extraits réels dans
 `tests/reponses/radio_rtl.html`, `radio_europe1.html`, `radio_sudradio.html`, `radio_rmc.html`,
 `radio_radioclassique.html`.
+
+Essai réel avec RMC et Radio Classique (12 octobre, 15 h 53) : 5 radios, 10 pages,
+661 programmes à venir, 27 retenus dont « Face à Face » sur RMC du lundi au vendredi,
+aucune anomalie. L'invité de la matinale de Radio Classique (Anne Goscinny le
+13 octobre) n'est retenu que s'il est une personnalité suivie ; sinon il est compté parmi
+les cas douteux, comme « L'édito politique ».
