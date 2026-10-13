@@ -57,7 +57,14 @@ class Configuration:
     tv_heures_masquees: tuple[int, int] | None = None  # (de, a) : début dans [de, a[ → ignoré
     # Cas douteux à mesurer : {"mots": [...], "emissions_a_invites": [...]}.
     cas_douteux: dict = field(default_factory=dict)
+    # Mots qui classent une émission dans « Présidentielle 2027 » (grille/campagne.py).
+    mots_presidentielle: list[str] = field(default_factory=list)
     anomalies: list[str] = field(default_factory=list)
+
+    def nommer(self, noms: list[str]) -> list[str]:
+        """« Jean-Philippe Tanguy (RN) » : sigle de politique.yaml après le nom, s'il est connu."""
+        sigles = {p["nom"]: p["sigle"] for p in self.candidats + self.personnalites if p.get("sigle")}
+        return [f"{n} ({sigles[n]})" if n in sigles else n for n in noms]
 
     def noms_a_reperer(self) -> list[str]:
         """Noms et alias de candidats, personnalités et partis non ambigus."""
@@ -193,6 +200,9 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
     for e in liste_blanche.get("emissions") or []:
         if not (isinstance(e, str) or (isinstance(e, dict) and isinstance(e.get("titre"), str))):
             raise ErreurConfig(f"politique.yaml, liste blanche : émission illisible {e!r} (texte ou {{titre: …, chaine: …}})")
+    mots_presidentielle = (politique.get("presidentielle") or {}).get("mots") or []
+    if not isinstance(mots_presidentielle, list) or not all(isinstance(m, str) for m in mots_presidentielle):
+        raise ErreurConfig("politique.yaml : « presidentielle: mots: » doit être une liste de textes")
     noms_chaines = {c.nom for c in chaines}
     for nom in liste_blanche.get("chaines") or []:
         if nom not in noms_chaines:
@@ -208,5 +218,6 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         mots_cles_titre=mots_cles_titre,
         tv_heures_masquees=masque,
         cas_douteux=cas_douteux,
+        mots_presidentielle=mots_presidentielle,
         anomalies=anomalies,
     )

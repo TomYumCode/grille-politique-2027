@@ -75,10 +75,13 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
                                        minuit + timedelta(days=1 + JOURS_TEMPS_FORTS))
         if temps_fort(e, candidats) and datetime.fromisoformat(e["debut"]) >= minuit + timedelta(days=1)
     ]
+    def nommer(e: dict) -> dict:
+        return dict(e, invites_affiches=config.nommer(e["invites"]), cites_affiches=config.nommer(e.get("cites") or []))
+
     return {
         "titre_jour": _jour(maintenant),
-        "aujourdhui": aujourdhui,
-        "temps_forts": a_venir,
+        "aujourdhui": [nommer(e) for e in aujourdhui],
+        "temps_forts": [nommer(e) for e in a_venir],
         "alertes": db.etat_des_sources(connexion, maintenant, SOURCES),
         "douteux": mesure_douteux(connexion, maintenant),
         "adresse_page": os.environ.get("ADRESSE_PAGE", ""),
@@ -93,9 +96,10 @@ def diffuseurs(e: dict) -> str:
 def _ligne_texte(e: dict, avec_jour: bool = False) -> str:
     debut = datetime.fromisoformat(e["debut"])
     quand = (_jour(debut) + " " if avec_jour else "") + f"{debut:%H:%M}"
-    invites = f" — avec {', '.join(e['invites'])}" if e["invites"] else ""
-    if e.get("cites"):
-        invites += f" — à propos de {', '.join(e['cites'])}"
+    presents, cites = e.get("invites_affiches", e["invites"]), e.get("cites_affiches", e.get("cites") or [])
+    invites = f" — avec {', '.join(presents)}" if presents else ""
+    if cites:
+        invites += f" — à propos de {', '.join(cites)}"
     lien = "".join(f"\n      {url}" for url in e["lien"])
     return f"  {quand}  {diffuseurs(e)} · {e['categorie']}\n    {e['titre']}{invites}{lien}"
 
@@ -129,10 +133,11 @@ def _ligne_html(e: dict, avec_jour: bool = False) -> str:
     titre = html.escape(e["titre"])
     if e["lien"]:
         titre = f'<a href="{html.escape(e["lien"][0])}" style="color:#1f3a5f">{titre}</a>'
-    invites = f'<div style="color:#5b6470;font-size:13px">Avec {html.escape(", ".join(e["invites"]))}</div>' if e["invites"] else ""
-    if e.get("cites"):
+    presents, cites = e.get("invites_affiches", e["invites"]), e.get("cites_affiches", e.get("cites") or [])
+    invites = f'<div style="color:#5b6470;font-size:13px">Avec {html.escape(", ".join(presents))}</div>' if presents else ""
+    if cites:
         invites += ('<div style="color:#5b6470;font-size:13px;font-style:italic">À propos de '
-                    f'{html.escape(", ".join(e["cites"]))}</div>')
+                    f'{html.escape(", ".join(cites))}</div>')
     # Émission fusionnée : un lien par autre diffuseur, sous le titre.
     autres = [f'<a href="{html.escape(src["lien"][0])}" style="color:#1f3a5f">{html.escape(src["chaine"])}'
               + (f' ({html.escape(src["precision"])})' if src.get("precision") else "") + "</a>"

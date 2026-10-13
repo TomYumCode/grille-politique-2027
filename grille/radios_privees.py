@@ -100,18 +100,34 @@ def _chroniques_avec_fin(chroniques: list[Programme], fin_emission: datetime | N
 
 def lire_rtl(contenu: str, adresse: str, jour: date) -> list[Programme]:
     """rtl.fr/grille/JJ-MM-AAAA : cartes « programme-card » (heure « 07h00 - 09h00 », titre, animateurs,
-    description) et leurs chroniques (« 07h40 », titre, animateurs, description)."""
+    description) et leurs chroniques (« 07h40 », titre, animateurs, description).
+
+    La carte de l'émission en cours (« programme-card--direct ») n'a pas d'horaire : elle commence
+    à la fin de la précédente et finit au début de la suivante. L'ignorer ferait passer ses
+    chroniques en « annulé » pendant la diffusion (« L'invité RTL de 7h40 » le 13 octobre 2026)."""
     cartes = re.split(r'(?=<div class="programme-card[ "])', contenu)[1:]
     if not cartes:
         raise PageIllisible("aucune carte de programme")
     horloge, resultat = _Horloge(jour), []
+    lues: list[tuple[Programme, list[tuple[time, str]]]] = []  # émission, chroniques (heure, fragment)
     for c in cartes:
-        horaires = re.search(r'programme-card__time[^>]*>(.*?)</', c, re.S)
+        horaires = re.search(r'class="programme-card__time[ "][^>]*>(.*?)</', c, re.S)
         titre = re.search(r'programme-card__title[^>]*>(.*?)</', c, re.S)
-        if not (horaires and titre):
+        if not titre:
             continue
-        bornes = _texte(horaires.group(1)).split("-")
-        debut = horloge(_heure(bornes[0]))
+        chroniques = []
+        for li in re.findall(r'(?s)<li class="programme-card__chronique".*?</li>', c):
+            h = re.search(r'programme-card__chronique-time[^>]*>(.*?)</p>', li, re.S)
+            if h and _heure(_texte(h.group(1))) is not None:
+                chroniques.append((_heure(_texte(h.group(1))), li))
+        bornes = _texte(horaires.group(1)).split("-") if horaires else []
+        h_debut = _heure(bornes[0]) if bornes else None
+        if h_debut is None:  # émission en cours : début à la fin de la précédente, sinon à sa première chronique
+            if lues and lues[-1][0].fin:
+                h_debut = lues[-1][0].fin.timetz().replace(tzinfo=None)
+            elif chroniques:
+                h_debut = chroniques[0][0]
+        debut = horloge(h_debut)
         if debut is None:
             continue
         fin_h = _heure(bornes[1]) if len(bornes) > 1 else None
@@ -120,25 +136,25 @@ def lire_rtl(contenu: str, adresse: str, jour: date) -> list[Programme]:
             fin += timedelta(days=1)
         lien = re.search(r'<a href="([^"]+)"', c)
         description = re.search(r'programme-card__description[^>]*>(.*?)</p>', c, re.S)
-        resultat.append(Programme(_texte(titre.group(1)), debut, fin, _texte(description.group(1) if description else ""),
-                                  urljoin(adresse, lien.group(1)) if lien else adresse))
-        chroniques = []
-        for li in re.findall(r'(?s)<li class="programme-card__chronique".*?</li>', c):
-            h = re.search(r'programme-card__chronique-time[^>]*>(.*?)</p>', li, re.S)
-            t = re.search(r'programme-card__chronique-title[^>]*>(.*?)</', li, re.S)
-            if not (h and t):
+        lues.append((Programme(_texte(titre.group(1)), debut, fin, _texte(description.group(1) if description else ""),
+                               urljoin(adresse, lien.group(1)) if lien else adresse), chroniques))
+    for i, (emission, chroniques) in enumerate(lues):
+        if emission.fin is None and i + 1 < len(lues):
+            emission.fin = lues[i + 1][0].debut
+        resultat.append(emission)
+        du_jour = []
+        for h_debut, li in chroniques:
+            t_ = re.search(r'programme-card__chronique-title[^>]*>(.*?)</', li, re.S)
+            if not t_:
                 continue
-            h_debut = _heure(_texte(h.group(1)))
-            if h_debut is None:
-                continue
-            d = datetime.combine(debut.date(), h_debut, PARIS)
-            if d < debut:
+            d = datetime.combine(emission.debut.date(), h_debut, PARIS)
+            if d < emission.debut:
                 d += timedelta(days=1)
             desc = re.search(r'programme-card__chronique-description[^>]*>(.*?)</p>', li, re.S)
             l = re.search(r'<a href="([^"]+)"', li)
-            chroniques.append(Programme(_texte(t.group(1)), d, None, _texte(desc.group(1) if desc else ""),
-                                        urljoin(adresse, l.group(1)) if l else adresse))
-        resultat += _chroniques_avec_fin(chroniques, fin)
+            du_jour.append(Programme(_texte(t_.group(1)), d, None, _texte(desc.group(1) if desc else ""),
+                                     urljoin(adresse, l.group(1)) if l else adresse))
+        resultat += _chroniques_avec_fin(du_jour, emission.fin)
     return resultat
 
 

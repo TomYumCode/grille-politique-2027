@@ -13,6 +13,7 @@ from pathlib import Path
 import requests
 
 from grille import acces, affichage, agendas, annonces, config, courriel, db, page, radio, radios_privees, tv, twitch, youtube
+from grille.campagne import Campagne
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre",
@@ -59,20 +60,23 @@ def cmd_verifier_acces(args: argparse.Namespace) -> int:
     return 1 if any(r.etat == "erreur" for r in resultats) else 0
 
 
-def afficher_grille(emissions: list[dict]) -> None:
+def afficher_grille(emissions: list[dict], conf: config.Configuration | None = None) -> None:
+    nommer = conf.nommer if conf else (lambda noms: noms)
+    classer = Campagne(conf).motif if conf else (lambda e: "")
     jour_courant = None
     for e in emissions:
         debut = datetime.fromisoformat(e["debut"])
         if debut.date() != jour_courant:
             jour_courant = debut.date()
             print(f"\n{JOURS[debut.weekday()].capitalize()} {debut.day} {MOIS[debut.month - 1]}")
-        invites = f" — avec {', '.join(e['invites'])}" if e["invites"] else ""
+        invites = f" — avec {', '.join(nommer(e['invites']))}" if e["invites"] else ""
         if e.get("cites"):
-            invites += f" — à propos de {', '.join(e['cites'])}"
+            invites += f" — à propos de {', '.join(nommer(e['cites']))}"
         etat = f" [{e['statut']}]" if e["statut"] != "annoncé" else ""
         plateforme = courriel.PLATEFORMES[e["plateforme"]]
         aussi = f"  [aussi : {', '.join(s['chaine'] for s in e['sources'][1:])}]" if e.get("sources") else ""
-        print(f"  {debut:%H:%M}  {plateforme:<7} {e['chaine'][:24]:<24} {e['categorie']:<9} "
+        # « 2027 » : émission classée dans « Présidentielle 2027 » sur la page.
+        print(f"  {debut:%H:%M} {'2027' if classer(e) else '    '} {plateforme:<7} {e['chaine'][:24]:<24} {e['categorie']:<9} "
               f"{e['titre']}{invites}{etat}  ({e['filtre']}){aussi}")
 
 
@@ -281,7 +285,7 @@ def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
     connexion.close()
     ou = NOMS[plateformes[0]] if len(plateformes) == 1 and affichees else "toutes sources"
     print(f"\nÉmissions politiques {ou}, aujourd'hui et les 7 jours suivants : {len(emissions)}")
-    afficher_grille(emissions)
+    afficher_grille(emissions, conf)
     return 0 if all(reussites) else 1
 
 
@@ -461,7 +465,11 @@ def cmd_lister(args: argparse.Namespace) -> int:
     emissions = affichage.emissions(connexion, maintenant, fin)
     connexion.close()
     print(f"Émissions politiques, aujourd'hui et les 7 jours suivants : {len(emissions)}")
-    afficher_grille(emissions)
+    try:
+        conf = config.charger(args.config)
+    except config.ErreurConfig:
+        conf = None  # les noms s'affichent alors sans sigle
+    afficher_grille(emissions, conf)
     return 0
 
 

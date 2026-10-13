@@ -10,88 +10,92 @@
 # charges (France-Vote, 21 septembre 2026) : à revérifier avant le lot 3.
 # « alias » : autres formes du nom à repérer dans les titres.
 candidats:
-  - {nom: "Jean-Luc Mélenchon", alias: ["Mélenchon"], parti: "La France insoumise", statut: "déclaré"}
-  - {nom: "François Ruffin", alias: ["Ruffin"], parti: "Debout!", statut: "déclaré"}
-  - {nom: "Juan Branco", alias: ["Branco"], parti: "Sans étiquette", statut: "déclaré"}
-  - {nom: "Nathalie Arthaud", alias: ["Arthaud"], parti: "Lutte ouvrière", statut: "déclaré"}
-  - {nom: "Gabriel Attal", alias: ["Attal"], parti: "Renaissance", statut: "déclaré"}
-  - {nom: "Édouard Philippe", alias: [], parti: "Horizons", statut: "déclaré"}
-  - {nom: "Bruno Retailleau", alias: ["Retailleau"], parti: "Les Républicains", statut: "désigné"}
-  - {nom: "David Lisnard", alias: ["Lisnard"], parti: "Nouvelle Énergie", statut: "déclaré"}
-  - {nom: "Marine Le Pen", alias: [], parti: "Rassemblement national", statut: "déclaré"}
-  - {nom: "Éric Zemmour", alias: ["Zemmour"], parti: "Reconquête", statut: "déclaré"}
-  - {nom: "Florian Philippot", alias: ["Philippot"], parti: "Les Patriotes", statut: "pressenti"}
-  - {nom: "François Asselineau", alias: ["Asselineau"], parti: "UPR", statut: "pressenti"}
-  - {nom: "Jean Lassalle", alias: ["Lassalle"], parti: "", statut: "pressenti"}
-  - {nom: "Nicolas Dupont-Aignan", alias: ["Dupont-Aignan"], parti: "Debout la France", statut: "à vérifier"}
-  - {nom: "Raphaël Glucksmann", alias: ["Glucksmann"], parti: "Place publique", statut: "désigné (primaire de la gauche du 11 octobre 2026, 66 %)"}
+  - {nom: "Jean-Luc Mélenchon", alias: ["Mélenchon"], parti: "La France insoumise", sigle: "LFI", statut: "déclaré"}
+  - {nom: "François Ruffin", alias: ["Ruffin"], parti: "Debout!", sigle: "Debout!", statut: "déclaré"}
+  - {nom: "Juan Branco", alias: ["Branco"], parti: "Sans étiquette", sigle: "SE", statut: "déclaré"}
+  - {nom: "Nathalie Arthaud", alias: ["Arthaud"], parti: "Lutte ouvrière", sigle: "LO", statut: "déclaré"}
+  - {nom: "Gabriel Attal", alias: ["Attal"], parti: "Renaissance", sigle: "Renaissance", statut: "déclaré"}
+  - {nom: "Édouard Philippe", alias: [], parti: "Horizons", sigle: "Horizons", statut: "déclaré"}
+  - {nom: "Bruno Retailleau", alias: ["Retailleau"], parti: "Les Républicains", sigle: "LR", statut: "désigné"}
+  - {nom: "David Lisnard", alias: ["Lisnard"], parti: "Nouvelle Énergie", sigle: "Nouvelle Énergie", statut: "déclaré"}
+  - {nom: "Marine Le Pen", alias: [], parti: "Rassemblement national", sigle: "RN", statut: "déclaré"}
+  - {nom: "Éric Zemmour", alias: ["Zemmour"], parti: "Reconquête", sigle: "Reconquête", statut: "déclaré"}
+  - {nom: "Florian Philippot", alias: ["Philippot"], parti: "Les Patriotes", sigle: "Les Patriotes", statut: "pressenti"}
+  - {nom: "François Asselineau", alias: ["Asselineau"], parti: "UPR", sigle: "UPR", statut: "pressenti"}
+  - {nom: "Jean Lassalle", alias: ["Lassalle"], parti: "Résistons!", sigle: "Résistons!", statut: "pressenti"}
+  - {nom: "Nicolas Dupont-Aignan", alias: ["Dupont-Aignan"], parti: "Debout la France", sigle: "DLF", statut: "à vérifier"}
+  - {nom: "Raphaël Glucksmann", alias: ["Glucksmann"], parti: "Place publique", sigle: "Place publique", statut: "désigné (primaire de la gauche du 11 octobre 2026, 66 %)"}
   # Autres noms cités dans l'annexe ; statut à vérifier quand il est indiqué.
-  - {nom: "Marine Tondelier", alias: ["Tondelier"], parti: "Les Écologistes", statut: "déclarée"}
-  - {nom: "Fabien Roussel", alias: ["Roussel"], parti: "PCF", statut: "déclaré (validé par le PCF le 6 septembre)"}
-  - {nom: "Karim Bouamrane", alias: ["Bouamrane"], parti: "Parti socialiste", statut: "déclaré (juin 2026), hors primaire"}
+  - {nom: "Marine Tondelier", alias: ["Tondelier"], parti: "Les Écologistes", sigle: "Les Écologistes", statut: "déclarée"}
+  - {nom: "Fabien Roussel", alias: ["Roussel"], parti: "PCF", sigle: "PCF", statut: "déclaré (validé par le PCF le 6 septembre)"}
+  - {nom: "Karim Bouamrane", alias: ["Bouamrane"], parti: "Parti socialiste", sigle: "PS", statut: "déclaré (juin 2026), hors primaire"}
   - {nom: "Xavier Bertrand", alias: [], parti: "", statut: "à vérifier"}
   - {nom: "Clémentine Autain", alias: ["Autain"], parti: "", statut: "primaire unitaire de gauche, à vérifier"}
   - {nom: "Bruno Le Maire", alias: [], parti: "", statut: "à vérifier"}
   - {nom: "Delphine Batho", alias: ["Batho"], parti: "", statut: "à vérifier"}
-  - {nom: "Anasse Kazib", alias: ["Kazib"], parti: "Révolution Permanente", statut: "à vérifier"}
-  - {nom: "Dominique de Villepin", alias: ["Villepin"], parti: "La France Humaniste", statut: "à vérifier"}
+  - {nom: "Anasse Kazib", alias: ["Kazib"], parti: "Révolution Permanente", sigle: "Révolution permanente", statut: "à vérifier"}
+  - {nom: "Dominique de Villepin", alias: ["Villepin"], parti: "La France Humaniste", sigle: "La France humaniste", statut: "à vérifier"}
   # Petites candidatures relevées le 12 octobre 2026 (lejdd.fr, touteleurope.eu, france24.com).
   # Noms complets seulement : « Labib », « Egger », « Lalanne » seuls sont trop courants.
-  - {nom: "Selma Labib", alias: [], parti: "NPA-Révolutionnaires", statut: "désignée (juin 2026)"}
-  - {nom: "Clara Egger", alias: [], parti: "Solution démocratique", statut: "déclarée"}
-  - {nom: "Francis Lalanne", alias: [], parti: "France libre", statut: "déclaré (août 2026)"}
-  - {nom: "Lydie Massard", alias: [], parti: "Union démocratique bretonne", statut: "à vérifier"}
+  - {nom: "Selma Labib", alias: [], parti: "NPA-Révolutionnaires", sigle: "NPA-R", statut: "désignée (juin 2026)"}
+  - {nom: "Clara Egger", alias: [], parti: "Solution démocratique", sigle: "Solution démocratique", statut: "déclarée"}
+  - {nom: "Francis Lalanne", alias: [], parti: "France libre", sigle: "France libre", statut: "déclaré (août 2026)"}
+  - {nom: "Lydie Massard", alias: [], parti: "Union démocratique bretonne", sigle: "UDB", statut: "à vérifier"}
 
 # Personnalités non candidates mais à repérer comme invités.
+# « campagne: true » : membre d'une équipe de campagne annoncée ; sa présence suffit à
+# classer l'émission dans « Présidentielle 2027 » (comme celle d'un candidat).
+# « sigle » : affiché après le nom (« Jean-Philippe Tanguy (RN) ») ; pour un membre
+# d'équipe de campagne dont le parti n'est pas vérifié, « équipe <candidat> ».
 personnalites:
-  - {nom: "Jordan Bardella", alias: ["Bardella"]}
-  - {nom: "Manuel Bompard", alias: ["Bompard"]}
+  - {nom: "Jordan Bardella", alias: ["Bardella"], sigle: "RN", campagne: true}
+  - {nom: "Manuel Bompard", alias: ["Bompard"], sigle: "LFI", campagne: true}
   # « Maréchal » seul attraperait les documentaires d'histoire : nom complet seulement.
-  - {nom: "Marion Maréchal", alias: ["Marion Maréchal-Le Pen"]}
+  - {nom: "Marion Maréchal", alias: ["Marion Maréchal-Le Pen"], sigle: "Identité-Libertés"}
 
   # Entourage des candidats, régulièrement invité sur les plateaux.
   # Pas d'alias pour les noms de famille courants (Haddad, Dumont, Sanchez…).
   # Marine Le Pen : équipe de campagne annoncée en juillet et septembre 2026.
-  - {nom: "Julien Sanchez", alias: []}
-  - {nom: "Sébastien Chenu", alias: ["Chenu"]}
-  - {nom: "Laure Lavalette", alias: []}
-  - {nom: "Laurent Jacobelli", alias: ["Jacobelli"]}
-  - {nom: "Gaëtan Dussausaye", alias: ["Dussausaye"]}
-  - {nom: "Aleksandar Nikolic", alias: []}
-  - {nom: "Andréa Kotarac", alias: ["Kotarac"]}
-  - {nom: "Jean-Philippe Tanguy", alias: []}
+  - {nom: "Julien Sanchez", alias: [], sigle: "RN", campagne: true}
+  - {nom: "Sébastien Chenu", alias: ["Chenu"], sigle: "RN", campagne: true}
+  - {nom: "Laure Lavalette", alias: [], sigle: "RN", campagne: true}
+  - {nom: "Laurent Jacobelli", alias: ["Jacobelli"], sigle: "RN", campagne: true}
+  - {nom: "Gaëtan Dussausaye", alias: ["Dussausaye"], sigle: "RN", campagne: true}
+  - {nom: "Aleksandar Nikolic", alias: [], sigle: "RN", campagne: true}
+  - {nom: "Andréa Kotarac", alias: ["Kotarac"], sigle: "RN", campagne: true}
+  - {nom: "Jean-Philippe Tanguy", alias: [], sigle: "RN", campagne: true}
   # Bruno Retailleau : porte-parole annoncés le 8 septembre 2026.
-  - {nom: "Othman Nasrou", alias: ["Nasrou"]}
-  - {nom: "Agnès Evren", alias: ["Evren"]}
-  - {nom: "Jonas Haddad", alias: []}
-  - {nom: "Pierre-Henri Dumont", alias: []}
-  - {nom: "Kristell Niasme", alias: ["Niasme"]}
+  - {nom: "Othman Nasrou", alias: ["Nasrou"], sigle: "LR", campagne: true}
+  - {nom: "Agnès Evren", alias: ["Evren"], sigle: "LR", campagne: true}
+  - {nom: "Jonas Haddad", alias: [], sigle: "LR", campagne: true}
+  - {nom: "Pierre-Henri Dumont", alias: [], sigle: "LR", campagne: true}
+  - {nom: "Kristell Niasme", alias: ["Niasme"], sigle: "équipe Retailleau", campagne: true}
   # Gabriel Attal : équipe de campagne annoncée en septembre 2026.
-  - {nom: "Franck Riester", alias: ["Riester"]}
-  - {nom: "Céline Géraud", alias: []}
-  - {nom: "Violette Spillebout", alias: ["Spillebout"]}
-  - {nom: "Jean-Charles Orsucci", alias: ["Orsucci"]}
-  - {nom: "Rachel-Flore Pardo", alias: []}
-  - {nom: "Jad Zahab", alias: ["Zahab"]}
-  - {nom: "Abdoulaye Kanté", alias: []}
+  - {nom: "Franck Riester", alias: ["Riester"], sigle: "Renaissance", campagne: true}
+  - {nom: "Céline Géraud", alias: [], sigle: "équipe Attal", campagne: true}
+  - {nom: "Violette Spillebout", alias: ["Spillebout"], sigle: "Renaissance", campagne: true}
+  - {nom: "Jean-Charles Orsucci", alias: ["Orsucci"], sigle: "équipe Attal", campagne: true}
+  - {nom: "Rachel-Flore Pardo", alias: [], sigle: "équipe Attal", campagne: true}
+  - {nom: "Jad Zahab", alias: ["Zahab"], sigle: "équipe Attal", campagne: true}
+  - {nom: "Abdoulaye Kanté", alias: [], sigle: "équipe Attal", campagne: true}
   # Jean-Luc Mélenchon : proches de longue date, rôle dans la campagne à confirmer.
-  - {nom: "Mathilde Panot", alias: ["Panot"]}
-  - {nom: "Éric Coquerel", alias: ["Coquerel"]}
-  - {nom: "Clémence Guetté", alias: ["Guetté"]}
-  - {nom: "Manon Aubry", alias: []}
+  - {nom: "Mathilde Panot", alias: ["Panot"], sigle: "LFI"}
+  - {nom: "Éric Coquerel", alias: ["Coquerel"], sigle: "LFI"}
+  - {nom: "Clémence Guetté", alias: ["Guetté"], sigle: "LFI"}
+  - {nom: "Manon Aubry", alias: [], sigle: "LFI"}
   # Édouard Philippe : proches de longue date, rôle dans la campagne à confirmer.
-  - {nom: "Christophe Béchu", alias: ["Béchu"]}
-  - {nom: "Gilles Boyer", alias: []}
+  - {nom: "Christophe Béchu", alias: ["Béchu"], sigle: "Horizons"}
+  - {nom: "Gilles Boyer", alias: [], sigle: "Horizons"}
   # Éric Zemmour : proches de longue date, rôle dans la campagne à confirmer.
-  - {nom: "Sarah Knafo", alias: ["Knafo"]}
-  - {nom: "Stanislas Rigault", alias: []}
+  - {nom: "Sarah Knafo", alias: ["Knafo"], sigle: "Reconquête"}
+  - {nom: "Stanislas Rigault", alias: [], sigle: "Reconquête"}
   # Nathalie Arthaud : à confirmer.
-  - {nom: "Jean-Pierre Mercier", alias: []}
+  - {nom: "Jean-Pierre Mercier", alias: [], sigle: "LO"}
   # Battus à la primaire de la gauche du 11 octobre 2026 (gagnée par Raphaël Glucksmann).
-  - {nom: "Olivier Faure", alias: []}
-  - {nom: "Ségolène Royal", alias: []}
-  - {nom: "Jérôme Guedj", alias: ["Guedj"]}
-  - {nom: "Emmanuel Maurel", alias: ["Maurel"]}
+  - {nom: "Olivier Faure", alias: [], sigle: "PS"}
+  - {nom: "Ségolène Royal", alias: [], sigle: "PS"}
+  - {nom: "Jérôme Guedj", alias: ["Guedj"], sigle: "PS"}
+  - {nom: "Emmanuel Maurel", alias: ["Maurel"], sigle: "GRS"}
 
 # « ambigu: true » : nom trop courant pour servir seul de mot-clé
 # (« Renaissance » attrape les documentaires sur la Renaissance italienne).
@@ -121,6 +125,35 @@ partis:
   - {nom: "Nouvelle Énergie", alias: [], ambigu: true}
   - {nom: "Génération.s", alias: []}
   - {nom: "Génération Écologie", alias: []}
+
+# Bouton « Présidentielle 2027 » de la page : émissions consacrées à la campagne, parmi
+# toutes les émissions politiques retenues. Une émission y entre si un candidat (ou un membre
+# d'équipe de campagne, « campagne: true ») y est présent, si c'est un meeting, si elle vient
+# de la chaîne d'un parti ou d'un candidat, ou si son titre ou son résumé contient l'un de ces
+# mots. Recalculé à chaque collecte : un invité annoncé la veille la fait entrer.
+presidentielle:
+  mots:
+    - "présidentielle"
+    - "présidentielles"
+    - "présidentiable"
+    - "présidentiables"
+    - "élection présidentielle"
+    - "campagne"
+    - "candidat"
+    - "candidate"
+    - "candidats"
+    - "candidates"
+    - "candidature"
+    - "primaire"
+    - "primaires"
+    - "sondage"
+    - "sondages"
+    - "premier tour"
+    - "second tour"
+    - "entre-deux-tours"
+    - "parrainages"
+    - "réunion publique"
+    - "2027 raisons de voter"
 
 # Filtre 1 : liste blanche.
 liste_blanche:

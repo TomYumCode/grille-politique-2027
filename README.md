@@ -144,6 +144,10 @@ politique Sud Radio » à 8 h 30). Europe 1 ne publie qu'une semaine type, sans 
 l'invité arrive par un agenda de parti (« … sera l'invité d'Europe 1 à 8h10 ») ou par le
 direct YouTube de la radio. Les résumés des sites ne servent au filtre que pour les
 créneaux d'invités : un journal qui cite un candidat n'entre pas dans la grille.
+Liens d'une émission de radio : « Écouter en direct » (direct de la station, quand il est
+connu) et la page de l'émission, « L'émission » avant la diffusion et « Réécouter » après
+(RTL, Radio Classique… y mettent la réécoute). RTL ne donne pas d'horaire à l'émission en
+cours : elle est placée entre la précédente et la suivante.
 RMC publie la semaine en cours sans invités (« Face à Face » à 8 h 29, diffusé aussi sur
 BFMTV) ; Radio Classique nomme l'invité de la matinale (8 h 15). Radio Nova n'a pas de
 grille sur son site : elle reste suivie par YouTube.
@@ -169,6 +173,28 @@ Chaque heure, la collecte lit aussi les communiqués de presse de France Télév
 Lescure — Dimanche 11 octobre à 13h20 ». L'invité s'ajoute alors à l'émission du même
 jour et de la même heure (à 30 minutes près). Les autres chaînes (TF1, M6, BFMTV…)
 n'ont pas de page équivalente repérée pour l'instant.
+
+## Présidentielle 2027 ou toute la politique
+
+En haut de la page, deux boutons : « Présidentielle 2027 » (choix par défaut, mémorisé)
+ne garde que les émissions consacrées à la campagne ; « Toute la politique » montre tout
+ce que les filtres ont retenu (questions au gouvernement, budget, éditos…). Une émission
+est de la campagne (`grille/campagne.py`) si :
+
+- un candidat, ou un membre d'équipe de campagne (`campagne: true` dans
+  `config/politique.yaml`), y est présent ;
+- un candidat est nommé dans le titre (« Glucksmann : gros scandale électoral ? ») ;
+- c'est un meeting, ou elle vient de la chaîne d'un parti ou d'un candidat ;
+- son titre ou son résumé contient un mot de la rubrique `presidentielle:` de
+  `config/politique.yaml` (« présidentielle », « candidat », « primaire », « sondage »…).
+
+Le classement est refait à chaque collecte : une émission à invités (« Franc-jeu », « Face
+à face ») entre dans « Présidentielle 2027 » dès que son invité, un candidat, est annoncé.
+Dans `python3 -m grille lister`, ces émissions sont marquées « 2027 ».
+
+Après chaque nom, le sigle du parti (« Jean-Philippe Tanguy (RN) ») : rubrique `sigle` des
+candidats et personnalités de `config/politique.yaml` (« équipe Attal » quand le parti d'un
+membre d'équipe de campagne n'est pas vérifié).
 
 ## Présents ou seulement cités
 
