@@ -19,3 +19,4 @@ jobs:
       - run: python .github/sonde/sonde.py
         env:
           PYTHONPATH: .
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}

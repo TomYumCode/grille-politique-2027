@@ -1,7 +1,6 @@
-"""Sonde temporaire : carte RTL en cours, replays RTL, Radio Courtoisie, Mediapart."""
+"""Sonde temporaire : émissions de Radio Courtoisie par date, programmes de Mediapart."""
+import os
 import re
-from datetime import datetime
-from zoneinfo import ZoneInfo
 
 import requests
 
@@ -18,30 +17,29 @@ def texte(f):
     return " ".join(re.sub(r"<[^>]+>", " ", f).split())
 
 
-aujourdhui = datetime.now(ZoneInfo("Europe/Paris"))
-print("heure de Paris", aujourdhui)
-h = requests.get(f"https://www.rtl.fr/grille/{aujourdhui:%d-%m-%Y}", headers=EN_TETES, timeout=30).text
-cartes = re.split(r'(?=<div class="programme-card[ "])', h)[1:]
-print("RTL cartes", len(cartes))
-for c in cartes:
-    cls = re.match(r'<div class="([^"]*)"', c).group(1)
-    t = re.search(r'programme-card__time[^>]*>(.*?)</', c, re.S)
-    ti = re.search(r'programme-card__title[^>]*>(.*?)</', c, re.S)
-    chron = re.findall(r'(?s)<li class="programme-card__chronique".*?</li>', c)
-    print("CARTE", cls, "|", t and texte(t.group(1)), "|", ti and texte(ti.group(1)), "| chroniques", len(chron),
-          "| autres li", len(re.findall(r'<li class="([^"]*)"', c)), sorted(set(re.findall(r'<li class="([^"]*)"', c)))[:5])
-    for li in chron[:30]:
-        print("   CHRON", texte(li)[:120], re.findall(r'href="([^"]+)"', li)[:3])
-# Carte du matin en entier, pour voir sa forme
-matin = [c for c in cartes if re.search(r'programme-card__title[^>]*>\s*RTL Matin', c)]
-if matin:
-    print("<<<EXTRAIT rtl_matin>>>")
-    print(leger(matin[0])[:20000])
-    print("<<<FIN rtl_matin>>>")
-for adresse in ("https://www.radiocourtoisie.fr/", "https://www.mediapart.fr/"):
-    try:
-        r = requests.get(adresse, headers=EN_TETES, timeout=30)
-        print("=====", adresse, r.status_code, r.url, len(r.text))
-        print(sorted(set(re.findall(r'href="([^"]*(?:grille|programme|emission|direct|studio|agenda|live)[^"]*)"', r.text, re.I)))[:60])
-    except requests.RequestException as e:
-        print("=====", adresse, "ERREUR", e)
+for adresse in ("https://www.rc.fr/filtres-emissions/filtre-date/", "https://www.mediapart.fr/studio"):
+    r = requests.get(adresse, headers=EN_TETES, timeout=30)
+    print("=====", adresse, r.status_code, r.url, len(r.text))
+    corps = leger(r.text)
+    heures = [m.start() for m in re.finditer(r"\b\d{1,2}\s*[hH:]\s*\d{2}\b", corps)]
+    print("heures", len(heures))
+    print(sorted(set(re.findall(r'href="([^"]*(?:emission|direct|live|programme|agenda|studio|filtre)[^"]*)"', r.text, re.I)))[:40])
+    if heures:
+        d = max(0, heures[0] - 1500)
+        print("<<<EXTRAIT>>>")
+        print(corps[d:d + 6000])
+        print("<<<FIN>>>")
+# Mediapart sur YouTube : dernières vidéos, directs et premières.
+cle = os.environ.get("YOUTUBE_API_KEY")
+if cle:
+    api = "https://www.googleapis.com/youtube/v3"
+    c = requests.get(f"{api}/channels", params={"part": "contentDetails", "forHandle": "mediapart", "key": cle}, timeout=30).json()
+    uu = c["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+    items = requests.get(f"{api}/playlistItems", params={"part": "contentDetails", "playlistId": uu, "maxResults": 50, "key": cle},
+                         timeout=30).json()["items"]
+    ids = ",".join(i["contentDetails"]["videoId"] for i in items)
+    videos = requests.get(f"{api}/videos", params={"part": "snippet,liveStreamingDetails", "id": ids, "key": cle}, timeout=30).json()["items"]
+    for v in videos:
+        d = v.get("liveStreamingDetails") or {}
+        print("MEDIAPART", v["snippet"]["publishedAt"], v["snippet"].get("liveBroadcastContent"),
+              d.get("scheduledStartTime") or d.get("actualStartTime") or "-", v["snippet"]["title"][:90])
