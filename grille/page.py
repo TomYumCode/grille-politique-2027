@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from grille import affichage, db
+from grille.campagne import Campagne
 from grille.config import Configuration
 from grille.filtre import normaliser
 from grille.tv import JOURS_AFFICHES, PARIS
@@ -28,7 +29,9 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     """Émissions non annulées d'aujourd'hui (depuis minuit) et des 7 jours suivants."""
     maintenant = maintenant.astimezone(PARIS)
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
-    emissions = [{k: e[k] for k in CHAMPS + ("sources",) if k in e}
+    campagne = Campagne(config)
+    # « campagne » : motif du classement dans « Présidentielle 2027 », vide sinon.
+    emissions = [{**{k: e[k] for k in CHAMPS + ("sources",) if k in e}, "campagne": campagne.motif(e)}
                  for e in affichage.emissions(connexion, minuit, minuit + timedelta(days=JOURS_AFFICHES))]
     # Émissions où le candidat est présent ou seulement cité.
     presents = Counter(nom for e in emissions for nom in e["invites"] + e.get("cites", []))
@@ -43,6 +46,9 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
         "candidats": [{"nom": nom, "emissions": presents[nom]}
                       for nom in sorted((c["nom"] for c in config.candidats), key=normaliser)],
         "logos": logos,
+        # Directs des stations de radio : « Écouter en direct », les autres liens radio menant à l'émission.
+        "directs": sorted({d for c in config.chaines if c.plateforme == "radio" for d in c.direct}),
+        "sigles": {p["nom"]: p["sigle"] for p in config.candidats + config.personnalites if p.get("sigle")},
         "emissions": emissions,
     }
 

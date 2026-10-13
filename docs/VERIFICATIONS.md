@@ -201,3 +201,22 @@ Essai réel avec RMC et Radio Classique (12 octobre, 15 h 53) : 5 radios, 10 pag
 aucune anomalie. L'invité de la matinale de Radio Classique (Anne Goscinny le
 13 octobre) n'est retenu que s'il est une personnalité suivie ; sinon il est compté parmi
 les cas douteux, comme « L'édito politique ».
+
+## RTL en direct, Radio Courtoisie, Mediapart (13 octobre 2026)
+
+Sondés depuis GitHub Actions :
+
+- rtl.fr/grille/JJ-MM-AAAA pendant la journée : la carte de l'émission en cours
+  (`programme-card programme-card--direct`) n'a pas d'horaire ; ses chroniques sont listées
+  normalement. Le lecteur l'ignorait : le 13 octobre à 7 h 36, « L'invité RTL de 7h40 » et
+  « Face à Fogiel » sont passés en « annulé ». Corrigé (début à la fin de la carte
+  précédente, fin au début de la suivante). Les liens des chroniques mènent à la page de
+  l'émission (`rtl.fr/programmes/l-invite-de-7h40`), pas à l'épisode : la page de
+  l'émission propose la réécoute.
+- rc.fr (Radio Courtoisie, ex-radiocourtoisie.fr) : grille-type en PDF (`rc.fr/grille.pdf`) ;
+  la page « filtre par date » ne contient aucun horaire (remplie par le navigateur). La
+  matinale « Ligne Droite » (7 h – 9 h 40) est suivie par sa chaîne YouTube.
+- Mediapart : pas de programme publié (`mediapart.fr/studio` : vidéos et documentaires).
+  Sur YouTube, environ un direct par semaine vers 19 h (« Nos révélations sur Jordan
+  Bardella - Édition spéciale », 29 septembre ; débat Coquerel – Ridel, 22 septembre),
+  publié au moment du direct : il n'apparaît dans la grille que pendant sa diffusion.

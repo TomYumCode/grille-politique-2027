@@ -63,6 +63,11 @@ h1 { font-size: 1.15rem; margin: 0; }
 .jour b { display: block; font-size: 1rem; }
 .jour[aria-current="date"] { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
 .jour .nombre { display: block; font-size: .7rem; opacity: .8; }
+/* Présidentielle 2027 | Toute la politique */
+.perimetre { display: flex; margin: 6px 0 2px; border: 1px solid var(--bord); border-radius: 8px; overflow: hidden; }
+.perimetre button { flex: 1; padding: 7px 6px; font: inherit; font-size: .9rem; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.perimetre button + button { border-left: 1px solid var(--bord); }
+.perimetre button[aria-pressed="true"] { background: var(--accent); color: var(--accent-texte); font-weight: 600; }
 .filtres { padding: 8px 0 4px; display: grid; gap: 8px; }
 .filtres[hidden] { display: none; }
 .groupe { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

@@ -112,8 +112,8 @@ chaines:
 - {plateforme: youtube, nom: "RMC", adresse: "https://www.youtube.com/@RMC", categorie: "Radio privée, généraliste"}
 - {plateforme: youtube, nom: "Sud Radio", adresse: "https://www.youtube.com/@SudRadioOfficiel", categorie: "Radio privée, généraliste"}
 # Ajoutée le 10 octobre 2026 : émission politique « 2027 raisons de voter ». @RADIONOVAChannel (annuaire de radios)
-# introuvable le 11 octobre ; youtube.com/radionova d’après la recherche, à confirmer par la collecte.
-- {plateforme: youtube, nom: "Radio Nova", adresse: "https://www.youtube.com/@radionova", categorie: "Radio privée, culture", a_confirmer: true}
+# introuvable le 11 octobre ; youtube.com/radionova trouvée par la collecte du 12 octobre 2026.
+- {plateforme: youtube, nom: "Radio Nova", adresse: "https://www.youtube.com/@radionova", categorie: "Radio privée, culture"}
 - {plateforme: youtube, nom: "Quotidien", adresse: "https://www.youtube.com/@QuotidienTMC", categorie: "Talk-show"}
 - {plateforme: youtube, nom: "Le Figaro TV", adresse: "https://www.youtube.com/@LeFigaroTV", categorie: "Presse, droite"}
 - {plateforme: youtube, nom: "Le Figaro", adresse: "https://www.youtube.com/@LeFigaro", categorie: "Presse, droite"}

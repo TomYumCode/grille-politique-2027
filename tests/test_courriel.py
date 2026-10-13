@@ -41,6 +41,13 @@ def test_contenu_du_jour_et_temps_forts(connexion):
     assert m["Subject"] == "Grille politique — lundi 15 mars : 1 émission"
     assert "https://www.france.tv/france-2/direct.html" in m.get_body(("plain",)).get_content()
     assert "Titre ce-soir" in m.get_body(("html",)).get_content()
+    # Le sigle du parti suit le nom : « Marine Le Pen (RN) ».
+    assert "avec Marine Le Pen (RN)" in courriel.texte(c)
+
+
+def test_sigle_apres_le_nom():
+    conf = config.charger()
+    assert conf.nommer(["Jean-Philippe Tanguy", "Inconnu Dupont"]) == ["Jean-Philippe Tanguy (RN)", "Inconnu Dupont"]
 
 
 def test_etat_des_sources(connexion):

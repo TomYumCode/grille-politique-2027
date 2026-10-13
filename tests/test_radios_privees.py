@@ -54,6 +54,25 @@ def test_rtl():
     assert p["Un jour, une vie"].debut.isoformat() == "2026-10-14T00:30:00+02:00"
 
 
+def test_rtl_emission_en_cours_sans_horaire(conf, tmp_path):
+    """Pendant RTL Matin, sa carte n'a pas d'horaire (« programme-card--direct ») : ses chroniques
+    restent lues et ne passent pas en « annulé » (13 octobre 2026, 7 h 36)."""
+    en_direct = RTL.replace('<div class="programme-card "', '<div class="programme-card programme-card--direct"', 1)
+    en_direct = en_direct.replace(">07h00 - 09h00</h2>", "></h2>", 1)
+    p = {x.titre: x for x in radios_privees.lire_rtl(en_direct, "https://www.rtl.fr/grille/13-10-2026", date(2026, 10, 13))}
+    assert p["RTL Matin"].debut.isoformat() == "2026-10-13T07:00:00+02:00"
+    assert p["L'invité RTL de 7h40"].debut.isoformat() == "2026-10-13T07:43:00+02:00"
+    # Collecte de 7 h 36 après une collecte de la veille : rien n'est annulé.
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    veille = datetime(2026, 10, 12, 20, 0, tzinfo=PARIS)
+    radios_privees.collecter(conf, SessionHtml({"https://www.rtl.fr/grille": RTL}), connexion, veille)
+    rapport = radios_privees.collecter(conf, SessionHtml({"https://www.rtl.fr/grille": en_direct}), connexion,
+                                       datetime(2026, 10, 13, 7, 36, tzinfo=PARIS))
+    assert rapport.annulees == 0
+    assert any(e["titre"] == "L'invité RTL de 7h40" for e in rapport.retenues)
+    connexion.close()
+
+
 def test_europe1_grille_type_placee_sur_la_semaine():
     p = radios_privees.lire_europe1(EUROPE1, "https://www.europe1.fr/grille-des-programmes", date(2026, 10, 12))
     gi = [x for x in p if x.titre.startswith("La Grande interview")]

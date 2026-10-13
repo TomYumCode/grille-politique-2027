@@ -17,6 +17,7 @@ const etat = {
   categories: new Set(CATEGORIES),
   plateformes: new Set(Object.keys(PLATEFORMES)),
   candidat: "",
+  perimetre: "campagne", // « campagne » : Présidentielle 2027 ; « tout » : toute la politique
   chaine: "", // touché sur un logo : n'afficher que cette chaîne (non mémorisé)
 };
 
@@ -30,6 +31,7 @@ function lireStockage() {
       const connues = s.connues || PLATEFORMES_ANCIENNES;
       Object.keys(PLATEFORMES).filter((p) => !connues.includes(p)).forEach((p) => etat.plateformes.add(p));
       etat.candidat = s.candidat || "";
+      if (s.perimetre === "tout" || s.perimetre === "campagne") etat.perimetre = s.perimetre;
     }
   } catch (e) { /* stockage indisponible : filtres par défaut */ }
 }
@@ -38,6 +40,7 @@ function ecrireStockage() {
   try {
     localStorage.setItem("filtres", JSON.stringify({
       categories: [...etat.categories], plateformes: [...etat.plateformes], candidat: etat.candidat,
+      perimetre: etat.perimetre,
       connues: Object.keys(PLATEFORMES),
     }));
   } catch (e) { /* sans importance */ }
@@ -64,9 +67,16 @@ function sources(e) {
   return e.sources || [{ chaine: e.chaine, plateforme: e.plateforme, lien: e.lien }];
 }
 
+// « Jean-Philippe Tanguy (RN) » : sigle du parti après le nom, s'il est connu.
+function nommer(noms) {
+  const sigles = DONNEES.sigles || {};
+  return noms.map((n) => (sigles[n] ? `${n} (${sigles[n]})` : n)).join(", ");
+}
+
 function visible(e) {
   const s = sources(e);
-  return etat.categories.has(e.categorie) && s.some((x) => etat.plateformes.has(x.plateforme))
+  return (etat.perimetre === "tout" || !!e.campagne)
+    && etat.categories.has(e.categorie) && s.some((x) => etat.plateformes.has(x.plateforme))
     && (!etat.candidat || e.invites.includes(etat.candidat) || (e.cites || []).includes(etat.candidat))
     && (!etat.chaine || s.some((x) => x.chaine === etat.chaine));
 }
@@ -117,18 +127,22 @@ function libelleJour(iso, aujourdhui) {
   return [JOURS[date.getUTCDay()], String(j)];
 }
 
-function nomLien(url, e) {
+function nomLien(url, e, fini) {
   if (url.includes("youtube.com")) return "YouTube";
   if (url.includes("twitch.tv")) return "Twitch";
-  if (e.plateforme === "radio") return url.includes("/podcasts/") ? "Émission" : "Écouter";
+  // Radio : direct de la station, ou page de l'émission (réécoute une fois diffusée).
+  if (e.plateforme === "radio") {
+    if ((DONNEES.directs || []).includes(url)) return "Écouter en direct";
+    return fini ? "Réécouter" : "L'émission";
+  }
   // Agenda d'un parti : page de l'événement, ou direct de la chaîne pour un passage média.
   if (e.plateforme === "web") return url.includes("direct") ? "Direct " + e.chaine : "Détails";
   if (url.includes("lcp")) return "Direct LCP / Public Sénat";
   return e.plateforme === "tv" ? "Direct " + e.chaine : "Regarder";
 }
 
-function libelleLien(url, source, plusieurs) {
-  const nom = nomLien(url, source);
+function libelleLien(url, source, plusieurs, fini) {
+  const nom = nomLien(url, source, fini);
   // Plusieurs diffuseurs : préciser lequel (« YouTube · La France insoumise »).
   let libelle = plusieurs && !nom.includes(source.chaine) && !nom.includes("LCP") ? nom + " · " + source.chaine : nom;
   // Version particulière de la même diffusion (« Vélotypie et LSF »).
@@ -155,7 +169,7 @@ function carte(e, maintenant) {
       if (vus.has(url)) continue;
       vus.add(url);
       bas.append(el("a", { classe: "regarder", href: url, target: "_blank", rel: "noopener",
-        texte: libelleLien(url, x, s.length > 1) }));
+        texte: libelleLien(url, x, s.length > 1, fini) }));
     }
   }
   return el("article", {
@@ -164,9 +178,9 @@ function carte(e, maintenant) {
   },
     haut,
     el("p", { classe: "titre-emission", texte: e.titre }),
-    e.invites.length ? el("p", { classe: "invites", texte: "Avec " + e.invites.join(", ") }) : null,
+    e.invites.length ? el("p", { classe: "invites", texte: "Avec " + nommer(e.invites) }) : null,
     // Personnes seulement citées (sujet d'un commentaire), sans être sur le plateau.
-    (e.cites || []).length ? el("p", { classe: "cites", texte: "À propos de " + e.cites.join(", ") }) : null,
+    (e.cites || []).length ? el("p", { classe: "cites", texte: "À propos de " + nommer(e.cites) }) : null,
     bas);
 }
 
@@ -210,7 +224,10 @@ function afficherGrille(aujourdhui) {
   }
   if (!duJour.length) {
     const filtre = etat.categories.size < CATEGORIES.length || etat.plateformes.size < Object.keys(PLATEFORMES).length || etat.candidat;
-    main.append(el("p", { classe: "vide", texte: "Aucune émission politique annoncée ce jour" + (filtre ? " avec ces filtres." : ".") }));
+    const quoi = etat.perimetre === "campagne" ? "Aucune émission sur la présidentielle annoncée ce jour"
+      : "Aucune émission politique annoncée ce jour";
+    main.append(el("p", { classe: "vide", texte: quoi + (filtre ? " avec ces filtres." : ".")
+      + (etat.perimetre === "campagne" ? " Voir « Toute la politique »." : "") }));
     return;
   }
   let heureCourante = null;
@@ -258,6 +275,9 @@ function afficherFiltres() {
     puce.setAttribute("aria-pressed", String(ensemble.has(puce.dataset.valeur)));
   }
   document.getElementById("filtre-candidat").value = etat.candidat;
+  for (const b of document.querySelectorAll("[data-perimetre]")) {
+    b.setAttribute("aria-pressed", String(b.dataset.perimetre === etat.perimetre));
+  }
 }
 
 function afficher() {
@@ -288,6 +308,9 @@ function preparerFiltres() {
       });
       groupe.append(puce);
     }
+  }
+  for (const b of document.querySelectorAll("[data-perimetre]")) {
+    b.addEventListener("click", () => { etat.perimetre = b.dataset.perimetre; ecrireStockage(); afficher(); });
   }
   const choix = document.getElementById("filtre-candidat");
   // D'abord les candidats présents dans la grille (avec leur nombre d'émissions), puis les autres.
