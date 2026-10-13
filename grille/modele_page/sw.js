@@ -23,8 +23,10 @@ self.addEventListener("fetch", (ev) => {
     );
     return;
   }
+  // « no-cache » : toujours demander au serveur si la page a changé (GitHub Pages autorise
+  // sinon le navigateur à resservir une version vieille de 10 minutes après une mise à jour).
   ev.respondWith(
-    fetch(ev.request)
+    fetch(new Request(ev.request.url, { cache: "no-cache" }))
       .then((reponse) => {
         const copie = reponse.clone();
         caches.open(CACHE).then((c) => c.put(ev.request, copie));
