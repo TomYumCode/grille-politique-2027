@@ -130,6 +130,33 @@ partis:
   - {nom: "Génération.s", alias: []}
   - {nom: "Génération Écologie", alias: []}
 
+# Émissions à invités (« L'Invité de 7h50 », « Le grand entretien », « Face à face »…) :
+# retenues quand le titre ou le résumé donne à l'invité une fonction politique
+# (« Edouard Geffray, ministre de l'Education nationale »), même s'il n'est dans aucune liste.
+fonctions_politiques:
+  - "ministre"
+  - "ministres"
+  - "secrétaire d'État"
+  - "député"
+  - "députée"
+  - "députés"
+  - "eurodéputé"
+  - "eurodéputée"
+  - "sénateur"
+  - "sénatrice"
+  - "maire"
+  - "porte-parole"
+  - "secrétaire national"
+  - "secrétaire nationale"
+  - "premier secrétaire"
+  - "première secrétaire"
+  - "président de région"
+  - "présidente de région"
+  - "président du groupe"
+  - "présidente du groupe"
+  - "candidat"
+  - "candidate"
+
 # Bouton « Présidentielle 2027 » de la page : émissions consacrées à la campagne, parmi
 # toutes les émissions politiques retenues. Une émission y entre si un candidat (ou un membre
 # d'équipe de campagne, « campagne: true ») y est présent, si c'est un meeting, si elle vient

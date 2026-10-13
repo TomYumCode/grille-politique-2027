@@ -48,6 +48,8 @@ _SIGNES_APRES = ["invite", "invitee", "sera l invite", "sera l invitee", "est l 
 _COMMENTAIRE = ["reaction", "reactions", "reagit", "reagir", "reagissons", "debrief", "debriefing", "decryptage",
                 "decrypte", "decryptons", "analyse", "analysons", "revue de presse", "retour sur", "commente",
                 "commentons", "parodie", "cafe rhetorique"]
+# Émission à invités, d'après son titre (« L'Invité de 7h50 », « Le grand entretien »).
+CRENEAU_INVITE = re.compile(r"\b(invit\w*|interview\w*|entretien\w*|grand jury|face a face)\b")
 # Rediffusion d'un meeting que le guide titre « L'interview — … ».
 _REDIFFUSION = ["retransmission", "rediffusion", "extraits", "en differe"]
 _EVENEMENTS = ["meeting", "discours", "reunion publique"]
@@ -104,6 +106,7 @@ class FiltrePolitique:
         partis_ambigus = [n for p in config.partis if p.get("ambigu") for n in [p["nom"]] + (p.get("alias") or [])]
         self._mots_douteux = [(m, normaliser(m)) for m in (douteux.get("mots") or []) + partis_ambigus]
         self._emissions_a_invites = [(e, normaliser(e)) for e in douteux.get("emissions_a_invites") or []]
+        self._fonctions = [(m, normaliser(m)) for m in config.fonctions_politiques]
         self.douteux: list[dict] = []  # cas douteux vus pendant la collecte en cours
 
     def invites(self, texte: str) -> list[str]:
@@ -234,4 +237,12 @@ class FiltrePolitique:
         for mot, mot_n in self._mots_titre:
             if _contient(titre_n, mot_n):
                 return decision(MOTS_CLES, f"« {mot} » dans le titre")
+        # Émission à invités dont l'invité a une fonction politique, même absent des listes
+        # (« L'Invité de 7h50 — Edouard Geffray, ministre de l'Education nationale »).
+        titre_complet_n = normaliser(titre_complet)
+        if CRENEAU_INVITE.search(titre_complet_n) or any(
+                _commence_par(titre_complet_n, e) for _, e in self._emissions_a_invites):
+            for mot, mot_n in self._fonctions:
+                if _contient(texte_n, mot_n) or _contient(titre_complet_n, mot_n):
+                    return decision(MOTS_CLES, f"invité « {mot} »")
         return None

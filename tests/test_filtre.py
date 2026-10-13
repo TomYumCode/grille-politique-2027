@@ -27,7 +27,9 @@ def test_normaliser():
         ("Franc-jeu", "", ("liste blanche", "analyse")),  # titre commençant par une émission de la liste
         ("Franc jeu — Gabriel Attal face à Marion Maréchal", "", ("liste blanche", "analyse")),
         ("Franchise", "", None),
-        ("Face à face", "Avec un ministre", None),  # « Face à face » réservé à BFMTV
+        # « Face à face » n'est en liste blanche que sur BFMTV, mais un ministre invité suffit ailleurs.
+        ("Face à face", "Avec un ministre", ("mots-clés", "débat")),
+        ("Face à face", "Avec un chef étoilé", None),
         ("Réunion publique à Saint-Ouen | Présidentielle 2027", "", ("mots-clés", "meeting")),
         ("L'heure de vérité", "Avec Édouard Philippe", ("mots-clés", "interview")),
         ("Élection de Miss France 2027", "", None),
@@ -95,3 +97,17 @@ def test_rediffusion_d_un_meeting(politique):
     assert f.decider(chaines["CNews"], "L'interview", "Au lendemain de son meeting, il répond à nos questions.",
                      sous_titre="Jean-Luc Mélenchon").categorie == "interview"
     assert f.decider(chaines["Hugo au Perchoir"], "Réaction au meeting de Mélenchon", "").categorie == "analyse"
+
+
+@pytest.mark.parametrize("emission, sous_titre, retenue", [
+    # Radio France publie l'invité la veille : une fonction politique suffit (13 et 14 octobre 2026).
+    ("L'Invité de 7h50", "Edouard Geffray, ministre de l'Education nationale", True),
+    ("L'Invité de 8h20 : le grand entretien", "Gérard Davet et Fabrice Lhomme", False),
+    ("L'Invité de 7h50", "Natacha Polony", False),
+    ("L'invité du 13/14", "Zita et le professeur Guillaume Bronsard", False),
+    # Hors émission à invités, la fonction seule ne suffit pas (journal, documentaire…).
+    ("Le journal de 8h", "Le ministre de l'Intérieur annonce un plan", False),
+])
+def test_invite_avec_fonction_politique(politique, emission, sous_titre, retenue):
+    f, chaines = politique
+    assert (f.decider(chaines["France Inter"], emission, "", sous_titre=sous_titre) is not None) is retenue

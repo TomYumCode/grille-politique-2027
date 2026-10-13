@@ -57,6 +57,8 @@ class Configuration:
     tv_heures_masquees: tuple[int, int] | None = None  # (de, a) : début dans [de, a[ → ignoré
     # Cas douteux à mesurer : {"mots": [...], "emissions_a_invites": [...]}.
     cas_douteux: dict = field(default_factory=dict)
+    # Fonctions qui font retenir une émission à invités (« ministre », « député »…).
+    fonctions_politiques: list[str] = field(default_factory=list)
     # Mots qui classent une émission dans « Présidentielle 2027 » (grille/campagne.py).
     mots_presidentielle: list[str] = field(default_factory=list)
     anomalies: list[str] = field(default_factory=list)
@@ -200,6 +202,9 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
     for e in liste_blanche.get("emissions") or []:
         if not (isinstance(e, str) or (isinstance(e, dict) and isinstance(e.get("titre"), str))):
             raise ErreurConfig(f"politique.yaml, liste blanche : émission illisible {e!r} (texte ou {{titre: …, chaine: …}})")
+    fonctions_politiques = politique.get("fonctions_politiques") or []
+    if not isinstance(fonctions_politiques, list) or not all(isinstance(m, str) for m in fonctions_politiques):
+        raise ErreurConfig("politique.yaml : « fonctions_politiques: » doit être une liste de textes")
     mots_presidentielle = (politique.get("presidentielle") or {}).get("mots") or []
     if not isinstance(mots_presidentielle, list) or not all(isinstance(m, str) for m in mots_presidentielle):
         raise ErreurConfig("politique.yaml : « presidentielle: mots: » doit être une liste de textes")
@@ -218,6 +223,7 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         mots_cles_titre=mots_cles_titre,
         tv_heures_masquees=masque,
         cas_douteux=cas_douteux,
+        fonctions_politiques=fonctions_politiques,
         mots_presidentielle=mots_presidentielle,
         anomalies=anomalies,
     )

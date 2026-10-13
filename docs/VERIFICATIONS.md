@@ -220,3 +220,15 @@ Sondés depuis GitHub Actions :
   Sur YouTube, environ un direct par semaine vers 19 h (« Nos révélations sur Jordan
   Bardella - Édition spéciale », 29 septembre ; débat Coquerel – Ridel, 22 septembre),
   publié au moment du direct : il n'apparaît dans la grille que pendant sa diffusion.
+
+## Invités annoncés par les chaînes (13 octobre 2026)
+
+Sondés depuis GitHub Actions : aucun site n'annonce ses invités à l'avance. RTL
+(`/programmes/l-invite-de-7h40`, `/programmes/le-grand-jury`), TF1 Info / LCI et franceinfo
+publient des articles après l'émission (« Invité de RTL ce mardi 13 octobre, … ») ; Sud
+Radio (`/emission/linvite-politique-sud-radio`) nomme l'invité du jour le matin même ;
+BFMTV, Europe 1 et France Inter : descriptions générales ; LCP, Public Sénat, CNews : pas de
+page de programme utilisable. En revanche, l'API Radio France donne les invités de France
+Inter dès la veille au soir dans le titre de la diffusion (« L'Invité de 7h50 — Natacha
+Polony », publié à 19 h 36 le 13 octobre pour le 14), et la grille RTL du jour présente
+l'invité dans la description de la chronique.
