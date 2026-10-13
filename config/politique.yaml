@@ -11,7 +11,7 @@
 # « alias » : autres formes du nom à repérer dans les titres.
 candidats:
   - {nom: "Jean-Luc Mélenchon", alias: ["Mélenchon"], parti: "La France insoumise", sigle: "LFI", statut: "déclaré"}
-  - {nom: "François Ruffin", alias: ["Ruffin"], parti: "Debout!", sigle: "Debout!", statut: "déclaré"}
+  - {nom: "François Ruffin", alias: ["Ruffin"], parti: "Debout!", sigle: "Écologiste et social", statut: "déclaré"}
   - {nom: "Juan Branco", alias: ["Branco"], parti: "Sans étiquette", sigle: "SE", statut: "déclaré"}
   - {nom: "Nathalie Arthaud", alias: ["Arthaud"], parti: "Lutte ouvrière", sigle: "LO", statut: "déclaré"}
   - {nom: "Gabriel Attal", alias: ["Attal"], parti: "Renaissance", sigle: "Renaissance", statut: "déclaré"}
@@ -29,10 +29,10 @@ candidats:
   - {nom: "Marine Tondelier", alias: ["Tondelier"], parti: "Les Écologistes", sigle: "Les Écologistes", statut: "déclarée"}
   - {nom: "Fabien Roussel", alias: ["Roussel"], parti: "PCF", sigle: "PCF", statut: "déclaré (validé par le PCF le 6 septembre)"}
   - {nom: "Karim Bouamrane", alias: ["Bouamrane"], parti: "Parti socialiste", sigle: "PS", statut: "déclaré (juin 2026), hors primaire"}
-  - {nom: "Xavier Bertrand", alias: [], parti: "", statut: "à vérifier"}
-  - {nom: "Clémentine Autain", alias: ["Autain"], parti: "", statut: "primaire unitaire de gauche, à vérifier"}
-  - {nom: "Bruno Le Maire", alias: [], parti: "", statut: "à vérifier"}
-  - {nom: "Delphine Batho", alias: ["Batho"], parti: "", statut: "à vérifier"}
+  - {nom: "Xavier Bertrand", alias: [], parti: "Les Républicains", sigle: "LR", statut: "à vérifier"}
+  - {nom: "Clémentine Autain", alias: ["Autain"], parti: "", sigle: "Écologiste et social", statut: "primaire unitaire de gauche, à vérifier"}
+  - {nom: "Bruno Le Maire", alias: [], parti: "Renaissance", sigle: "Renaissance", statut: "à vérifier"}
+  - {nom: "Delphine Batho", alias: ["Batho"], parti: "", sigle: "Écologiste et social", statut: "à vérifier"}
   - {nom: "Anasse Kazib", alias: ["Kazib"], parti: "Révolution Permanente", sigle: "Révolution permanente", statut: "à vérifier"}
   - {nom: "Dominique de Villepin", alias: ["Villepin"], parti: "La France Humaniste", sigle: "La France humaniste", statut: "à vérifier"}
   # Petites candidatures relevées le 12 octobre 2026 (lejdd.fr, touteleurope.eu, france24.com).
@@ -89,6 +89,10 @@ personnalites:
   # Éric Zemmour : proches de longue date, rôle dans la campagne à confirmer.
   - {nom: "Sarah Knafo", alias: ["Knafo"], sigle: "Reconquête"}
   - {nom: "Stanislas Rigault", alias: [], sigle: "Reconquête"}
+  # Groupe Écologiste et social à l'Assemblée (comme Clémentine Autain, François Ruffin,
+  # Delphine Batho). « Rousseau » seul attraperait Jean-Jacques : nom complet seulement.
+  - {nom: "Alexis Corbière", alias: ["Corbière"], sigle: "Écologiste et social"}
+  - {nom: "Sandrine Rousseau", alias: [], sigle: "Écologiste et social"}
   # Nathalie Arthaud : à confirmer.
   - {nom: "Jean-Pierre Mercier", alias: [], sigle: "LO"}
   # Battus à la primaire de la gauche du 11 octobre 2026 (gagnée par Raphaël Glucksmann).
