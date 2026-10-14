@@ -157,7 +157,7 @@ La page est une application web installable (PWA) : icône sur l'écran d'accuei
 **Email quotidien**
 
 - Envoi chaque matin à 7 h, heure de Paris, à l'adresse enregistrée dans le secret GitHub `EMAIL_DESTINATAIRE` (jamais en clair dans le dépôt, qui est public).
-- Contenu : la grille du jour triée par heure, puis les temps forts des 3 jours suivants.
+- Contenu : la grille du jour triée par heure, puis les temps forts des 3 jours suivants. Depuis le 14 octobre 2026 : émissions du jour sur la présidentielle d'abord, puis les autres émissions politiques ; temps forts de la présidentielle : seulement les émissions où un candidat officiel (déclaré ou désigné) ou un membre de son équipe de campagne est présent ; bouton « Présidentielle 2027 » : mot de campagne dans le titre seulement.
 - Chaque ligne renvoie vers le lien de visionnage.
 - En option pour plus tard : une alerte 15 minutes avant un débat entre candidats.
 

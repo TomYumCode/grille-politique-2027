@@ -29,7 +29,10 @@ def _e(titre, chaine="France 2", categorie="analyse", invites=(), cites=(), resu
     (_e("Réunion publique à Frontignan", chaine="La France insoumise", categorie="meeting"), True),
     (_e("Vlog du dimanche", chaine="Rassemblement National"), True),
     (_e("Controverse — Faut-il interdire les sondages ?", chaine="LCP / Public Sénat"), True),
-    (_e("C politique", chaine="France 5", resume="Les candidats à la présidentielle face aux jeunes."), True),
+    # Mot de campagne dans le résumé seulement : ne suffit pas (Tocsin, documentaires…).
+    (_e("C politique", chaine="France 5", resume="Les candidats à la présidentielle face aux jeunes."), False),
+    (_e("Balladur - Chirac : mensonges et trahisons", chaine="LCP / Public Sénat",
+        resume="Retour sur la présidentielle de 1995."), False),
     # Actualité politique hors campagne.
     (_e("Questions au gouvernement", chaine="LCP / Public Sénat"), False),
     (_e("Budget 2027 : débat sur la dette", chaine="LCP - Assemblée nationale", categorie="débat"), False),

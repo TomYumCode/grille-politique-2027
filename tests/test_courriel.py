@@ -10,8 +10,8 @@ from grille.tv import PARIS
 MAINTENANT = datetime(2027, 3, 15, 7, 0, tzinfo=PARIS)
 
 
-def _e(id_, debut, categorie="analyse", invites=(), **autres):
-    return {"id": id_, "titre": f"Titre {id_}", "debut": debut.isoformat(), "fin": (debut + timedelta(hours=1)).isoformat(),
+def _e(id_, debut, categorie="analyse", invites=(), titre=None, **autres):
+    return {"id": id_, "titre": titre or f"Titre {id_}", "debut": debut.isoformat(), "fin": (debut + timedelta(hours=1)).isoformat(),
             "plateforme": "tv", "chaine": "France 2", "categorie": categorie, "invites": list(invites),
             "lien": ["https://www.france.tv/france-2/direct.html"], "statut": "annoncé", "filtre": "mots-clés", **autres}
 
@@ -26,23 +26,40 @@ def connexion(tmp_path):
 def test_contenu_du_jour_et_temps_forts(connexion):
     emissions = [
         _e("hier-soir", MAINTENANT - timedelta(hours=10)),
-        _e("ce-soir", MAINTENANT + timedelta(hours=14)),
-        _e("demain-analyse", MAINTENANT + timedelta(days=1)),  # ni débat ni candidat : pas un temps fort
-        _e("demain-debat", MAINTENANT + timedelta(days=1, hours=2), "débat"),
+        _e("ce-soir", MAINTENANT + timedelta(hours=14)),  # politique, hors campagne
+        _e("ce-soir-campagne", MAINTENANT + timedelta(hours=15), titre="Présidentielle : le grand débat"),
+        _e("demain-analyse", MAINTENANT + timedelta(days=1)),
+        # Débat de campagne sans candidat : les mots-clés ne font pas un temps fort.
+        _e("demain-debat-campagne", MAINTENANT + timedelta(days=1, hours=3), "débat",
+           titre="Débat : faut-il interdire les sondages ?"),
+        # Membre d'équipe de campagne : compte ; candidat pressenti : ne compte pas.
+        _e("demain-porte-parole", MAINTENANT + timedelta(days=1, hours=4), "interview", ["Jean-Philippe Tanguy"]),
+        _e("j2-pressenti", MAINTENANT + timedelta(days=2), "meeting", ["François Asselineau"]),
         _e("j3-candidat", MAINTENANT + timedelta(days=3), "interview", ["Marine Le Pen"]),
-        _e("j4-meeting", MAINTENANT + timedelta(days=4), "meeting"),  # au-delà de 3 jours
+        _e("j4-meeting", MAINTENANT + timedelta(days=4), "meeting", ["Gabriel Attal"]),  # au-delà de 3 jours
     ]
     db.enregistrer_collecte(connexion, emissions, "tv", set(), MAINTENANT)
     c = courriel.contenu(connexion, config.charger(), MAINTENANT)
     assert c["titre_jour"] == "lundi 15 mars"
-    assert [e["id"] for e in c["aujourdhui"]] == ["ce-soir"]
-    assert [e["id"] for e in c["temps_forts"]] == ["demain-debat", "j3-candidat"]
+    assert [e["id"] for e in c["presidentielle"]] == ["ce-soir-campagne"]
+    assert [e["id"] for e in c["autres"]] == ["ce-soir"]
+    # Temps forts : un candidat officiel (déclaré ou désigné) ou un membre d'équipe de campagne présent.
+    assert [e["id"] for e in c["temps_forts"]] == ["demain-porte-parole", "j3-candidat"]
     m = courriel.message(c)
-    assert m["Subject"] == "Grille politique — lundi 15 mars : 1 émission"
-    assert "https://www.france.tv/france-2/direct.html" in m.get_body(("plain",)).get_content()
+    assert m["Subject"] == "Grille politique — lundi 15 mars : 1 sur la présidentielle, 2 émissions en tout"
+    texte = m.get_body(("plain",)).get_content()
+    assert texte.index("PRÉSIDENTIELLE 2027 — AUJOURD'HUI") < texte.index("Présidentielle : le grand débat") \
+        < texte.index("TOUTE LA POLITIQUE") < texte.index("Titre ce-soir")
+    assert "https://www.france.tv/france-2/direct.html" in texte
     assert "Titre ce-soir" in m.get_body(("html",)).get_content()
     # Le sigle du parti suit le nom : « Marine Le Pen (RN) ».
     assert "avec Marine Le Pen (RN)" in courriel.texte(c)
+
+
+def test_candidats_officiels():
+    officiels = config.charger().candidats_officiels()
+    assert {"Marine Le Pen", "Raphaël Glucksmann", "Bruno Retailleau", "Natacha Polony"} <= officiels
+    assert not {"François Asselineau", "Xavier Bertrand", "Jean-Philippe Tanguy"} & officiels
 
 
 def test_sigle_apres_le_nom():

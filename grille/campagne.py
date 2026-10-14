@@ -8,7 +8,7 @@ Une émission est de la campagne si :
   électoral ? ») ; cité seulement dans le résumé, il ne suffit pas ;
 - c'est un meeting ;
 - elle vient de la chaîne d'un parti ou d'un candidat ;
-- son titre ou son résumé contient un mot de la rubrique « presidentielle: » de politique.yaml
+- son titre (pas son résumé) contient un mot de la rubrique « presidentielle: » de politique.yaml
   (« présidentielle », « candidat », « primaire », « sondage »…).
 
 Calculé à l'affichage, à chaque collecte : quand l'invité d'une émission est annoncé (guide,
@@ -49,8 +49,9 @@ class Campagne:
         chaines = [s["chaine"] for s in e.get("sources") or [e]]
         if any(c in self._chaines for c in chaines):
             return "chaîne de parti ou de candidat"
-        texte = normaliser(f"{e['titre']}\n{e.get('resume') or ''}")
+        # Mot de campagne dans le titre seulement : un résumé cite la présidentielle pour
+        # n'importe quel sujet (texte de présentation d'une chaîne, documentaire historique).
         for mot, mot_n in self._mots:
-            if _contient(texte, mot_n):
-                return f"« {mot} »"
+            if _contient(titre_n, mot_n):
+                return f"« {mot} » dans le titre"
         return ""

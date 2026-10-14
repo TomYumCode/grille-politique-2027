@@ -162,8 +162,8 @@ fonctions_politiques:
 # Bouton « Présidentielle 2027 » de la page : émissions consacrées à la campagne, parmi
 # toutes les émissions politiques retenues. Une émission y entre si un candidat (ou un membre
 # d'équipe de campagne, « campagne: true ») y est présent, si c'est un meeting, si elle vient
-# de la chaîne d'un parti ou d'un candidat, ou si son titre ou son résumé contient l'un de ces
-# mots. Recalculé à chaque collecte : un invité annoncé la veille la fait entrer.
+# de la chaîne d'un parti ou d'un candidat, ou si son titre (pas son résumé) contient l'un de
+# ces mots. Recalculé à chaque collecte : un invité annoncé la veille la fait entrer.
 presidentielle:
   mots:
     - "présidentielle"
