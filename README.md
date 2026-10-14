@@ -76,8 +76,9 @@ Deux tâches tournent toutes seules sur GitHub (onglet **Actions** du dépôt) :
 - **Collecte horaire**, chaque heure vers :17 : télévision, radio, YouTube, Twitch, puis
   publication de la page sur `https://tomyumcode.github.io/grille-politique-2027/`.
 - **Email du matin**, à 7 h (heure de Paris) : émissions du jour sur la présidentielle,
-  puis les autres émissions politiques du jour, temps forts des 3 jours suivants (émissions
-  où un candidat officiel, de statut « déclaré » ou « désigné », est présent), état des sources. Objet : « 4 sur la
+  puis les autres émissions politiques du jour, temps forts de la présidentielle des 3 jours
+  suivants (émissions où un candidat officiel, de statut « déclaré » ou « désigné », ou un
+  membre de son équipe de campagne est présent), état des sources. Objet : « 4 sur la
   présidentielle, 13 émissions en tout ».
 
 La base est conservée sur la branche `donnees`, qui ne garde que la dernière version.
@@ -187,7 +188,7 @@ est de la campagne (`grille/campagne.py`) si :
   `config/politique.yaml`), y est présent ;
 - un candidat est nommé dans le titre (« Glucksmann : gros scandale électoral ? ») ;
 - c'est un meeting, ou elle vient de la chaîne d'un parti ou d'un candidat ;
-- son titre ou son résumé contient un mot de la rubrique `presidentielle:` de
+- son titre (pas son résumé) contient un mot de la rubrique `presidentielle:` de
   `config/politique.yaml` (« présidentielle », « candidat », « primaire », « sondage »…).
 
 YouTube : le texte de présentation qu'une chaîne répète dans chaque description (« La
@@ -235,7 +236,8 @@ est présente si (`FiltrePolitique.presences` dans `grille/filtre.py`) :
 Un titre de commentaire (« réaction », « décryptage », « débrief »…) ne rend personne
 présent. Un résumé qui parle de rediffusion ou de retransmission d'un meeting classe
 l'émission en « meeting », même titrée « L'interview ». Le filtre « Candidat » de la page
-montre les deux ; les temps forts de l'email ne gardent que les émissions où un candidat officiel est présent. Le résumé donné par la source est gardé en base (colonne `resume`).
+montre les deux ; les temps forts de l'email ne gardent que les émissions où un candidat officiel ou un membre
+d'équipe de campagne est présent. Le résumé donné par la source est gardé en base (colonne `resume`).
 
 ## Doublons entre chaînes
 

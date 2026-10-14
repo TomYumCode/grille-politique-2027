@@ -69,6 +69,10 @@ class Configuration:
         return {c["nom"] for c in self.candidats
                 if str(c.get("statut", "")).lower().startswith(("déclar", "désign"))}
 
+    def equipes_de_campagne(self) -> set[str]:
+        """Personnalités marquées « campagne: true » : porte-parole et équipes des candidats."""
+        return {p["nom"] for p in self.personnalites if p.get("campagne")}
+
     def nommer(self, noms: list[str]) -> list[str]:
         """« Jean-Philippe Tanguy (RN) » : sigle de politique.yaml après le nom, s'il est connu."""
         sigles = {p["nom"]: p["sigle"] for p in self.candidats + self.personnalites if p.get("sigle")}

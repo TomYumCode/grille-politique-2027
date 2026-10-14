@@ -32,7 +32,7 @@ def test_contenu_du_jour_et_temps_forts(connexion):
         # Débat de campagne sans candidat : les mots-clés ne font pas un temps fort.
         _e("demain-debat-campagne", MAINTENANT + timedelta(days=1, hours=3), "débat",
            titre="Débat : faut-il interdire les sondages ?"),
-        # Membre d'équipe de campagne, candidat pressenti : pas un candidat officiel.
+        # Membre d'équipe de campagne : compte ; candidat pressenti : ne compte pas.
         _e("demain-porte-parole", MAINTENANT + timedelta(days=1, hours=4), "interview", ["Jean-Philippe Tanguy"]),
         _e("j2-pressenti", MAINTENANT + timedelta(days=2), "meeting", ["François Asselineau"]),
         _e("j3-candidat", MAINTENANT + timedelta(days=3), "interview", ["Marine Le Pen"]),
@@ -43,8 +43,8 @@ def test_contenu_du_jour_et_temps_forts(connexion):
     assert c["titre_jour"] == "lundi 15 mars"
     assert [e["id"] for e in c["presidentielle"]] == ["ce-soir-campagne"]
     assert [e["id"] for e in c["autres"]] == ["ce-soir"]
-    # Temps forts : seulement les émissions où un candidat officiel (déclaré ou désigné) est présent.
-    assert [e["id"] for e in c["temps_forts"]] == ["j3-candidat"]
+    # Temps forts : un candidat officiel (déclaré ou désigné) ou un membre d'équipe de campagne présent.
+    assert [e["id"] for e in c["temps_forts"]] == ["demain-porte-parole", "j3-candidat"]
     m = courriel.message(c)
     assert m["Subject"] == "Grille politique — lundi 15 mars : 1 sur la présidentielle, 2 émissions en tout"
     texte = m.get_body(("plain",)).get_content()
