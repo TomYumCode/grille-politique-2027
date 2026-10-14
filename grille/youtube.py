@@ -23,6 +23,7 @@ from grille.tv import JOURS_AFFICHES, PARIS, statut
 
 DELAI = 30
 VIDEOS_PAR_CHAINE = 15  # vidéos récentes examinées par chaîne
+LIGNE_MIN = 20  # une ligne plus courte (« 🔔🔔 ») ne compte pas comme texte de présentation
 # Un direct annoncé dont l'heure est passée depuis plus longtemps a été abandonné sans être supprimé.
 RETARD_MAXIMAL = timedelta(hours=6)
 
@@ -179,17 +180,21 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
         ids_en_cours = _en_cours_en_base(connexion)
         identifiants = list(dict.fromkeys(list(chaine_de_la_video) + ids_en_cours))
         par_canal = {resolues[c.adresse][0]: c for c in chaines if c.adresse in resolues}
+        videos = []
         for i in range(0, len(identifiants), 50):
             lot = identifiants[i:i + 50]
             reponse = client.appeler("videos", part="snippet,liveStreamingDetails", id=",".join(lot), maxResults=50)
-            for video in reponse.get("items") or []:
-                rapport.videos_examinees += 1
-                chaine = chaine_de_la_video.get(video["id"]) or par_canal.get(video["snippet"]["channelId"])
-                if chaine is None:
-                    continue
-                emission = _emission(video, chaine, filtre, maintenant, debut_du_jour, fin_horizon)
-                if emission:
-                    rapport.retenues.append(emission)
+            videos += reponse.get("items") or []
+        sans_presentation(videos)
+        ecartees: set[str] = set()
+        for video in videos:
+            rapport.videos_examinees += 1
+            chaine = chaine_de_la_video.get(video["id"]) or par_canal.get(video["snippet"]["channelId"])
+            if chaine is None:
+                continue
+            emission = _emission(video, chaine, filtre, maintenant, debut_du_jour, fin_horizon, ecartees)
+            if emission:
+                rapport.retenues.append(emission)
     except QuotaEpuise as e:
         rapport.interrompu = str(e)
     except requests.RequestException as e:
@@ -202,11 +207,32 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     rapport.annulees = db.enregistrer_collecte(
         connexion, a_ecrire, "youtube", set() if rapport.interrompu else couvertes, maintenant
     )
+    if not rapport.interrompu:
+        # Vidéo déjà dans la grille que le filtre écarte maintenant (filtre ou description changés) :
+        # elle en sort, même commencée.
+        rapport.annulees += db.annuler(connexion, [f"youtube:{i}" for i in ecartees], maintenant)
     return rapport
 
 
+def sans_presentation(videos: list[dict]) -> None:
+    """Retire des descriptions le texte de présentation de la chaîne : les lignes qui reviennent
+    mot pour mot dans plusieurs vidéos de la même chaîne (« La présidentielle arrive à grands pas,
+    et la censure avec elle ! Gardez la ligne directe avec Tocsin… »). Sinon un mot de ce texte
+    ferait retenir chaque vidéo, quel que soit son sujet. Modifie les vidéos en place."""
+    lignes = lambda v: [l.strip() for l in (v["snippet"].get("description") or "").splitlines()]
+    vues: dict[tuple[str, str], int] = {}
+    for v in videos:
+        for l in set(lignes(v)):
+            if len(l) >= LIGNE_MIN:
+                vues[(v["snippet"]["channelId"], l)] = vues.get((v["snippet"]["channelId"], l), 0) + 1
+    for v in videos:
+        canal = v["snippet"]["channelId"]
+        gardees = [l for l in lignes(v) if vues.get((canal, l), 0) < 2]
+        v["snippet"]["description"] = "\n".join(l for l in gardees if l)
+
+
 def _emission(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: datetime,
-              debut_du_jour: datetime, fin_horizon: datetime) -> dict | None:
+              debut_du_jour: datetime, fin_horizon: datetime, ecartees: set[str] | None = None) -> dict | None:
     details = video.get("liveStreamingDetails")
     etat = video["snippet"].get("liveBroadcastContent")
     if not details:
@@ -226,6 +252,8 @@ def _emission(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: 
     if decision is None:
         filtre.noter_douteux(f"youtube:{video['id']}", "youtube", chaine, titre,
                              video["snippet"].get("description", ""), debut)
+        if ecartees is not None:
+            ecartees.add(video["id"])
         return None
     if etat == "live":
         etat_emission = "en direct"
