@@ -103,7 +103,9 @@ def test_rediffusion_d_un_meeting(politique):
     # Radio France publie l'invité la veille : une fonction politique suffit (13 et 14 octobre 2026).
     ("L'Invité de 7h50", "Edouard Geffray, ministre de l'Education nationale", True),
     ("L'Invité de 8h20 : le grand entretien", "Gérard Davet et Fabrice Lhomme", False),
-    ("L'Invité de 7h50", "Natacha Polony", False),
+    # Natacha Polony, journaliste… puis candidate déclarée ce même 14 octobre : retenue.
+    ("L'Invité de 7h50", "Natacha Polony", True),
+    ("L'Invité de 7h50", "Fabrice Luchini", False),
     ("L'invité du 13/14", "Zita et le professeur Guillaume Bronsard", False),
     # Hors émission à invités, la fonction seule ne suffit pas (journal, documentaire…).
     ("Le journal de 8h", "Le ministre de l'Intérieur annonce un plan", False),
