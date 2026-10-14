@@ -36,3 +36,14 @@ def _e(titre, chaine="France 2", categorie="analyse", invites=(), cites=(), resu
 ])
 def test_classement(classer, emission, dedans):
     assert bool(classer(emission)) is dedans
+
+
+def test_tocsin_toujours_retenu_mais_pas_forcement_campagne(classer):
+    """Liste blanche : toute matinale de Tocsin entre dans « Toute la politique » ; elle n'entre
+    dans « Présidentielle 2027 » que si son contenu propre parle de la campagne."""
+    from grille.filtre import FiltrePolitique
+    conf = config.charger()
+    tocsin = next(c for c in conf.chaines if c.nom == "Tocsin")
+    decision = FiltrePolitique(conf).decider(tocsin, "La Matinale du 14/10 : la France sous la tutelle de la BCE ?", "")
+    assert decision is not None and decision.filtre == "liste blanche"
+    assert not classer(_e("La Matinale du 14/10 : la France sous la tutelle de la BCE ?", chaine="Tocsin"))

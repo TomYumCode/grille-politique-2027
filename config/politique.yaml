@@ -193,6 +193,8 @@ liste_blanche:
   # Ses émissions politiques passent par les mots-clés et la liste des émissions.
   chaines:
     - "LCP-Assemblée nationale"
+    # Matinale quotidienne largement politique (YouTube, directs seulement).
+    - "Tocsin"
   # Toute émission d'une chaîne de ces catégories est retenue.
   categories_de_chaine:
     - "Parti"
