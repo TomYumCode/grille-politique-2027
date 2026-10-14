@@ -76,7 +76,8 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
         if temps_fort(e, candidats) and datetime.fromisoformat(e["debut"]) >= minuit + timedelta(days=1)
     ]
     def nommer(e: dict) -> dict:
-        return dict(e, invites_affiches=config.nommer(e["invites"]), cites_affiches=config.nommer(e.get("cites") or []))
+        return dict(e, invites_affiches=config.nommer(e["invites"]), cites_affiches=config.nommer(e.get("cites") or []),
+                    presentation=affichage.presentation(e))
 
     return {
         "titre_jour": _jour(maintenant),
@@ -98,6 +99,8 @@ def _ligne_texte(e: dict, avec_jour: bool = False) -> str:
     quand = (_jour(debut) + " " if avec_jour else "") + f"{debut:%H:%M}"
     presents, cites = e.get("invites_affiches", e["invites"]), e.get("cites_affiches", e.get("cites") or [])
     invites = f" — avec {', '.join(presents)}" if presents else ""
+    if e.get("presentation"):
+        invites += f" — {e['presentation']}"
     if cites:
         invites += f" — à propos de {', '.join(cites)}"
     lien = "".join(f"\n      {url}" for url in e["lien"])
@@ -135,6 +138,8 @@ def _ligne_html(e: dict, avec_jour: bool = False) -> str:
         titre = f'<a href="{html.escape(e["lien"][0])}" style="color:#1f3a5f">{titre}</a>'
     presents, cites = e.get("invites_affiches", e["invites"]), e.get("cites_affiches", e.get("cites") or [])
     invites = f'<div style="color:#5b6470;font-size:13px">Avec {html.escape(", ".join(presents))}</div>' if presents else ""
+    if e.get("presentation"):
+        invites += f'<div style="color:#5b6470;font-size:13px">{html.escape(e["presentation"])}</div>'
     if cites:
         invites += ('<div style="color:#5b6470;font-size:13px;font-style:italic">À propos de '
                     f'{html.escape(", ".join(cites))}</div>')

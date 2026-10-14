@@ -196,6 +196,19 @@ Après chaque nom, le sigle du parti (« Jean-Philippe Tanguy (RN) ») : rubriqu
 candidats et personnalités de `config/politique.yaml` (« équipe Attal » quand le parti d'un
 membre d'équipe de campagne n'est pas vérifié).
 
+## Invités des émissions à invités
+
+Une émission à invités (« L'Invité de 7h50 », « Le grand entretien », « Face à face »…) est
+retenue quand son invité est un candidat ou une personnalité suivie, mais aussi quand le
+titre ou le résumé lui donne une fonction politique (rubrique `fonctions_politiques` de
+`config/politique.yaml` : ministre, député, sénateur, maire, porte-parole…) :
+« L'Invité de 7h50 — Edouard Geffray, ministre de l'Education nationale ». Radio France
+publie ces invités dès la veille au soir ; RTL et Sud Radio le jour même.
+
+Quand l'invité n'est dans aucune liste, la carte d'une émission de radio montre la phrase
+de la station qui le présente (« Patrick Martin, chef d'entreprise et président du Medef,
+est l'invité des Matins ») ; aussi dans l'email.
+
 ## Présents ou seulement cités
 
 Une carte distingue les personnes présentes (« Avec Gabriel Attal ») de celles dont il

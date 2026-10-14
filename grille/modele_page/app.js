@@ -179,6 +179,8 @@ function carte(e, maintenant) {
     haut,
     el("p", { classe: "titre-emission", texte: e.titre }),
     e.invites.length ? el("p", { classe: "invites", texte: "Avec " + nommer(e.invites) }) : null,
+    // Invité inconnu de l'outil : la phrase de la radio qui le présente.
+    e.presentation ? el("p", { classe: "invites", texte: e.presentation }) : null,
     // Personnes seulement citées (sujet d'un commentaire), sans être sur le plateau.
     (e.cites || []).length ? el("p", { classe: "cites", texte: "À propos de " + nommer(e.cites) }) : null,
     bas);

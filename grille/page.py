@@ -31,7 +31,8 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
     campagne = Campagne(config)
     # « campagne » : motif du classement dans « Présidentielle 2027 », vide sinon.
-    emissions = [{**{k: e[k] for k in CHAMPS + ("sources",) if k in e}, "campagne": campagne.motif(e)}
+    emissions = [{**{k: e[k] for k in CHAMPS + ("sources",) if k in e}, "campagne": campagne.motif(e),
+                  "presentation": affichage.presentation(e)}
                  for e in affichage.emissions(connexion, minuit, minuit + timedelta(days=JOURS_AFFICHES))]
     # Émissions où le candidat est présent ou seulement cité.
     presents = Counter(nom for e in emissions for nom in e["invites"] + e.get("cites", []))
