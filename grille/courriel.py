@@ -39,9 +39,10 @@ def _jour(d: datetime) -> str:
     return f"{JOURS[d.weekday()]} {d.day} {MOIS[d.month - 1]}"
 
 
-def temps_fort(e: dict, candidats: set[str]) -> bool:
-    """Débats, meetings, et toute émission où un candidat est annoncé."""
-    return e["categorie"] in ("débat", "meeting") or any(nom in candidats for nom in e["invites"])
+def temps_fort(e: dict, candidats_officiels: set[str]) -> bool:
+    """Émission où un candidat officiel (déclaré ou désigné) est présent : interview, débat,
+    meeting. Les mots-clés seuls ne suffisent pas (n'importe quelle émission peut en contenir)."""
+    return any(nom in candidats_officiels for nom in e["invites"])
 
 
 def mesure_douteux(connexion, maintenant: datetime) -> dict:
@@ -69,7 +70,7 @@ def _repartition(d: dict) -> str:
 def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
     maintenant = maintenant.astimezone(PARIS)
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
-    candidats = {c["nom"] for c in config.candidats}
+    candidats = config.candidats_officiels()
     aujourdhui = affichage.emissions(connexion, maintenant, minuit + timedelta(days=1))
     a_venir = [
         e for e in affichage.emissions(connexion, minuit + timedelta(days=1),
@@ -77,7 +78,6 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
         if temps_fort(e, candidats) and datetime.fromisoformat(e["debut"]) >= minuit + timedelta(days=1)
     ]
     classer = Campagne(config).motif
-    a_venir = [e for e in a_venir if classer(e)]  # temps forts : seulement ceux de la campagne
 
     def nommer(e: dict) -> dict:
         return dict(e, invites_affiches=config.nommer(e["invites"]), cites_affiches=config.nommer(e.get("cites") or []),
@@ -121,7 +121,7 @@ def texte(c: dict) -> str:
     parties += ["", f"TOUTE LA POLITIQUE — AUTRES ÉMISSIONS DU JOUR ({len(c['autres'])})"]
     parties += [_ligne_texte(e) for e in c["autres"]] or ["  Aucune autre émission politique annoncée."]
     parties += ["", f"PRÉSIDENTIELLE 2027 — TEMPS FORTS DES {JOURS_TEMPS_FORTS} PROCHAINS JOURS ({len(c['temps_forts'])})"]
-    parties += [_ligne_texte(e, avec_jour=True) for e in c["temps_forts"]] or ["  Aucun débat, meeting ni candidat annoncé."]
+    parties += [_ligne_texte(e, avec_jour=True) for e in c["temps_forts"]] or ["  Aucun candidat annoncé."]
     d = c.get("douteux")
     if d and d["nombre"]:
         parties += ["", f"MESURE — CAS DOUTEUX DES DERNIÈRES 24 H : {d['nombre']} ({_repartition(d)})",
@@ -182,7 +182,7 @@ def page_html(c: dict) -> str:
         section(f"Toute la politique — autres émissions du jour ({len(c['autres'])})",
                 [_ligne_html(e) for e in c["autres"]], "Aucune autre émission politique annoncée."),
         section(f"Présidentielle 2027 — temps forts des {JOURS_TEMPS_FORTS} prochains jours",
-                [_ligne_html(e, True) for e in c["temps_forts"]], "Aucun débat, meeting ni candidat annoncé."),
+                [_ligne_html(e, True) for e in c["temps_forts"]], "Aucun candidat annoncé."),
     ]
     d = c.get("douteux")
     if d and d["nombre"]:

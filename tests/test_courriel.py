@@ -28,20 +28,23 @@ def test_contenu_du_jour_et_temps_forts(connexion):
         _e("hier-soir", MAINTENANT - timedelta(hours=10)),
         _e("ce-soir", MAINTENANT + timedelta(hours=14)),  # politique, hors campagne
         _e("ce-soir-campagne", MAINTENANT + timedelta(hours=15), titre="Présidentielle : le grand débat"),
-        _e("demain-analyse", MAINTENANT + timedelta(days=1)),  # ni débat ni candidat : pas un temps fort
-        _e("demain-debat", MAINTENANT + timedelta(days=1, hours=2), "débat"),  # débat hors campagne
+        _e("demain-analyse", MAINTENANT + timedelta(days=1)),
+        # Débat de campagne sans candidat : les mots-clés ne font pas un temps fort.
         _e("demain-debat-campagne", MAINTENANT + timedelta(days=1, hours=3), "débat",
            titre="Débat : faut-il interdire les sondages ?"),
+        # Membre d'équipe de campagne, candidat pressenti : pas un candidat officiel.
+        _e("demain-porte-parole", MAINTENANT + timedelta(days=1, hours=4), "interview", ["Jean-Philippe Tanguy"]),
+        _e("j2-pressenti", MAINTENANT + timedelta(days=2), "meeting", ["François Asselineau"]),
         _e("j3-candidat", MAINTENANT + timedelta(days=3), "interview", ["Marine Le Pen"]),
-        _e("j4-meeting", MAINTENANT + timedelta(days=4), "meeting"),  # au-delà de 3 jours
+        _e("j4-meeting", MAINTENANT + timedelta(days=4), "meeting", ["Gabriel Attal"]),  # au-delà de 3 jours
     ]
     db.enregistrer_collecte(connexion, emissions, "tv", set(), MAINTENANT)
     c = courriel.contenu(connexion, config.charger(), MAINTENANT)
     assert c["titre_jour"] == "lundi 15 mars"
     assert [e["id"] for e in c["presidentielle"]] == ["ce-soir-campagne"]
     assert [e["id"] for e in c["autres"]] == ["ce-soir"]
-    # Temps forts : débats, meetings et candidats, seulement ceux de la campagne.
-    assert [e["id"] for e in c["temps_forts"]] == ["demain-debat-campagne", "j3-candidat"]
+    # Temps forts : seulement les émissions où un candidat officiel (déclaré ou désigné) est présent.
+    assert [e["id"] for e in c["temps_forts"]] == ["j3-candidat"]
     m = courriel.message(c)
     assert m["Subject"] == "Grille politique — lundi 15 mars : 1 sur la présidentielle, 2 émissions en tout"
     texte = m.get_body(("plain",)).get_content()
@@ -51,6 +54,12 @@ def test_contenu_du_jour_et_temps_forts(connexion):
     assert "Titre ce-soir" in m.get_body(("html",)).get_content()
     # Le sigle du parti suit le nom : « Marine Le Pen (RN) ».
     assert "avec Marine Le Pen (RN)" in courriel.texte(c)
+
+
+def test_candidats_officiels():
+    officiels = config.charger().candidats_officiels()
+    assert {"Marine Le Pen", "Raphaël Glucksmann", "Bruno Retailleau", "Natacha Polony"} <= officiels
+    assert not {"François Asselineau", "Xavier Bertrand", "Jean-Philippe Tanguy"} & officiels
 
 
 def test_sigle_apres_le_nom():

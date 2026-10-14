@@ -63,6 +63,12 @@ class Configuration:
     mots_presidentielle: list[str] = field(default_factory=list)
     anomalies: list[str] = field(default_factory=list)
 
+    def candidats_officiels(self) -> set[str]:
+        """Candidats déclarés ou désignés (statut « déclaré… », « désigné… » dans politique.yaml),
+        sans les pressentis ni les « à vérifier »."""
+        return {c["nom"] for c in self.candidats
+                if str(c.get("statut", "")).lower().startswith(("déclar", "désign"))}
+
     def nommer(self, noms: list[str]) -> list[str]:
         """« Jean-Philippe Tanguy (RN) » : sigle de politique.yaml après le nom, s'il est connu."""
         sigles = {p["nom"]: p["sigle"] for p in self.candidats + self.personnalites if p.get("sigle")}
