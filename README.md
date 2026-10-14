@@ -188,6 +188,11 @@ est de la campagne (`grille/campagne.py`) si :
 - son titre ou son résumé contient un mot de la rubrique `presidentielle:` de
   `config/politique.yaml` (« présidentielle », « candidat », « primaire », « sondage »…).
 
+YouTube : le texte de présentation qu'une chaîne répète dans chaque description (« La
+présidentielle arrive à grands pas, et la censure avec elle ! » chez Tocsin) est ignoré, par
+le filtre comme par ce classement ; seules les lignes propres à la vidéo comptent. Une vidéo
+déjà dans la grille que le filtre écarte à la relecture en sort.
+
 Le classement est refait à chaque collecte : une émission à invités (« Franc-jeu », « Face
 à face ») entre dans « Présidentielle 2027 » dès que son invité, un candidat, est annoncé.
 Dans `python3 -m grille lister`, ces émissions sont marquées « 2027 ».

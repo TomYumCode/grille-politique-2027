@@ -144,3 +144,33 @@ def test_logo_rattrape_pour_les_chaines_deja_connues(conf, connexion):
     appels_logos = [p for _, url, p in session.appels if url.endswith("/channels") and p.get("part") == "snippet"]
     assert len(appels_logos) == 1  # un seul appel pour toutes les chaînes
     assert "Hugo au Perchoir" in db.logos(connexion)
+
+
+def test_texte_de_presentation_de_la_chaine_ignore():
+    """Tocsin met dans chaque description « La présidentielle arrive à grands pas… » :
+    ce texte commun ne doit pas faire classer chaque matinale dans la présidentielle."""
+    pub = ("🔔🔔 TOCSIN EN PREMIÈRE LIGNE CONTRE LA CENSURE 🔔🔔\n"
+           "La présidentielle arrive à grands pas, et la censure avec elle !\n"
+           "Soutenez-nous, faites un don à Tocsin : https://tocsin-media.fr/nous")
+    videos = [
+        {"id": "a", "snippet": {"channelId": "UCtocsin", "description": pub + "\nAu sommaire : la BCE et la dette"}},
+        {"id": "b", "snippet": {"channelId": "UCtocsin", "description": pub + "\nAu sommaire : Mai 68 et les lycéens"}},
+        # Une autre chaîne qui cite la présidentielle une seule fois garde sa description.
+        {"id": "c", "snippet": {"channelId": "UCautre", "description": "Débat : la présidentielle vue des régions"}},
+    ]
+    youtube.sans_presentation(videos)
+    assert videos[0]["snippet"]["description"] == "Au sommaire : la BCE et la dette"
+    assert videos[1]["snippet"]["description"].endswith("Mai 68 et les lycéens")
+    assert videos[2]["snippet"]["description"] == "Débat : la présidentielle vue des régions"
+
+
+def test_video_ecartee_a_la_relecture_sort_de_la_grille(tmp_path):
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    debut = datetime(2026, 10, 14, 7, 34, tzinfo=PARIS)
+    db.enregistrer_collecte(connexion, [{
+        "id": "youtube:tocsin1", "titre": "La Matinale du 14/10", "debut": debut.isoformat(), "fin": None,
+        "plateforme": "youtube", "chaine": "Tocsin", "categorie": "analyse", "invites": [], "lien": [],
+        "statut": "en direct", "filtre": "mots-clés"}], "youtube", set(), debut)
+    assert db.annuler(connexion, ["youtube:tocsin1", "youtube:inconnue"], debut) == 1
+    assert db.lister(connexion, debut.replace(hour=0), debut.replace(hour=23)) == []
+    connexion.close()

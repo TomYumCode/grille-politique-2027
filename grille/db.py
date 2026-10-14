@@ -188,6 +188,17 @@ def enregistrer_collecte(
     return len(annulees)
 
 
+def annuler(connexion: sqlite3.Connection, ids: list[str], maintenant: datetime) -> int:
+    """Passe en « annulé » celles de ces émissions qui sont en base et ne le sont pas déjà."""
+    vu_le = maintenant.isoformat(timespec="seconds")
+    n = 0
+    for id_ in ids:
+        n += connexion.execute("UPDATE emissions SET statut = 'annulé', vu_le = ? WHERE id = ? AND statut != 'annulé'",
+                               (vu_le, id_)).rowcount
+    connexion.commit()
+    return n
+
+
 def lister(connexion: sqlite3.Connection, depuis: datetime, jusqua: datetime) -> list[dict]:
     """Émissions non annulées qui se terminent après `depuis` et commencent avant `jusqua`, par heure de début."""
     connexion.row_factory = sqlite3.Row
