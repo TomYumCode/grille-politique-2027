@@ -37,6 +37,8 @@ candidats:
   - {nom: "Dominique de Villepin", alias: ["Villepin"], parti: "La France Humaniste", sigle: "La France humaniste", statut: "à vérifier"}
   # Petites candidatures relevées le 12 octobre 2026 (lejdd.fr, touteleurope.eu, france24.com).
   # Noms complets seulement : « Labib », « Egger », « Lalanne » seuls sont trop courants.
+  # Candidature annoncée le 14 octobre 2026 sur France Inter (« L'Invité de 7h50 »).
+  - {nom: "Natacha Polony", alias: ["Polony"], parti: "", statut: "déclarée (14 octobre 2026)"}
   - {nom: "Selma Labib", alias: [], parti: "NPA-Révolutionnaires", sigle: "NPA-R", statut: "désignée (juin 2026)"}
   - {nom: "Clara Egger", alias: [], parti: "Solution démocratique", sigle: "Solution démocratique", statut: "déclarée"}
   - {nom: "Francis Lalanne", alias: [], parti: "France libre", sigle: "France libre", statut: "déclaré (août 2026)"}
