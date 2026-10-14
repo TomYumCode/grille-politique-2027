@@ -75,8 +75,10 @@ Deux tâches tournent toutes seules sur GitHub (onglet **Actions** du dépôt) :
 
 - **Collecte horaire**, chaque heure vers :17 : télévision, radio, YouTube, Twitch, puis
   publication de la page sur `https://tomyumcode.github.io/grille-politique-2027/`.
-- **Email du matin**, à 7 h (heure de Paris) : grille du jour, temps forts des 3 jours
-  suivants, état des sources.
+- **Email du matin**, à 7 h (heure de Paris) : émissions du jour sur la présidentielle,
+  puis les autres émissions politiques du jour, temps forts de la campagne des 3 jours
+  suivants (débats, meetings, candidats présents), état des sources. Objet : « 4 sur la
+  présidentielle, 13 émissions en tout ».
 
 La base est conservée sur la branche `donnees`, qui ne garde que la dernière version.
 
@@ -233,8 +235,7 @@ est présente si (`FiltrePolitique.presences` dans `grille/filtre.py`) :
 Un titre de commentaire (« réaction », « décryptage », « débrief »…) ne rend personne
 présent. Un résumé qui parle de rediffusion ou de retransmission d'un meeting classe
 l'émission en « meeting », même titrée « L'interview ». Le filtre « Candidat » de la page
-montre les deux ; l'email ne met en avant (temps forts) que les émissions où un candidat
-est présent. Le résumé donné par la source est gardé en base (colonne `resume`).
+montre les deux ; les temps forts de l'email ne gardent que les émissions de la campagne. Le résumé donné par la source est gardé en base (colonne `resume`).
 
 ## Doublons entre chaînes
 

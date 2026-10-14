@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from email.message import EmailMessage
 
 from grille import affichage, db
+from grille.campagne import Campagne
 from grille.config import Configuration
 from grille.tv import PARIS
 
@@ -75,6 +76,9 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
                                        minuit + timedelta(days=1 + JOURS_TEMPS_FORTS))
         if temps_fort(e, candidats) and datetime.fromisoformat(e["debut"]) >= minuit + timedelta(days=1)
     ]
+    classer = Campagne(config).motif
+    a_venir = [e for e in a_venir if classer(e)]  # temps forts : seulement ceux de la campagne
+
     def nommer(e: dict) -> dict:
         return dict(e, invites_affiches=config.nommer(e["invites"]), cites_affiches=config.nommer(e.get("cites") or []),
                     presentation=affichage.presentation(e))
@@ -82,6 +86,9 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
     return {
         "titre_jour": _jour(maintenant),
         "aujourdhui": [nommer(e) for e in aujourdhui],
+        # Aujourd'hui, en deux parties : la campagne d'abord, puis le reste de la politique.
+        "presidentielle": [nommer(e) for e in aujourdhui if classer(e)],
+        "autres": [nommer(e) for e in aujourdhui if not classer(e)],
         "temps_forts": [nommer(e) for e in a_venir],
         "alertes": db.etat_des_sources(connexion, maintenant, SOURCES),
         "douteux": mesure_douteux(connexion, maintenant),
@@ -109,10 +116,12 @@ def _ligne_texte(e: dict, avec_jour: bool = False) -> str:
 
 def texte(c: dict) -> str:
     parties = [f"Grille politique — {c['titre_jour']}", ""]
-    parties.append(f"AUJOURD'HUI ({len(c['aujourdhui'])})")
-    parties += [_ligne_texte(e) for e in c["aujourdhui"]] or ["  Aucune émission politique annoncée."]
-    parties += ["", f"TEMPS FORTS DES {JOURS_TEMPS_FORTS} PROCHAINS JOURS ({len(c['temps_forts'])})"]
-    parties += [_ligne_texte(e, avec_jour=True) for e in c["temps_forts"]] or ["  Aucun débat ni meeting annoncé."]
+    parties.append(f"PRÉSIDENTIELLE 2027 — AUJOURD'HUI ({len(c['presidentielle'])})")
+    parties += [_ligne_texte(e) for e in c["presidentielle"]] or ["  Aucune émission sur la présidentielle annoncée."]
+    parties += ["", f"TOUTE LA POLITIQUE — AUTRES ÉMISSIONS DU JOUR ({len(c['autres'])})"]
+    parties += [_ligne_texte(e) for e in c["autres"]] or ["  Aucune autre émission politique annoncée."]
+    parties += ["", f"PRÉSIDENTIELLE 2027 — TEMPS FORTS DES {JOURS_TEMPS_FORTS} PROCHAINS JOURS ({len(c['temps_forts'])})"]
+    parties += [_ligne_texte(e, avec_jour=True) for e in c["temps_forts"]] or ["  Aucun débat, meeting ni candidat annoncé."]
     d = c.get("douteux")
     if d and d["nombre"]:
         parties += ["", f"MESURE — CAS DOUTEUX DES DERNIÈRES 24 H : {d['nombre']} ({_repartition(d)})",
@@ -168,10 +177,12 @@ def page_html(c: dict) -> str:
     morceaux = [
         '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1b1f24;max-width:640px">',
         f'<h1 style="font-size:20px;margin:0 0 4px">Grille politique — {html.escape(c["titre_jour"])}</h1>',
-        section(f"Aujourd'hui ({len(c['aujourdhui'])})", [_ligne_html(e) for e in c["aujourdhui"]],
-                "Aucune émission politique annoncée."),
-        section(f"Temps forts des {JOURS_TEMPS_FORTS} prochains jours", [_ligne_html(e, True) for e in c["temps_forts"]],
-                "Aucun débat ni meeting annoncé."),
+        section(f"Présidentielle 2027 — aujourd'hui ({len(c['presidentielle'])})",
+                [_ligne_html(e) for e in c["presidentielle"]], "Aucune émission sur la présidentielle annoncée."),
+        section(f"Toute la politique — autres émissions du jour ({len(c['autres'])})",
+                [_ligne_html(e) for e in c["autres"]], "Aucune autre émission politique annoncée."),
+        section(f"Présidentielle 2027 — temps forts des {JOURS_TEMPS_FORTS} prochains jours",
+                [_ligne_html(e, True) for e in c["temps_forts"]], "Aucun débat, meeting ni candidat annoncé."),
     ]
     d = c.get("douteux")
     if d and d["nombre"]:
@@ -198,8 +209,9 @@ def page_html(c: dict) -> str:
 
 def message(c: dict) -> EmailMessage:
     m = EmailMessage()
-    nb = len(c["aujourdhui"])
-    m["Subject"] = f"Grille politique — {c['titre_jour']} : {nb} émission{'s' if nb > 1 else ''}"
+    nb, p = len(c["aujourdhui"]), len(c["presidentielle"])
+    m["Subject"] = (f"Grille politique — {c['titre_jour']} : {p} sur la présidentielle, "
+                    f"{nb} émission{'s' if nb > 1 else ''} en tout")
     m.set_content(texte(c))
     m.add_alternative(page_html(c), subtype="html")
     return m
