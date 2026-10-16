@@ -1,6 +1,6 @@
 """Agendas des partis, à partir d'extraits enregistrés des pages du RN et de l'UPR."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 import requests
@@ -85,6 +85,11 @@ def test_collecte(conf, connexion):
     assert par_titre["Jean-Philippe Tanguy sur RTL"]["chaine"] == "RTL"  # radio suivie sur YouTube
     upr = par_titre["Réunion publique de François Asselineau à Villefagnan (Charente)"]
     assert (upr["chaine"], upr["categorie"], upr["invites"]) == ("UPR", "meeting", ["François Asselineau"])
+    # L'agenda du RN ne donne que le début : un passage média est supposé durer 30 minutes
+    # (la carte se grise ensuite), sans attendre 4 heures.
+    assert datetime.fromisoformat(bfm["fin"]) - datetime.fromisoformat(bfm["debut"]) == timedelta(minutes=30)
+    # Le meeting de l'UPR donne sa propre heure de fin : elle est gardée.
+    assert upr["fin"] is not None
 
 
 def test_rattachement_a_l_emission(conf, connexion):

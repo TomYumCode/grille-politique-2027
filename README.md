@@ -166,7 +166,9 @@ Seuls les rendez-vous qui citent un candidat ou une personnalité suivie sont ga
 Un passage dans un média rejoint l'émission de la chaîne à cette heure si elle est dans
 la grille ; sinon il s'affiche seul, avec l'étiquette « Agenda ».
 
-Chaque site demande son propre lecteur (`grille/agendas.py`). Sans agenda lisible le
+Les agendas ne donnent que l'heure de début : un passage dans un média est supposé durer
+30 minutes, un meeting 2 heures (la carte se grise ensuite), sauf rattachement à une émission
+de la grille, dont la fin compte. Chaque site demande son propre lecteur (`grille/agendas.py`). Sans agenda lisible le
 11 octobre 2026 : LFI et Reconquête (sites protégés contre les programmes), Renaissance,
 LR, Les Écologistes (pas d'agenda), Édouard Philippe (agenda vide ce jour-là).
 
