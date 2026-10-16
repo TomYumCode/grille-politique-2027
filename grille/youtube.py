@@ -23,6 +23,7 @@ from grille.tv import JOURS_AFFICHES, PARIS, statut
 
 DELAI = 30
 VIDEOS_PAR_CHAINE = 15  # vidéos récentes examinées par chaîne
+CONSERVATION = timedelta(days=30)  # YouTube API Services, Developer Policies
 LIGNE_MIN = 20  # une ligne plus courte (« 🔔🔔 ») ne compte pas comme texte de présentation
 # Un direct annoncé dont l'heure est passée depuis plus longtemps a été abandonné sans être supprimé.
 RETARD_MAXIMAL = timedelta(hours=6)
@@ -207,6 +208,8 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     rapport.annulees = db.enregistrer_collecte(
         connexion, a_ecrire, "youtube", set() if rapport.interrompu else couvertes, maintenant
     )
+    # Conditions de YouTube : données rafraîchies ou effacées sous 30 jours.
+    db.oublier(connexion, "youtube", CONSERVATION, maintenant)
     if not rapport.interrompu:
         # Vidéo déjà dans la grille que le filtre écarte maintenant (filtre ou description changés) :
         # elle en sort, même commencée.

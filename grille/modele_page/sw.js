@@ -1,6 +1,7 @@
 // Mode hors connexion : réseau d'abord, dernière version enregistrée sinon.
 const CACHE = "grille-2027";
-const FICHIERS = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icone-180.png", "icone-192.png", "icone-512.png"];
+const FICHIERS = ["./", "index.html", "sources.html", "style.css", "app.js", "manifest.webmanifest", "icone-180.png", "icone-192.png",
+  "icone-512.png"];
 
 self.addEventListener("install", (ev) => {
   ev.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHIERS)).then(() => self.skipWaiting()));

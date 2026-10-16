@@ -50,7 +50,8 @@ def test_page_generee_avec_les_emissions_du_jour_et_de_la_semaine(connexion, tmp
     assert candidats["Raphaël Glucksmann"] == 1 and candidats["Marine Tondelier"] == 0
     assert len(candidats) == len(config.charger().candidats)
     assert donnees["emissions"][1]["titre"] == "Débat </script> piégé"
-    for fichier in ("app.js", "style.css", "sw.js", "manifest.webmanifest", "icone-180.png", "icone-512.png", "robots.txt"):
+    for fichier in ("app.js", "style.css", "sw.js", "manifest.webmanifest", "icone-180.png", "icone-512.png", "robots.txt",
+                    "sources.html"):
         assert (tmp_path / "site" / fichier).exists()
 
 
@@ -59,7 +60,7 @@ def test_manifeste_et_service_worker_coherents(tmp_path):
     assert manifeste["display"] == "standalone"
     icones = {i["src"] for i in manifeste["icons"]}
     sw = (page.MODELE / "sw.js").read_text(encoding="utf-8")
-    for icone in icones | {"index.html", "app.js", "style.css"}:
+    for icone in icones | {"index.html", "sources.html", "app.js", "style.css"}:
         assert (page.MODELE / icone).exists()
         assert f'"{icone}"' in sw  # mis en cache pour le mode hors connexion
 
