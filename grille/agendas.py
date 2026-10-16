@@ -32,6 +32,10 @@ from grille.filtre import FiltrePolitique, _contient, normaliser
 from grille.tv import EN_TETES, JOURS_AFFICHES, PARIS, statut
 
 DELAI = 30
+# Fin supposée d'un rendez-vous sans heure de fin (les agendas ne donnent que le début) :
+# sinon la page attend 4 h avant de griser la carte (« Sébastien Chenu sur LCI » à 8 h 30).
+DUREE_MEDIA = timedelta(minutes=30)
+DUREE_AUTRE = timedelta(hours=2)
 
 
 @dataclass
@@ -161,7 +165,9 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
         rapport.agendas_lus += 1
         couvertes.add(source.nom)
         for rdv in rendez_vous:
-            if rdv.debut >= fin_horizon or (rdv.fin or rdv.debut + timedelta(hours=1)) <= maintenant:
+            if rdv.fin is None:
+                rdv.fin = rdv.debut + (DUREE_MEDIA if rdv.media else DUREE_AUTRE)
+            if rdv.debut >= fin_horizon or rdv.fin <= maintenant:
                 continue
             rapport.rendez_vous += 1
             decision = filtre.decider(source, rdv.titre, rdv.description)
