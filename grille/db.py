@@ -281,6 +281,12 @@ def etat_des_sources(connexion: sqlite3.Connection, maintenant: datetime, source
     return alertes
 
 
+def derniere_collecte(connexion: sqlite3.Connection) -> datetime | None:
+    """Heure de la dernière collecte enregistrée (toutes sources), ou None."""
+    (horodatage,) = connexion.execute("SELECT max(horodatage) FROM collectes").fetchone()
+    return datetime.fromisoformat(horodatage) if horodatage else None
+
+
 def deja_envoye(connexion: sqlite3.Connection, jour: str) -> bool:
     return connexion.execute("SELECT 1 FROM envois WHERE jour = ?", (jour,)).fetchone() is not None
 

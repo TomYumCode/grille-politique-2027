@@ -1,13 +1,15 @@
 # Email du matin à 7 h, heure de Paris.
-# GitHub ne connaît que l'heure UTC et ses déclenchements prennent souvent du retard :
-# la tâche démarre vers 6 h 30 (deux horaires, un par saison), attend 7 h, puis envoie.
-# Un seul email par jour : le second déclenchement voit que l'envoi est fait.
+# GitHub ne connaît que l'heure UTC, et ses déclenchements prennent du retard ou sont abandonnés
+# quand il est chargé (aucun le 16 octobre 2026). La tâche a donc une occasion de démarrer
+# toutes les 20 minutes de 4 h à 8 h 40 UTC (de 6 h à 10 h à Paris, été comme hiver) : elle
+# attend 7 h si besoin, puis envoie. Un seul email par jour : une fois l'envoi fait, les
+# déclenchements suivants s'arrêtent tout de suite. Juste avant l'envoi, une collecte rafraîchit
+# la base, au cas où les collectes de la nuit auraient été sautées.
 name: Email du matin
 
 on:
   schedule:
-    - cron: "30 4 * * *"   # 6 h 30 à Paris en heure d'été (UTC+2)
-    - cron: "30 5 * * *"   # 6 h 30 à Paris en heure d'hiver (UTC+1)
+    - cron: "0,20,40 4-8 * * *"   # de 6 h à 10 h 40 (été) ou de 5 h à 9 h 40 (hiver), heure de Paris
   workflow_dispatch:
     inputs:
       forcer:
@@ -31,15 +33,21 @@ jobs:
           python-version: "3.13"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Récupérer la base (email du jour déjà parti ?)
+        run: .github/scripts/base.sh recuperer
       - id: attente
         name: Attendre 7 h (heure de Paris)
         run: |
           if [ "${{ inputs.forcer }}" = "true" ]; then
             echo "envoyer=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
+          if [ "$(python -m grille envoi-du-jour)" = "fait" ]; then
+            echo "Email du jour déjà envoyé : rien à faire."
+            echo "envoyer=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           attente=$(python -m grille attente-7h)
           if [ "$attente" = "hors-plage" ]; then
-            echo "Hors de la plage 6 h – 10 h à Paris : c'est le déclenchement prévu pour l'autre saison."
+            echo "Hors de la plage 6 h – 10 h à Paris (déclenchement de l'autre saison) : rien à faire."
             echo "envoyer=false" >> "$GITHUB_OUTPUT"
           else
             echo "Attente de ${attente} s avant 7 h"
@@ -64,6 +72,17 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Récupérer la base
         run: .github/scripts/base.sh recuperer
+      - name: Collecter juste avant l'envoi (données fraîches même si la nuit a été sautée)
+        if: ${{ !inputs.forcer }}
+        env:
+          RADIOFRANCE_API_KEY: ${{ secrets.RADIOFRANCE_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+        run: |
+          if [ "$(python -m grille envoi-du-jour)" = "fait" ]; then echo "Email déjà parti : pas de collecte."; exit 0; fi
+          if [ "$(python -m grille collecte-recente --minutes 30)" = "oui" ]; then echo "Collecte récente."; exit 0; fi
+          python -m grille collecter > /dev/null || echo "::warning::Collecte incomplète avant l'email, voir l'état des sources."
       - name: Envoyer l'email
         env:
           SMTP_SERVEUR: ${{ secrets.SMTP_SERVEUR }}
