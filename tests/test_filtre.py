@@ -80,6 +80,11 @@ def test_emission_limitee_a_une_chaine(politique):
          ["Marine Tondelier"], []),
         # Sa propre chaîne.
         ("Jean-Luc Mélenchon", "Le peuple au pouvoir", "", "", ["Jean-Luc Mélenchon"], []),
+        # Débat titré par une question sur lui, « avec » dans un autre membre de phrase : sujet, pas invité.
+        ("France Culture", "Questions du soir : le débat",
+         "Vainqueur de la primaire avec près de 66 % des voix, Raphaël Glucksmann revendique une ligne "
+         "social-démocrate. Débat avec nos invités.",
+         "Glucksmann candidat de la gauche : la social-démocratie fait-elle rêver ?", [], ["Raphaël Glucksmann"]),
     ],
 )
 def test_presents_ou_cites(politique, chaine, titre, description, sous_titre, presents, cites):
