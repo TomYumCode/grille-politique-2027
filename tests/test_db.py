@@ -48,3 +48,29 @@ def test_valeurs_hors_liste_refusees(tmp_path):
             "INSERT INTO emissions (id, titre, debut, plateforme, chaine, vu_le) VALUES (?, ?, ?, ?, ?, ?)",
             ("fax:1", "x", "2027-03-15T21:00:00+01:00", "fax", "x", "2027-03-15T20:00:00+01:00"),
         )
+
+
+def test_derniere_collecte_et_commandes_pour_github(tmp_path, capsys):
+    """« collecte-recente » et « envoi-du-jour » : la tâche GitHub ne refait pas ce qui est fait."""
+    from datetime import datetime, timedelta
+
+    from grille import cli
+    from grille.tv import PARIS
+
+    chemin = tmp_path / "g.sqlite"
+    connexion = db.ouvrir(chemin)
+    assert db.derniere_collecte(connexion) is None
+    maintenant = datetime.now(PARIS)
+    db.noter_collecte(connexion, "tv", maintenant - timedelta(minutes=10), True, 3, [])
+    connexion.commit()
+    assert db.derniere_collecte(connexion) == (maintenant - timedelta(minutes=10)).replace(microsecond=0)
+    connexion.close()
+
+    cli.main(["--base", str(chemin), "collecte-recente", "--minutes", "40"])
+    cli.main(["--base", str(chemin), "collecte-recente", "--minutes", "5"])
+    cli.main(["--base", str(chemin), "envoi-du-jour"])
+    connexion = db.ouvrir(chemin)
+    db.noter_envoi(connexion, maintenant.date().isoformat(), maintenant)
+    connexion.close()
+    cli.main(["--base", str(chemin), "envoi-du-jour"])
+    assert capsys.readouterr().out.split() == ["oui", "non", "a-faire", "fait"]

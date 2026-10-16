@@ -436,6 +436,26 @@ def cmd_courriel(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_collecte_recente(args: argparse.Namespace) -> int:
+    """Affiche « oui » si une collecte a eu lieu il y a moins de --minutes, « non » sinon
+    (pour la tâche GitHub : un second déclenchement par heure ne refait pas la collecte)."""
+    connexion = db.ouvrir(args.base)
+    derniere = db.derniere_collecte(connexion)
+    connexion.close()
+    recente = derniere is not None and datetime.now(tv.PARIS) - derniere < timedelta(minutes=args.minutes)
+    print("oui" if recente else "non")
+    return 0
+
+
+def cmd_envoi_du_jour(args: argparse.Namespace) -> int:
+    """Affiche « fait » si l'email du jour (heure de Paris) est déjà parti, « a-faire » sinon."""
+    connexion = db.ouvrir(args.base)
+    fait = db.deja_envoye(connexion, datetime.now(tv.PARIS).date().isoformat())
+    connexion.close()
+    print("fait" if fait else "a-faire")
+    return 0
+
+
 def cmd_attente_7h(args: argparse.Namespace) -> int:
     """Affiche le nombre de secondes à attendre avant 7 h (heure de Paris), ou « hors-plage »."""
     attente = courriel.attente_avant_7h(datetime.now(tv.PARIS))
@@ -520,6 +540,11 @@ def main(argv: list[str] | None = None) -> int:
     p_courriel.set_defaults(func=cmd_courriel)
     sous.add_parser("attente-7h", help="secondes à attendre avant 7 h, heure de Paris (pour la tâche GitHub)"
                     ).set_defaults(func=cmd_attente_7h)
+    p_recente = sous.add_parser("collecte-recente", help="« oui » si une collecte a eu lieu il y a moins de N minutes")
+    p_recente.add_argument("--minutes", type=int, default=40)
+    p_recente.set_defaults(func=cmd_collecte_recente)
+    sous.add_parser("envoi-du-jour", help="« fait » si l'email du jour est parti, « a-faire » sinon"
+                    ).set_defaults(func=cmd_envoi_du_jour)
     p_cherche = sous.add_parser("chercher-tv", help="cherche une émission dans le guide TV et dit si elle est retenue")
     p_cherche.add_argument("texte", help="mot ou titre à chercher (majuscules et accents ignorés)")
     p_cherche.add_argument("--fichier", type=Path, help="guide déjà téléchargé (.xml ou .xml.gz)")

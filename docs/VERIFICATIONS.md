@@ -232,3 +232,13 @@ page de programme utilisable. En revanche, l'API Radio France donne les invités
 Inter dès la veille au soir dans le titre de la diffusion (« L'Invité de 7h50 — Natacha
 Polony », publié à 19 h 36 le 13 octobre pour le 14), et la grille RTL du jour présente
 l'invité dans la description de la chronique.
+
+## Déclenchements programmés de GitHub (16 octobre 2026)
+
+Les tâches programmées de GitHub sont « au mieux » : du 13 au 16 octobre, la collecte
+horaire n'a été lancée que toutes les 3 à 5 heures, et aucun des deux déclenchements de
+l'email du 16 octobre n'a eu lieu. Parade : deux occasions de collecte par heure (:17 et
+:47, la seconde ne refait rien après une collecte de moins de 40 minutes) ; email avec une
+occasion toutes les 20 minutes de 6 h à 10 h (heure de Paris), qui s'arrête dès que l'email
+du jour est parti et collecte juste avant l'envoi. Commandes ajoutées : `collecte-recente`,
+`envoi-du-jour`.

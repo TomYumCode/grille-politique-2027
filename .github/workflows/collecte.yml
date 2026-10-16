@@ -2,8 +2,12 @@
 name: Collecte horaire
 
 on:
+  # GitHub abandonne des déclenchements quand il est chargé (une collecte toutes les 3 à 5 h
+  # les 14 et 15 octobre 2026) : deux occasions par heure ; la seconde ne refait rien si une
+  # collecte a eu lieu il y a moins de 40 minutes.
   schedule:
     - cron: "17 * * * *"   # chaque heure à :17 (l'heure pile est la plus encombrée chez GitHub)
+    - cron: "47 * * * *"   # seconde occasion, utile seulement si celle de :17 a été sautée
   workflow_dispatch:         # bouton « Run workflow » pour lancer une collecte à la main
 
 permissions:
@@ -20,6 +24,8 @@ jobs:
   collecter:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      faite: ${{ steps.utile.outputs.faite }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -29,7 +35,17 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Récupérer la base
         run: .github/scripts/base.sh recuperer
+      - id: utile
+        name: Collecte déjà faite il y a moins de 40 minutes ?
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(python -m grille collecte-recente --minutes 40)" = "oui" ]; then
+            echo "Collecte récente : rien à refaire."
+            echo "faite=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "faite=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Collecter (une source en panne n'arrête pas les autres)
+        if: steps.utile.outputs.faite == 'true'
         env:
           RADIOFRANCE_API_KEY: ${{ secrets.RADIOFRANCE_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -38,18 +54,23 @@ jobs:
         run: |
           python -m grille collecter || echo "::warning::Au moins une source a échoué, voir le détail ci-dessus et l'email du matin."
       - name: Générer la page
+        if: steps.utile.outputs.faite == 'true'
         run: python -m grille page
       - name: Enregistrer la base
+        if: steps.utile.outputs.faite == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: .github/scripts/base.sh enregistrer
       - uses: actions/configure-pages@v6
+        if: steps.utile.outputs.faite == 'true'
       - uses: actions/upload-pages-artifact@v5
+        if: steps.utile.outputs.faite == 'true'
         with:
           path: site
 
   publier:
     needs: collecter
+    if: needs.collecter.outputs.faite == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
