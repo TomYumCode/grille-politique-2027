@@ -188,6 +188,21 @@ def enregistrer_collecte(
     return len(annulees)
 
 
+def oublier(connexion: sqlite3.Connection, plateforme: str, delai: timedelta, maintenant: datetime) -> int:
+    """Efface les émissions (et cas douteux) d'une plateforme qui n'ont pas été relues depuis `delai`.
+    Conditions des API : Twitch interdit de garder ses données plus de 24 heures, YouTube plus
+    de 30 jours sans les rafraîchir (docs/CONDITIONS_UTILISATION.md). Renvoie le nombre effacé."""
+    limite = maintenant - delai
+    vieilles = [(i,) for i, vu in connexion.execute("SELECT id, vu_le FROM emissions WHERE plateforme = ?", (plateforme,))
+                if datetime.fromisoformat(vu) < limite]
+    connexion.executemany("DELETE FROM emissions WHERE id = ?", vieilles)
+    douteux = [(i,) for i, vu in connexion.execute("SELECT id, vu_le FROM douteux WHERE source = ?", (plateforme,))
+               if datetime.fromisoformat(vu) < limite]
+    connexion.executemany("DELETE FROM douteux WHERE id = ?", douteux)
+    connexion.commit()
+    return len(vieilles)
+
+
 def annuler(connexion: sqlite3.Connection, ids: list[str], maintenant: datetime) -> int:
     """Passe en « annulé » celles de ces émissions qui sont en base et ne le sont pas déjà."""
     vu_le = maintenant.isoformat(timespec="seconds")

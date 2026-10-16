@@ -130,3 +130,12 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
   background: var(--accent); color: var(--accent-texte); padding: 4px 12px 4px 4px; font: inherit; font-size: .85rem;
 }
 .etiquette-chaine .logo { width: 22px; height: 22px; line-height: 20px; border-color: transparent; }
+
+/* Pied de page et page « Sources et confidentialité ». */
+.pied { text-align: center; font-size: .8rem; padding: 24px 16px 32px; }
+.pied a, .texte-page a { color: var(--accent); }
+.texte-page { max-width: 680px; margin: 0 auto; padding: 16px; line-height: 1.5; }
+.texte-page h1 { font-size: 1.4rem; }
+.texte-page h2 { font-size: 1.05rem; margin-top: 1.6em; }
+.texte-page li { margin: .4em 0; }
+.texte-page .discret { color: var(--discret); font-size: .9rem; }

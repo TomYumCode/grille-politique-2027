@@ -243,6 +243,13 @@ l'émission en « meeting », même titrée « L'interview ». Le filtre « Cand
 montre les deux ; les temps forts de l'email ne gardent que les émissions où un candidat officiel ou un membre
 d'équipe de campagne est présent. Le résumé donné par la source est gardé en base (colonne `resume`).
 
+## Sources et confidentialité
+
+Lien en bas de la grille : `grille/modele_page/sources.html` (sources, conditions de YouTube et
+Twitch, confidentialité : ni compte, ni publicité, ni mesure d'audience ; filtres gardés sur le
+téléphone). Conditions des API (`docs/CONDITIONS_UTILISATION.md`) : les données Twitch non
+relues depuis 24 heures et YouTube depuis 30 jours sont effacées de la base (`db.oublier`).
+
 ## Doublons entre chaînes
 
 Une même diffusion vue sur plusieurs chaînes (Questions au gouvernement sur LCP et

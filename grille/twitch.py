@@ -21,6 +21,7 @@ from grille.filtre import FiltrePolitique
 from grille.tv import JOURS_AFFICHES, PARIS
 
 DELAI = 30
+CONSERVATION = timedelta(hours=24)  # Twitch Developer Services Agreement
 
 
 @dataclass
@@ -130,6 +131,8 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     a_ecrire = [{k: v for k, v in e.items() if k != "motif"} for e in rapport.retenues]
     couvertes = set() if rapport.interrompu else couvertes
     rapport.annulees = db.enregistrer_collecte(connexion, a_ecrire, "twitch", couvertes, maintenant)
+    # Conditions de Twitch : pas de données gardées plus de 24 heures sans être relues.
+    db.oublier(connexion, "twitch", CONSERVATION, maintenant)
     ids_en_direct = {e["id"] for e in rapport.retenues if e["statut"] == "en direct"}
     rapport.directs_finis = db.terminer_directs(connexion, "twitch", ids_en_direct, couvertes, maintenant)
     return rapport

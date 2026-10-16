@@ -25,8 +25,12 @@ en revanche un **stockage suivi d'une rediffusion**, ce que certaines conditions
 1. **Radio France** : écrire au support de l'Open API (adresse indiquée sur api.gouv.fr) pour
    décrire l'usage et demander une autorisation écrite (projet de courriel ci-dessous). Sans
    réponse favorable, retirer France Inter, franceinfo et France Culture de la page publique.
-2. **YouTube et Twitch** : mise en conformité dans l'outil (attribution, purge à 30 jours et
-   24 heures, page « Sources et confidentialité »).
+2. **YouTube et Twitch** : mise en conformité dans l'outil. Fait le 16 octobre 2026 : données
+   effacées si non relues depuis 30 jours (YouTube) ou 24 heures (Twitch, aussi pour les cas
+   douteux) ; page « Sources et confidentialité » (`sources.html`, lien en bas de la grille)
+   avec les services de l'API YouTube, les conditions de YouTube et de Google, celles de Twitch,
+   et la politique de confidentialité. Reste : le logo YouTube à côté des contenus YouTube (le
+   nom « YouTube » est affiché sur chaque carte), à vérifier avec les consignes de marque.
 3. **Guide TV** : demander l'accord du mainteneur de xmltvfr.fr pour un usage public non
    commercial.
 4. **Sites lus directement** : relire leurs CGU et robots.txt ; en cas de demande d'un site,

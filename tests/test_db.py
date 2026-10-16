@@ -74,3 +74,27 @@ def test_derniere_collecte_et_commandes_pour_github(tmp_path, capsys):
     connexion.close()
     cli.main(["--base", str(chemin), "envoi-du-jour"])
     assert capsys.readouterr().out.split() == ["oui", "non", "a-faire", "fait"]
+
+
+def test_oublier_les_donnees_non_relues(tmp_path):
+    """Twitch : 24 heures ; YouTube : 30 jours (conditions des API). Les autres plateformes restent."""
+    from datetime import datetime, timedelta
+
+    from grille.tv import PARIS
+
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    maintenant = datetime(2026, 10, 16, 12, 0, tzinfo=PARIS)
+
+    def emission(id_, plateforme, vu_le):
+        db.enregistrer_collecte(connexion, [{
+            "id": id_, "titre": "x", "debut": (maintenant + timedelta(days=1)).isoformat(), "fin": None,
+            "plateforme": plateforme, "chaine": "c", "categorie": "analyse", "invites": [], "lien": [],
+            "statut": "annoncé", "filtre": "mots-clés"}], plateforme, set(), vu_le)
+
+    emission("twitch:vieux", "twitch", maintenant - timedelta(hours=25))
+    emission("twitch:frais", "twitch", maintenant - timedelta(hours=2))
+    emission("tv:vieux", "tv", maintenant - timedelta(days=40))
+    assert db.oublier(connexion, "twitch", timedelta(hours=24), maintenant) == 1
+    ids = {i for (i,) in connexion.execute("SELECT id FROM emissions")}
+    assert ids == {"twitch:frais", "tv:vieux"}
+    connexion.close()
