@@ -1,15 +1,15 @@
 # Email du matin à 7 h, heure de Paris.
 # GitHub ne connaît que l'heure UTC, et ses déclenchements prennent du retard ou sont abandonnés
-# quand il est chargé (aucun le 16 octobre 2026). La tâche a donc une occasion de démarrer
-# toutes les 20 minutes de 4 h à 8 h 40 UTC (de 6 h à 10 h à Paris, été comme hiver) : elle
-# attend 7 h si besoin, puis envoie. Un seul email par jour : une fois l'envoi fait, les
-# déclenchements suivants s'arrêtent tout de suite. Juste avant l'envoi, une collecte rafraîchit
+# quand il est chargé (aucun le 16 octobre 2026, un seul à 10 h 21 le 17). La tâche a donc une
+# occasion de démarrer toutes les 20 minutes de 4 h à 16 h 40 UTC (de 6 h à 18 h à Paris, été
+# comme hiver) : elle attend 7 h si besoin, puis envoie, même en retard. Un seul email par jour :
+# une fois l'envoi fait, les déclenchements suivants s'arrêtent tout de suite. Juste avant l'envoi, une collecte rafraîchit
 # la base, au cas où les collectes de la nuit auraient été sautées.
 name: Email du matin
 
 on:
   schedule:
-    - cron: "0,20,40 4-8 * * *"   # de 6 h à 10 h 40 (été) ou de 5 h à 9 h 40 (hiver), heure de Paris
+    - cron: "0,20,40 4-16 * * *"  # de 6 h à 18 h 40 (été) ou de 5 h à 17 h 40 (hiver), heure de Paris
   workflow_dispatch:
     inputs:
       forcer:
@@ -47,7 +47,7 @@ jobs:
           fi
           attente=$(python -m grille attente-7h)
           if [ "$attente" = "hors-plage" ]; then
-            echo "Hors de la plage 6 h – 10 h à Paris (déclenchement de l'autre saison) : rien à faire."
+            echo "Avant 6 h à Paris (déclenchement de l'autre saison) : rien à faire."
             echo "envoyer=false" >> "$GITHUB_OUTPUT"
           else
             echo "Attente de ${attente} s avant 7 h"

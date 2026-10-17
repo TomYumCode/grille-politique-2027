@@ -243,10 +243,12 @@ def attente_avant_7h(maintenant: datetime) -> float | None:
     GitHub déclenche ses tâches en heure UTC, avec du retard : la tâche est lancée
     deux fois (6 h 30 en heure d'été comme en heure d'hiver) et attend 7 h.
     Avant 6 h, c'est le déclenchement prévu pour l'autre saison : on ne fait rien.
-    Après 10 h, un email du matin n'a plus de sens.
+    Après 7 h, l'email part tout de suite : GitHub saute parfois tous les déclenchements
+    du matin (le 17 octobre 2026, le premier est venu à 10 h 21), et un email en retard
+    vaut mieux que pas d'email.
     """
     maintenant = maintenant.astimezone(PARIS)
     sept_heures = maintenant.replace(hour=7, minute=0, second=0, microsecond=0)
-    if maintenant.hour < 6 or maintenant.hour >= 10:
+    if maintenant.hour < 6:
         return None
     return max(0.0, (sept_heures - maintenant).total_seconds())

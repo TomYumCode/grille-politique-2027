@@ -246,6 +246,10 @@ du jour est parti et collecte juste avant l'envoi. Commandes ajoutées : `collec
 Constat du 16 octobre au soir : malgré les deux occasions par heure, aucune collecte entre
 14 h 32 et 19 h (heure de Paris). Les tâches programmées restent donc peu fiables l'après-midi.
 
+Le 17 octobre, sur les quinze occasions d'email de 6 h à 10 h 40, GitHub n'en a lancé
+qu'une, à 10 h 21, que l'outil a jugée trop tardive : pas d'email. Désormais l'email part
+même en retard, avec des occasions jusqu'à 18 h 40.
+
 ## Créneaux Radio France encore vides (16 octobre 2026)
 
 « Questions du soir : le débat » (France Culture, 18 h 20) manquait à la grille le
