@@ -261,3 +261,13 @@ ignorait ces créneaux. Désormais un créneau vide prend le nom de l'émission 
 même heure sept jours plus tôt (une requête de plus par station et par jour concerné) ;
 le titre de la diffusion le remplace dès qu'il est publié. Réponses enregistrées :
 `tests/reponses/radiofrance_creneaux_vides.json`.
+
+## Direct LCP / Public Sénat (17 octobre 2026)
+
+L'adresse https://www.france.tv/lcp-public-senat/direct.html est valide (page « LCP - Public
+Sénat en direct TV »), et l'application France TV revendique toutes les adresses de
+france.tv (fichier apple-app-site-association). Mais sur iPhone, elle s'ouvre alors sur son
+accueil, pas sur le direct. Les deux chaînes ont chacune leur direct sur leur site, lu dans
+le navigateur : https://lcp.fr/direct-lcp-5434 et https://www.publicsenat.fr/direct
+(réponse 200 toutes les deux). La grille propose donc deux boutons, « Direct LCP » et
+« Direct Public Sénat ».

@@ -34,8 +34,10 @@ chaines:
 - {plateforme: tv, nom: "CNews", adresse: "CNews.fr", categorie: "Info en continu", direct: "https://www.cnews.fr/le-direct"}
 - {plateforme: tv, nom: "LCI", adresse: "LCI.fr", categorie: "Info en continu", direct: "https://www.tf1.fr/lci/direct"}
 - {plateforme: tv, nom: "franceinfo", adresse: "FranceInfo.fr", categorie: "Info en continu", direct: "https://www.francetvinfo.fr/en-direct/tv.html"}
-# Canal partagé, un seul direct sur france.tv (adresse relevée le 9 octobre 2026).
-- {plateforme: tv, nom: "LCP / Public Sénat", adresse: "LaChaineParlementaire.fr", categorie: "Chaîne parlementaire", direct: "https://www.france.tv/lcp-public-senat/direct.html"}
+# Canal partagé : le direct de chaque chaîne sur son site. Celui de france.tv
+# (https://www.france.tv/lcp-public-senat/direct.html) ouvre l'application France TV sur
+# son accueil au lieu du direct (constaté sur iPhone le 17 octobre 2026).
+- {plateforme: tv, nom: "LCP / Public Sénat", adresse: "LaChaineParlementaire.fr", categorie: "Chaîne parlementaire", direct: ["https://lcp.fr/direct-lcp-5434", "https://www.publicsenat.fr/direct"]}
 
 # --- Radio (grille de l'API Radio France, invités souvent annoncés la veille) ---
 # Même nom que la chaîne YouTube de la station : un seul logo, et toucher le logo
