@@ -54,6 +54,9 @@ CRENEAU_INVITE = re.compile(r"\b(invit\w*|interview\w*|entretien\w*|grand jury|f
 _REDIFFUSION = ["retransmission", "rediffusion", "extraits", "en differe"]
 _EVENEMENTS = ["meeting", "discours", "reunion publique"]
 FENETRE_AVANT, FENETRE_APRES = 6, 4  # mots examinés autour du nom
+# « avec » sert à tout (« vainqueur avec près de 66 % des voix, Raphaël Glucksmann… ») :
+# il ne compte que dans le même membre de phrase que le nom (pas de virgule ni de point entre).
+_COUPURE = "0coupure0"
 
 
 def normaliser(texte: str) -> str:
@@ -139,28 +142,43 @@ class FiltrePolitique:
 
         Présente : sa propre chaîne ; un signe autour du nom (« avec », « invité », « répond »,
         « meeting de »…) ; ou une émission d'interview, de débat ou de meeting (d'après le
-        titre, ou de la liste blanche) qui la nomme dans son titre ; ou, dans une émission
+        titre, ou de la liste blanche) qui la nomme dans son titre, sauf un débat titré par une
+        question ; ou, dans une émission
         d'interview sans nom dans le titre, la première personne du résumé (« L'invité de la
         matinale » : « Anne Goscinny, co-auteure… »). Les autres sont seulement citées.
         """
         titre_n, description_n, chaine_n = normaliser(titre), normaliser(description), normaliser(chaine.nom)
         commentaire = any(_contient(titre_n, m) for m in _COMMENTAIRE)
         signes_avant = _SIGNES_AVANT + ([] if commentaire else _SIGNES_EVENEMENT)
+        signes_sans_avec = [s for s in signes_avant if s != "avec"]
         categorie_titre = self.categorie(titre, "")
         emission_a_invite = not commentaire and (emission_blanche or categorie_titre != "analyse")
+        # Débat dont le titre pose une question sur quelqu'un (« Glucksmann candidat de la gauche :
+        # la social-démocratie fait-elle rêver ? ») : c'est le sujet, les débatteurs sont d'autres.
+        if categorie_titre == "débat" and "?" in titre:
+            emission_a_invite = False
 
         def position(texte_n: str, formes: list[str]) -> int | None:
             places = [f" {texte_n} ".find(f" {f} ") for f in formes if _contient(texte_n, f)]
             return min(places) if places else None
 
-        def signe_autour(texte_n: str, formes: list[str]) -> bool:
-            mots = texte_n.split()
+        def signe_autour(texte: str, formes: list[str]) -> bool:
+            mots = normaliser(texte).split()
             for f in formes:
                 taille = len(f.split())
                 for i in range(len(mots) - taille + 1):
                     if mots[i:i + taille] == f.split() and (
-                            _fenetre_contient(mots[max(0, i - FENETRE_AVANT):i], signes_avant)
+                            _fenetre_contient(mots[max(0, i - FENETRE_AVANT):i], signes_sans_avec)
                             or _fenetre_contient(mots[i + taille:i + taille + FENETRE_APRES], _SIGNES_APRES)):
+                        return True
+            mots = normaliser(re.sub(r"[,.;!?]", f" {_COUPURE} ", texte or "")).split()
+            for f in formes:
+                taille = len(f.split())
+                for i in range(len(mots) - taille + 1):
+                    avant = mots[max(0, i - FENETRE_AVANT):i]
+                    if _COUPURE in avant:
+                        avant = avant[len(avant) - avant[::-1].index(_COUPURE):]
+                    if mots[i:i + taille] == f.split() and "avec" in avant:
                         return True
             return False
 
@@ -179,7 +197,7 @@ class FiltrePolitique:
         for nom, formes in nommes:
             present = (
                 nom in proprietaire
-                or signe_autour(titre_n, formes) or signe_autour(description_n, formes)
+                or signe_autour(titre, formes) or signe_autour(description, formes)
                 or (emission_a_invite and position(titre_n, formes) is not None)
                 or nom == premiere
             )

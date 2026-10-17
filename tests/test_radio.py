@@ -173,3 +173,28 @@ def test_ancienne_base_migree(tmp_path):
     assert connexion.execute("SELECT 1 FROM sqlite_master WHERE name = 'emissions_debut'").fetchone() == (1,)
     connexion.close()
     db.ouvrir(chemin).close()  # deuxième ouverture : rien à migrer
+
+
+def test_creneau_vide_nomme_d_apres_la_semaine_precedente(tmp_path, connexion):
+    """Radio France ne relie la diffusion à son créneau qu'au dernier moment : d'ici là, le
+    créneau vide prend le nom de l'émission diffusée à la même heure sept jours plus tôt."""
+    (tmp_path / "chaines.yaml").write_text(
+        'chaines:\n- {plateforme: radio, nom: "France Culture", adresse: "FRANCECULTURE", categorie: "Radio publique"}\n',
+        encoding="utf-8")
+    shutil.copy(Path(config.DOSSIER_CONFIG) / "politique.yaml", tmp_path / "politique.yaml")
+    conf = config.charger(tmp_path)
+    vides = charger("radiofrance_creneaux_vides.json")
+    lus = []
+
+    def repondre(methode, url, corps):
+        debut = datetime.fromtimestamp(int(re.search(r"start: (\d+)", corps["query"]).group(1)), PARIS)
+        lus.append(debut.date())
+        grilles = {date(2026, 10, 12): "lundi_12_octobre", date(2026, 10, 19): "lundi_19_octobre"}
+        return Reponse(corps=vides[grilles[debut.date()]] if debut.date() in grilles else {"data": {"grid": []}})
+
+    rapport = radio.collecter(conf, Session(repondre), connexion, datetime(2026, 10, 19, 10, 0, tzinfo=PARIS), cle=CLE)
+    assert [(e["id"], e["titre"], e["categorie"]) for e in rapport.retenues] == [
+        ("radio:FRANCECULTURE:202610191820", "Questions du soir : le débat", "débat")]
+    # La semaine précédente n'est lue que pour le jour qui a des créneaux vides (le 25, jour de
+    # 25 heures, demande deux requêtes).
+    assert lus == [date(2026, 10, d) for d in (19, 12, 20, 25, 25)]

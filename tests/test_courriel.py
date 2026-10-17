@@ -89,7 +89,8 @@ def test_etat_des_sources(connexion):
         (datetime(2027, 6, 15, 5, 30), 0),      # été, second déclenchement : 7 h 30 → tout de suite (doublon évité ailleurs)
         (datetime(2027, 1, 15, 4, 30), None),   # hiver : 5 h 30 à Paris → trop tôt, c'est l'autre déclenchement
         (datetime(2027, 1, 15, 5, 30), 1800),   # hiver : 6 h 30 → attendre 30 min
-        (datetime(2027, 1, 15, 9, 30), None),   # 10 h 30 à Paris : trop tard
+        (datetime(2027, 1, 15, 9, 30), 0),      # 10 h 30 à Paris : en retard, mais envoyé tout de suite
+        (datetime(2027, 6, 15, 16, 40), 0),     # 18 h 40 : dernière occasion de la journée
     ],
 )
 def test_attente_avant_7h(heure_utc, attendu):

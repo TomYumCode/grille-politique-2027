@@ -1,0 +1,75 @@
+{
+ "_note": "Vraies réponses de l'API Radio France (France Culture, 18 h–19 h 30), enregistrées le 16 octobre 2026 : le lundi 12 octobre est rempli, le lundi 19 octobre pas encore (« diffusion: null »).",
+ "lundi_12_octobre": {
+  "data": {
+   "grid": [
+    {
+     "id": "e4863d70-bc14-4c52-9ecf-f1ce77dec015_5",
+     "start": 1791820800,
+     "end": 1791822000,
+     "diffusion": {
+      "id": "efe552ea-ebfd-45c4-8018-4a20e8fc2393_5",
+      "title": "Le prix Nobel d'économie 2026 attribué aux Américains Michael Woodford et Robert Hall",
+      "standFirst": "Le \"prix de la Banque de Suède en sciences économiques en mémoire d’Alfred Nobel\" récompense Michael Woodford et Robert Hall. Les deux économistes ont élaboré plusieurs méthodes pour assurer la stabilité afin d'éviter l'inflation galopante ou les récessions.",
+      "url": "https://www.franceculture.fr/franceculture/podcasts/journal-de-18h/journal-de-18h-emission-du-lundi-12-octobre-2026-5247414",
+      "show": {
+       "title": "Journal de 18h"
+      }
+     }
+    },
+    {
+     "id": "ce71f696-59b4-4780-a9fc-798ef38ad4f9_5",
+     "start": 1791822000,
+     "end": 1791824325,
+     "diffusion": {
+      "id": "996c2253-307e-480f-8e98-25b9d391a15c_5",
+      "title": "LVMH sur les Champs-Élysées : peut-on privatiser la ville ?",
+      "standFirst": "Deux rues aujourd’hui, un quartier demain ? En confiant à LVMH le réaménagement des rues Bassano et Galilée, la ville de Paris ouvre un débat explosif sur la privatisation de l’espace public et l’évolution de la gouvernance urbaine.",
+      "url": "https://www.franceculture.fr/franceculture/podcasts/questions-du-soir-le-debat/lvmh-sur-les-champs-elysees-peut-on-privatiser-la-ville-7456257",
+      "show": {
+       "title": "Questions du soir : le débat"
+      }
+     }
+    },
+    {
+     "id": "42435e3f-242b-43e6-b305-a59d55fc26f7_5",
+     "start": 1791824580,
+     "end": 1791826125,
+     "diffusion": {
+      "id": "a0e17c34-dc4f-4c28-9f21-6266cc794acb_5",
+      "title": "Climat : comment sortir de l’aveuglement ?",
+      "standFirst": "Après l’été le plus chaud jamais enregistré, la France fait face à une sécheresse historique. Alors que les crises climatiques s’accumulent, le biologiste Olivier Hamant invite à repenser notre modèle : faut-il abandonner la performance au profit de la robustesse ?",
+      "url": "https://www.franceculture.fr/franceculture/podcasts/questions-du-soir-l-idee/climat-comment-sortir-de-l-aveuglement-1524480",
+      "show": {
+       "title": "Questions du soir : l'idée"
+      }
+     }
+    }
+   ]
+  }
+ },
+ "lundi_19_octobre": {
+  "data": {
+   "grid": [
+    {
+     "id": "b021cedb-23d3-44d2-8771-4f41f3e8f7cb_5",
+     "start": 1792425600,
+     "end": 1792426800,
+     "diffusion": null
+    },
+    {
+     "id": "2d7ab5ab-ac20-4502-aec3-1213e4b9ecce_5",
+     "start": 1792426800,
+     "end": 1792429125,
+     "diffusion": null
+    },
+    {
+     "id": "8a4ded24-fed9-476d-a16e-a05586a0ace6_5",
+     "start": 1792429380,
+     "end": 1792430925,
+     "diffusion": null
+    }
+   ]
+  }
+ }
+}
