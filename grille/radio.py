@@ -3,8 +3,10 @@
 Requête GraphQL « grid » par station (France Inter, franceinfo, France Culture…) et par
 jour : l'API refuse plus de 24 heures par requête. Chaque collecte lit aujourd'hui, demain
 et un des jours suivants à tour de rôle (chaque jour relu au moins toutes les 6 heures) :
-3 stations × 3 jours × 24 collectes = 216 requêtes par jour (limite : 1 000). La clé passe dans l'adresse (`?x-token=…`) : ne jamais afficher l'adresse
-complète, les journaux de GitHub sont publics.
+3 stations × 3 jours × 24 collectes = 216 requêtes par jour (limite : 1 000). Un jour dont
+des créneaux sont encore vides coûte une requête de plus (la même journée, une semaine plus
+tôt) : au plus 432 requêtes par jour. La clé passe dans l'adresse (`?x-token=…`) : ne
+jamais afficher l'adresse complète, les journaux de GitHub sont publics.
 
 Forme de la requête reprise d'une intégration publique (voir docs/VERIFICATIONS.md) ;
 la documentation officielle n'était pas joignable pendant le développement. Le champ
@@ -96,6 +98,21 @@ def _date(horodatage) -> datetime | None:
     return datetime.fromtimestamp(int(horodatage), PARIS) if horodatage else None
 
 
+def _vide(etape: dict) -> bool:
+    """Créneau de diffusion pas encore relié à sa diffusion (l'API renvoie « diffusion: null »)."""
+    return "diffusion" in etape and not etape["diffusion"]
+
+
+def emissions_par_heure(etapes: list[dict]) -> dict[str, str]:
+    """Nom de l'émission de chaque créneau, par heure de début à Paris (« 18:20 »)."""
+    noms = {}
+    for e in etapes:
+        nom = (((e.get("diffusion") or {}).get("show") or {}).get("title") or "").strip()
+        if nom and (debut := _date(e.get("start"))):
+            noms[f"{debut:%H:%M}"] = nom
+    return noms
+
+
 def collecter(config: Configuration, session: requests.Session, connexion, maintenant: datetime,
               cle: str | None = None) -> Rapport:
     rapport = Rapport()
@@ -113,22 +130,37 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     avec_emission = True
     jours = set(jours_a_lire(maintenant))
 
+    def lire_jour(station: str, jour: date) -> list[dict]:
+        nonlocal avec_emission
+        resultat = []
+        for debut_f, fin_f in fenetres(jour):
+            try:
+                etapes = lire_grille(session, cle, requete(station, debut_f, fin_f, avec_emission))
+            except ErreurRadioFrance as e:
+                if not avec_emission or "show" not in str(e):
+                    raise
+                avec_emission = False
+                rapport.anomalies.append("Radio France : nom des émissions (« show ») refusé, titres seuls")
+                etapes = lire_grille(session, cle, requete(station, debut_f, fin_f, False))
+            # Une étape à cheval sur deux créneaux n'est gardée qu'une fois : celui où elle commence.
+            resultat += [e for e in etapes if (d := _date(e.get("start"))) and debut_f <= d < fin_f]
+        return resultat
+
     for chaine in stations:
         station = chaine.cle["station"]
         grille = []
         try:
             for jour in sorted(jours):
-                for debut_f, fin_f in fenetres(jour):
-                    try:
-                        etapes = lire_grille(session, cle, requete(station, debut_f, fin_f, avec_emission))
-                    except ErreurRadioFrance as e:
-                        if not avec_emission or "show" not in str(e):
-                            raise
-                        avec_emission = False
-                        rapport.anomalies.append("Radio France : nom des émissions (« show ») refusé, titres seuls")
-                        etapes = lire_grille(session, cle, requete(station, debut_f, fin_f, False))
-                    # Une étape à cheval sur deux créneaux n'est gardée qu'une fois : celui où elle commence.
-                    grille += [e for e in etapes if (d := _date(e.get("start"))) and debut_f <= d < fin_f]
+                etapes = lire_jour(station, jour)
+                # Radio France ne relie la diffusion à son créneau qu'au dernier moment (parfois
+                # pendant l'émission) : d'ici là, le créneau est vide. Il prend le nom de l'émission
+                # diffusée à la même heure une semaine plus tôt (« Questions du soir : le débat »).
+                if any(_vide(e) for e in etapes):
+                    modele = emissions_par_heure(lire_jour(station, jour - timedelta(days=7)))
+                    for e in etapes:
+                        if _vide(e) and (nom := modele.get(f"{_date(e['start']):%H:%M}")):
+                            e["emission_presumee"] = nom
+                grille += etapes
         except (requests.RequestException, ValueError, ErreurRadioFrance) as e:
             # Une erreur réseau cite l'adresse, donc la clé : elle est masquée (base et journaux publics).
             rapport.anomalies.append(f"grille illisible : {chaine.nom} ({str(e).replace(cle, '***')})")
@@ -144,7 +176,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
                 continue
             diffusion = etape.get("diffusion") or {}
             titre = (diffusion.get("title") or etape.get("title") or "").strip()
-            emission = ((diffusion.get("show") or {}).get("title") or "").strip()
+            emission = ((diffusion.get("show") or {}).get("title") or etape.get("emission_presumee") or "").strip()
             if not (titre or emission):
                 continue
             rapport.programmes += 1

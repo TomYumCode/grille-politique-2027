@@ -137,14 +137,15 @@ function nomLien(url, e, fini) {
   }
   // Agenda d'un parti : page de l'événement, ou direct de la chaîne pour un passage média.
   if (e.plateforme === "web") return url.includes("direct") ? "Direct " + e.chaine : "Détails";
-  if (url.includes("lcp")) return "Direct LCP / Public Sénat";
+  if (url.includes("lcp.fr")) return "Direct LCP";
+  if (url.includes("publicsenat.fr")) return "Direct Public Sénat";
   return e.plateforme === "tv" ? "Direct " + e.chaine : "Regarder";
 }
 
 function libelleLien(url, source, plusieurs, fini) {
   const nom = nomLien(url, source, fini);
   // Plusieurs diffuseurs : préciser lequel (« YouTube · La France insoumise »).
-  let libelle = plusieurs && !nom.includes(source.chaine) && !nom.includes("LCP") ? nom + " · " + source.chaine : nom;
+  let libelle = plusieurs && !nom.includes(source.chaine) && !/LCP|Public Sénat/.test(nom) ? nom + " · " + source.chaine : nom;
   // Version particulière de la même diffusion (« Vélotypie et LSF »).
   if (source.precision) libelle += " · " + source.precision;
   return libelle;

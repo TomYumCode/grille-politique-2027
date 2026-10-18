@@ -77,7 +77,7 @@ Deux tâches tournent toutes seules sur GitHub (onglet **Actions** du dépôt) :
   celle de :17) : télévision, radio, YouTube, Twitch, puis
   publication de la page sur `https://tomyumcode.github.io/grille-politique-2027/`.
 - **Email du matin**, à 7 h (heure de Paris ; occasions de démarrer toutes les 20 minutes
-  jusqu'à 10 h si GitHub saute un déclenchement, collecte juste avant l'envoi) : émissions du jour sur la présidentielle,
+  jusqu'à 18 h si GitHub saute des déclenchements : mieux vaut en retard que jamais ; collecte juste avant l'envoi) : émissions du jour sur la présidentielle,
   puis les autres émissions politiques du jour, temps forts de la présidentielle des 3 jours
   suivants (émissions où un candidat officiel, de statut « déclaré » ou « désigné », ou un
   membre de son équipe de campagne est présent), état des sources. Objet : « 4 sur la

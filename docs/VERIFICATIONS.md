@@ -242,3 +242,32 @@ l'email du 16 octobre n'a eu lieu. Parade : deux occasions de collecte par heure
 occasion toutes les 20 minutes de 6 h à 10 h (heure de Paris), qui s'arrête dès que l'email
 du jour est parti et collecte juste avant l'envoi. Commandes ajoutées : `collecte-recente`,
 `envoi-du-jour`.
+
+Constat du 16 octobre au soir : malgré les deux occasions par heure, aucune collecte entre
+14 h 32 et 19 h (heure de Paris). Les tâches programmées restent donc peu fiables l'après-midi.
+
+Le 17 octobre, sur les quinze occasions d'email de 6 h à 10 h 40, GitHub n'en a lancé
+qu'une, à 10 h 21, que l'outil a jugée trop tardive : pas d'email. Désormais l'email part
+même en retard, avec des occasions jusqu'à 18 h 40.
+
+## Créneaux Radio France encore vides (16 octobre 2026)
+
+« Questions du soir : le débat » (France Culture, 18 h 20) manquait à la grille le
+16 octobre. Sondage de l'API : un créneau de diffusion à venir est renvoyé sans diffusion
+(`"diffusion": null`, aucun autre champ sur `DiffusionStep` que `id`, `start`, `end` et
+`children`, vide) ; Radio France ne relie la diffusion qu'au dernier moment, le jour même
+et parfois pendant l'émission (celle du 13 octobre n'a été vue qu'à 18 h 38). Le collecteur
+ignorait ces créneaux. Désormais un créneau vide prend le nom de l'émission diffusée à la
+même heure sept jours plus tôt (une requête de plus par station et par jour concerné) ;
+le titre de la diffusion le remplace dès qu'il est publié. Réponses enregistrées :
+`tests/reponses/radiofrance_creneaux_vides.json`.
+
+## Direct LCP / Public Sénat (17 octobre 2026)
+
+L'adresse https://www.france.tv/lcp-public-senat/direct.html est valide (page « LCP - Public
+Sénat en direct TV »), et l'application France TV revendique toutes les adresses de
+france.tv (fichier apple-app-site-association). Mais sur iPhone, elle s'ouvre alors sur son
+accueil, pas sur le direct. Les deux chaînes ont chacune leur direct sur leur site, lu dans
+le navigateur : https://lcp.fr/direct-lcp-5434 et https://www.publicsenat.fr/direct
+(réponse 200 toutes les deux). La grille propose donc deux boutons, « Direct LCP » et
+« Direct Public Sénat ».
