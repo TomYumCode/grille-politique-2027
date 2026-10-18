@@ -157,6 +157,15 @@ RMC publie la semaine en cours sans invités (« Face à Face » à 8 h 29, diff
 BFMTV) ; Radio Classique nomme l'invité de la matinale (8 h 15). Radio Nova n'a pas de
 grille sur son site : elle reste suivie par YouTube.
 
+## Événement de dernière minute
+
+Une allocution annoncée l'après-midi pour le soir même n'est dans aucun guide (le guide
+télé n'est mis à jour qu'une fois par jour, vers 4 h). Pour l'ajouter : dans GitHub, ouvrir
+`config/evenements.yaml`, bouton crayon, ajouter une ligne (titre, heure de Paris
+« 2026-10-18 20:00 », chaînes de `chaines.yaml`), puis « Commit changes ». Il apparaît à la
+collecte suivante, en une seule carte avec le direct de chaque chaîne citée. Retiré du
+fichier avant sa date, il passe en « annulé ».
+
 ## Agendas des partis
 
 Les lignes `plateforme: web` de `config/chaines.yaml` sont des pages d'agenda de partis.

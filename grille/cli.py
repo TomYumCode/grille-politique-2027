@@ -12,7 +12,8 @@ from pathlib import Path
 
 import requests
 
-from grille import acces, affichage, agendas, annonces, config, courriel, db, page, radio, radios_privees, tv, twitch, youtube
+from grille import (acces, affichage, agendas, annonces, config, courriel, db, evenements, page, radio, radios_privees,
+                    tv, twitch, youtube)
 from grille.campagne import Campagne
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -212,6 +213,17 @@ def _etape_agendas(conf, connexion, maintenant, args) -> bool:
     return True
 
 
+def _etape_evenements(conf, connexion, maintenant, args) -> bool:
+    if not conf.evenements:
+        return True
+    print("Événements ajoutés à la main (config/evenements.yaml) :")
+    rapport = evenements.collecter(conf, connexion, maintenant)
+    print(f"  {len(rapport.retenues)} diffusions écrites, {rapport.annulees} retirées du fichier")
+    for anomalie in rapport.anomalies:
+        print(f"  ATTENTION {anomalie}")
+    return not rapport.anomalies
+
+
 def _etape_youtube(conf, connexion, maintenant, args) -> bool:
     print("YouTube :")
     rapport = youtube.collecter(conf, requests.Session(), connexion, maintenant)
@@ -259,9 +271,9 @@ def _etape_twitch(conf, connexion, maintenant, args) -> bool:
 
 
 ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch,
-          "annonces": _etape_annonces, "web": _etape_agendas}
+          "annonces": _etape_annonces, "web": _etape_agendas, "evenements": _etape_evenements}
 NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch",
-        "annonces": "avec invités annoncés", "web": "dans les agendas"}
+        "annonces": "avec invités annoncés", "web": "dans les agendas", "evenements": "ajoutées à la main"}
 
 
 def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
@@ -314,7 +326,7 @@ def cmd_collecter_twitch(args: argparse.Namespace) -> int:
 
 
 def cmd_collecter(args: argparse.Namespace) -> int:
-    return _collecter(args, ["tv", "radio", "youtube", "twitch", "web", "annonces"])
+    return _collecter(args, ["tv", "radio", "youtube", "twitch", "web", "annonces", "evenements"])
 
 
 def _generer_page(args: argparse.Namespace) -> Path | None:

@@ -61,6 +61,8 @@ class Configuration:
     fonctions_politiques: list[str] = field(default_factory=list)
     # Mots qui classent une émission dans « Présidentielle 2027 » (grille/campagne.py).
     mots_presidentielle: list[str] = field(default_factory=list)
+    # Événements ajoutés à la main (config/evenements.yaml, grille/evenements.py).
+    evenements: list[dict] = field(default_factory=list)
     anomalies: list[str] = field(default_factory=list)
 
     def candidats_officiels(self) -> set[str]:
@@ -179,6 +181,19 @@ def _liste_de_noms(contenu: dict, rubrique: str, fichier: str) -> list[dict]:
     return entrees
 
 
+def _lire_evenements(chemin: Path, anomalies: list[str]) -> list[dict]:
+    """Événements ajoutés à la main : fichier facultatif, une ligne fautive est signalée et ignorée."""
+    if not chemin.exists():
+        return []
+    evenements = []
+    for i, ligne in enumerate(_lire_yaml(chemin).get("evenements") or [], start=1):
+        if not isinstance(ligne, dict) or not ligne.get("titre") or not ligne.get("debut") or not ligne.get("chaines"):
+            anomalies.append(f"evenements.yaml, événement n° {i} : « titre », « debut » et « chaines » sont obligatoires")
+            continue
+        evenements.append(ligne)
+    return evenements
+
+
 def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
     anomalies: list[str] = []
     chaines = _lire_chaines(_lire_yaml(dossier / "chaines.yaml").get("chaines"), anomalies)
@@ -235,5 +250,6 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         cas_douteux=cas_douteux,
         fonctions_politiques=fonctions_politiques,
         mots_presidentielle=mots_presidentielle,
+        evenements=_lire_evenements(dossier / "evenements.yaml", anomalies),
         anomalies=anomalies,
     )

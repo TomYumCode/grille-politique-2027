@@ -179,6 +179,8 @@ def enregistrer_collecte(
             "SELECT id, debut, chaine FROM emissions WHERE plateforme = ? AND statut != 'annulé'", (plateforme,)
         )
         if id_ not in ids_vus and chaine in chaines_couvertes and datetime.fromisoformat(debut) > maintenant
+        # Ajouté à la main (grille/evenements.py) : aucune autre source ne le connaît.
+        and not id_.startswith("evenement:")
         # Source lue seulement pour certains jours (grille page par page) : on n'annule que ceux-là.
         and (jours is None or datetime.fromisoformat(debut).date() in jours)
     ]

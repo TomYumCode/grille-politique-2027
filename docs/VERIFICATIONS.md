@@ -271,3 +271,12 @@ accueil, pas sur le direct. Les deux chaînes ont chacune leur direct sur leur s
 le navigateur : https://lcp.fr/direct-lcp-5434 et https://www.publicsenat.fr/direct
 (réponse 200 toutes les deux). La grille propose donc deux boutons, « Direct LCP » et
 « Direct Public Sénat ».
+
+## Allocution présidentielle du 18 octobre 2026
+
+Annoncée par l'Élysée le jour même pour 20 h. Le guide XMLTV (dernière mise à jour à
+4 h 16, heure de Paris) annonçait « JT 20h » sur TF1 et « Journal 20h00 » sur France 2,
+rien d'autre : aucune source automatique ne connaît un événement décidé dans la journée.
+Ajouté : `config/evenements.yaml` (événements à la main), Emmanuel Macron dans les
+personnalités, « allocution » dans les mots-clés du titre. La fusion distingue désormais
+une chaîne par son nom et sa plateforme (franceinfo télévision et radio : une carte).
