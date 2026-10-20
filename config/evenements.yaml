@@ -1,0 +1,21 @@
+# Événements ajoutés à la main : une annonce de dernière minute qu'aucun guide ne connaît
+# encore (allocution présidentielle, conférence de presse, débat ajouté au programme).
+# Modifiable depuis GitHub (navigateur ou téléphone) : bouton crayon, puis « Commit changes ».
+# L'événement apparaît à la collecte suivante, sur chaque chaîne citée, en une seule carte.
+#
+# Une ligne par événement :
+#   titre    : obligatoire
+#   debut    : obligatoire, heure de Paris, « AAAA-MM-JJ HH:MM »
+#   chaines  : obligatoire, noms exacts de chaines.yaml (télévision ou radio)
+#   duree    : facultatif, en minutes (30 par défaut)
+#   resume   : facultatif, une phrase affichée sous le titre
+#   categorie: facultatif (interview, débat, meeting, analyse) ; sinon déduite du titre
+# Un événement passé peut rester ici ; retiré avant sa date, il passe en « annulé ».
+
+evenements:
+  - titre: "Allocution d'Emmanuel Macron"
+    debut: "2026-10-18 20:00"
+    duree: 20
+    chaines: ["TF1", "France 2", "franceinfo", "BFMTV", "LCI", "CNews", "France Inter", "franceinfo (radio)"]
+    resume: "Le président de la République s'adresse aux Français après les violences en marge des manifestations du 17 octobre (annonce de l'Élysée)."
+    categorie: "meeting"

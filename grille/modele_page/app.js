@@ -161,7 +161,7 @@ function carte(e, maintenant) {
     ...s.map((x) => logo(x.chaine, true)),
     el("span", { classe: "horaire", texte: horaire }),
     direct ? el("span", { classe: "badge-direct", texte: "En direct" }) : null,
-    el("span", { classe: "chaine", texte: s.map((x) => x.chaine).join(" · ") }),
+    el("span", { classe: "chaine", texte: [...new Set(s.map((x) => x.chaine))].join(" · ") }),
     el("span", { texte: plateformes.join(" · ") }));
   const bas = el("div", { classe: "ligne-bas" }, el("span", { classe: "categorie", texte: e.categorie }));
   const vus = new Set();

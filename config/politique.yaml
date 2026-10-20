@@ -50,6 +50,8 @@ candidats:
 # « sigle » : affiché après le nom (« Jean-Philippe Tanguy (RN) ») ; pour un membre
 # d'équipe de campagne dont le parti n'est pas vérifié, « équipe <candidat> ».
 personnalites:
+  # Exécutif : ni candidat ni équipe de campagne, mais ses allocutions sont des événements politiques.
+  - {nom: "Emmanuel Macron", alias: ["Macron"], sigle: "président de la République"}
   - {nom: "Jordan Bardella", alias: ["Bardella"], sigle: "RN", campagne: true}
   - {nom: "Manuel Bompard", alias: ["Bompard"], sigle: "LFI", campagne: true}
   # « Maréchal » seul attraperait les documentaires d'histoire : nom complet seulement.
@@ -251,6 +253,7 @@ mots_cles:
 mots_cles_titre:
   - "débat"
   - "meeting"
+  - "allocution"
 
 # Télévision : programmes ignorés s'ils commencent entre ces heures (heure de Paris),
 # presque toujours des rediffusions nocturnes. « de: 1, a: 6 » masque de 1 h à 5 h 59.

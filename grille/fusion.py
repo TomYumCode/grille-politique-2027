@@ -2,7 +2,7 @@
 fait qu'une émission, avec tous ses liens.
 
 Deux émissions sont la même diffusion quand :
-- elles viennent de chaînes différentes ;
+- elles viennent de chaînes différentes (ou de la même chaîne sur deux plateformes) ;
 - elles commencent à moins de ECART_MAX l'une de l'autre (un direct Twitch annoncé
   à 14 h pour des Questions au gouvernement à 14 h 02) ;
 - leurs titres concordent : titres identiques, ou tous les mots significatifs du
@@ -41,7 +41,9 @@ def meme_titre(a: str, b: str) -> bool:
 
 def _meme_diffusion(a: dict, b: dict) -> bool:
     ecart = abs(datetime.fromisoformat(a["debut"]) - datetime.fromisoformat(b["debut"]))
-    return a["chaine"] != b["chaine"] and ecart <= ECART_MAX and meme_titre(a["titre"], b["titre"])
+    # Même nom, autre plateforme (franceinfo à la télévision et à la radio) : deux diffuseurs.
+    autre = (a["chaine"], a["plateforme"]) != (b["chaine"], b["plateforme"])
+    return autre and ecart <= ECART_MAX and meme_titre(a["titre"], b["titre"])
 
 
 def precision(titre: str, titre_de_tete: str) -> str:
@@ -67,8 +69,9 @@ def fusionner(emissions: list[dict]) -> list[dict]:
     groupes: list[list[dict]] = []
     for e in sorted(emissions, key=lambda e: e["debut"]):
         for groupe in groupes:
-            # Jamais deux émissions de la même chaîne dans un groupe.
-            if all(m["chaine"] != e["chaine"] for m in groupe) and any(_meme_diffusion(m, e) for m in groupe):
+            # Jamais deux émissions de la même chaîne (sur la même plateforme) dans un groupe.
+            if all((m["chaine"], m["plateforme"]) != (e["chaine"], e["plateforme"]) for m in groupe) \
+                    and any(_meme_diffusion(m, e) for m in groupe):
                 groupe.append(e)
                 break
         else:
