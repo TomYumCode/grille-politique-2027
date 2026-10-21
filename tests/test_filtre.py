@@ -118,3 +118,13 @@ def test_rediffusion_d_un_meeting(politique):
 def test_invite_avec_fonction_politique(politique, emission, sous_titre, retenue):
     f, chaines = politique
     assert (f.decider(chaines["France Inter"], emission, "", sous_titre=sous_titre) is not None) is retenue
+
+
+@pytest.mark.parametrize("chaine, titre", [
+    ("BFMTV", "BFM Politique"), ("BFMTV", "Le grand oral 2027"), ("CNews", "100% Politique Week-End"),
+    ("franceinfo", "L'invité politique"), ("France 5", "C politique, la suite"), ("LCP / Public Sénat", "Parlement hebdo"),
+])
+def test_rendez_vous_politiques_sans_invite_nomme(politique, chaine, titre):
+    """Vus seulement en cas douteux jusqu'au 21 octobre 2026 : le guide ne nomme pas l'invité."""
+    f, chaines = politique
+    assert f.decider(chaines[chaine], titre, "").filtre == "liste blanche"

@@ -228,6 +228,14 @@ liste_blanche:
     - {titre: "L'invité politique", chaine: "Sud Radio"}
     # Interview de 8 h 30, diffusée aussi sur BFMTV (les deux se fusionnent à l'affichage).
     - {titre: "Face à face", chaine: "RMC"}
+    # Rendez-vous politiques vus seulement en « cas douteux » jusqu'au 21 octobre 2026
+    # (le guide ne nomme pas l'invité). Le début du titre suffit (« 100% Politique Week-End »).
+    - {titre: "BFM Politique", chaine: "BFMTV"}
+    - {titre: "Le grand oral 2027", chaine: "BFMTV"}
+    - {titre: "100% Politique", chaine: "CNews"}
+    - {titre: "L'invité politique", chaine: "franceinfo"}
+    - {titre: "C politique", chaine: "France 5"}
+    - {titre: "Parlement hebdo", chaine: "LCP / Public Sénat"}
     # LCP le lundi soir (titre du guide : « LCP-Lundi c'est politique »), aussi sur Twitch.
     - "Lundi c'est politique"
     - {titre: "LCP-Lundi c'est politique", chaine: "LCP / Public Sénat"}

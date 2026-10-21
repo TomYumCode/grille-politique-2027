@@ -280,3 +280,14 @@ rien d'autre : aucune source automatique ne connaît un événement décidé dan
 Ajouté : `config/evenements.yaml` (événements à la main), Emmanuel Macron dans les
 personnalités, « allocution » dans les mots-clés du titre. La fusion distingue désormais
 une chaîne par son nom et sa plateforme (franceinfo télévision et radio : une carte).
+
+## Invités du soir sur BFMTV (21 octobre 2026)
+
+Natacha Polony était en direct sur BFMTV vers 22 h. Le guide XMLTV n'annonçait que
+« BFM Grand Soir » (21 h – minuit), sans description ni invité : impossible à repérer à
+l'avance. Le relevé des cas douteux a montré six rendez-vous politiques jamais retenus,
+faute d'invité nommé : « BFM Politique » et « Le grand oral 2027 » (BFMTV), « 100%
+Politique » (CNews), « L'invité politique » (franceinfo), « C politique » (France 5),
+« Parlement hebdo » (LCP). Ajoutés à la liste blanche. Restent à trancher (émissions de
+plateau généralistes, souvent politiques) : « C dans l'air », « C à vous », « C ce soir »,
+« 28 minutes », « L'heure des pros », « BFM Grand Soir », « 100% Mabrouk ».
