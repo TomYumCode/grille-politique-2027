@@ -38,7 +38,7 @@ candidats:
   # Petites candidatures relevées le 12 octobre 2026 (lejdd.fr, touteleurope.eu, france24.com).
   # Noms complets seulement : « Labib », « Egger », « Lalanne » seuls sont trop courants.
   # Candidature annoncée le 14 octobre 2026 sur France Inter (« L'Invité de 7h50 »).
-  - {nom: "Natacha Polony", alias: ["Polony"], parti: "", statut: "déclarée (14 octobre 2026)"}
+  - {nom: "Natacha Polony", alias: ["Polony"], parti: "Nous sommes la France", sigle: "Nous sommes la France", statut: "déclarée (14 octobre 2026)"}
   - {nom: "Selma Labib", alias: [], parti: "NPA-Révolutionnaires", sigle: "NPA-R", statut: "désignée (juin 2026)"}
   - {nom: "Clara Egger", alias: [], parti: "Solution démocratique", sigle: "Solution démocratique", statut: "déclarée"}
   - {nom: "Francis Lalanne", alias: [], parti: "France libre", sigle: "France libre", statut: "déclaré (août 2026)"}
@@ -128,6 +128,8 @@ partis:
   - {nom: "Debout la France", alias: []}
   - {nom: "Les Patriotes", alias: [], ambigu: true}
   - {nom: "UPR", alias: ["Union populaire républicaine"]}
+  # Mouvement de Natacha Polony ; « nous sommes la France » est aussi une phrase courante.
+  - {nom: "Nous sommes la France", alias: [], ambigu: true}
   - {nom: "Reconquête", alias: [], ambigu: true}
   - {nom: "UDR", alias: []}
   - {nom: "Nouvelle Énergie", alias: [], ambigu: true}

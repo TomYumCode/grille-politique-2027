@@ -288,6 +288,6 @@ Natacha Polony était en direct sur BFMTV vers 22 h. Le guide XMLTV n'annonçait
 l'avance. Le relevé des cas douteux a montré six rendez-vous politiques jamais retenus,
 faute d'invité nommé : « BFM Politique » et « Le grand oral 2027 » (BFMTV), « 100%
 Politique » (CNews), « L'invité politique » (franceinfo), « C politique » (France 5),
-« Parlement hebdo » (LCP). Ajoutés à la liste blanche. Restent à trancher (émissions de
-plateau généralistes, souvent politiques) : « C dans l'air », « C à vous », « C ce soir »,
-« 28 minutes », « L'heure des pros », « BFM Grand Soir », « 100% Mabrouk ».
+« Parlement hebdo » (LCP). Ajoutés à la liste blanche. Écartées sur décision (émissions de
+plateau généralistes, souvent politiques mais trop chargées) : « C dans l'air », « C à vous »,
+« C ce soir », « 28 minutes », « L'heure des pros », « BFM Grand Soir », « 100% Mabrouk ».
