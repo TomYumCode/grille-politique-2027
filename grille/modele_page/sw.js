@@ -11,6 +11,27 @@ self.addEventListener("activate", (ev) => ev.waitUntil(self.clients.claim()));
 
 const LOGOS = "grille-2027-logos";
 
+// Notifications des favoris, envoyées par le service (notifications/, Cloudflare).
+// Chaque message reçu doit s'afficher : iPhone coupe l'abonnement sinon.
+self.addEventListener("push", (ev) => {
+  let m = {};
+  try { m = ev.data ? ev.data.json() : {}; } catch (e) { m = { corps: ev.data ? ev.data.text() : "" }; }
+  ev.waitUntil(self.registration.showNotification(m.titre || "Grille politique 2027", {
+    body: m.corps || "", tag: m.tag || undefined, icon: "icone-192.png", badge: "icone-192.png",
+    data: { url: m.url || self.registration.scope },
+  }));
+});
+
+// Toucher la notification ouvre la grille (ou la ramène au premier plan).
+self.addEventListener("notificationclick", (ev) => {
+  ev.notification.close();
+  const cible = (ev.notification.data && ev.notification.data.url) || self.registration.scope;
+  ev.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((fenetres) => {
+    const ouverte = fenetres.find((f) => f.url.startsWith(self.registration.scope));
+    return ouverte ? ouverte.focus() : self.clients.openWindow(cible);
+  }));
+});
+
 self.addEventListener("fetch", (ev) => {
   if (ev.request.method !== "GET") return;
   if (new URL(ev.request.url).origin !== location.origin) {

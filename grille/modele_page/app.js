@@ -39,6 +39,130 @@ function lireFavoris() {
 
 function ecrireFavoris() {
   try { localStorage.setItem("favoris", JSON.stringify(favoris)); } catch (e) { /* sans importance */ }
+  synchroniserFavoris();
+}
+
+// Notifications : la page s'abonne auprès du service (notifications/, Cloudflare) et lui
+// confie ses favoris ; c'est lui qui envoie, même page fermée. Sur iPhone, seulement depuis
+// la page ajoutée à l'écran d'accueil (iOS 16.4 ou plus).
+const SERVICE = DONNEES.notifications || "";
+const notif = { actif: false, attente: false, message: "" };
+let minuterieFavoris = null;
+
+function surIPhone() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function surEcranAccueil() {
+  return navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+}
+
+function notificationsPossibles() {
+  return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+}
+
+function depuisB64(texte) {
+  const s = atob(texte.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((texte.length + 3) % 4));
+  return Uint8Array.from(s, (c) => c.charCodeAt(0));
+}
+
+async function appelerService(chemin, corps) {
+  const r = await fetch(SERVICE + chemin, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(corps) });
+  if (!r.ok) throw new Error("service : HTTP " + r.status);
+  return r.json();
+}
+
+// Le service worker peut ne jamais être prêt (page ouverte hors HTTPS) : on n'attend pas plus de 5 s.
+function serviceWorkerPret() {
+  return Promise.race([navigator.serviceWorker.ready,
+    new Promise((_, refus) => setTimeout(() => refus(new Error("service worker indisponible")), 5000))]);
+}
+
+async function abonnementActuel() {
+  const reg = await serviceWorkerPret();
+  return reg.pushManager.getSubscription();
+}
+
+function afficherNotifications() {
+  const zone = document.getElementById("zone-notifications");
+  if (!SERVICE) { zone.hidden = true; return; }
+  zone.hidden = false;
+  const bouton = document.getElementById("bouton-notifications");
+  const etatTexte = document.getElementById("etat-notifications");
+  if (!notificationsPossibles()) {
+    bouton.hidden = true;
+    etatTexte.textContent = surIPhone() && !surEcranAccueil()
+      ? "Sur iPhone : touchez Partager puis « Sur l'écran d'accueil », et ouvrez la grille depuis son icône."
+      : "Ce navigateur ne reçoit pas de notifications.";
+    return;
+  }
+  bouton.hidden = false;
+  bouton.disabled = notif.attente;
+  bouton.setAttribute("aria-pressed", String(notif.actif));
+  bouton.textContent = notif.actif ? "🔔 Activées — désactiver" : "🔕 Activer les notifications";
+  etatTexte.textContent = notif.message || (notif.actif
+    ? "15 min avant chaque favori, à l'annonce d'un nouveau passage et au début des directs." : "");
+}
+
+async function activerNotifications() {
+  // Demandée tout de suite, dans le geste de l'utilisateur (sinon refusée sur iPhone).
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    notif.message = "Notifications refusées. Pour les autoriser : Réglages → Notifications → Grille 2027.";
+    return;
+  }
+  const { cle } = await (await fetch(SERVICE + "cle")).json();
+  const reg = await serviceWorkerPret();
+  const abonnement = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: depuisB64(cle) });
+  await appelerService("abonnement", { abonnement: abonnement.toJSON(), favoris, essai: true });
+  notif.actif = true;
+  notif.message = "Activées : une notification d'essai arrive.";
+}
+
+async function desactiverNotifications() {
+  const abonnement = await abonnementActuel();
+  if (abonnement) {
+    await appelerService("desabonnement", { endpoint: abonnement.endpoint }).catch(() => {});
+    await abonnement.unsubscribe();
+  }
+  notif.actif = false;
+  notif.message = "Désactivées.";
+}
+
+async function basculerNotifications() {
+  notif.attente = true;
+  notif.message = "";
+  afficherNotifications();
+  try {
+    if (notif.actif) await desactiverNotifications(); else await activerNotifications();
+  } catch (e) {
+    notif.message = "Échec (" + e.message + "). Réessayez dans un moment.";
+  }
+  notif.attente = false;
+  afficherNotifications();
+}
+
+// Favoris modifiés : le service les reçoit quelques secondes plus tard (un seul envoi).
+function synchroniserFavoris() {
+  if (!SERVICE || !notif.actif) return;
+  clearTimeout(minuterieFavoris);
+  minuterieFavoris = setTimeout(async () => {
+    try {
+      const abonnement = await abonnementActuel();
+      if (abonnement) await appelerService("abonnement", { abonnement: abonnement.toJSON(), favoris });
+    } catch (e) { /* nouvel essai au prochain changement */ }
+  }, 1500);
+}
+
+async function preparerNotifications() {
+  if (!SERVICE) return;
+  document.getElementById("bouton-notifications").addEventListener("click", basculerNotifications);
+  afficherNotifications();
+  if (notificationsPossibles()) {
+    try { notif.actif = !!(await abonnementActuel()); } catch (e) { /* pas de service worker */ }
+  }
+  afficherNotifications();
 }
 
 function lireStockage() {
@@ -454,6 +578,7 @@ function preparerBalayage() {
 lireStockage();
 lireFavoris();
 preparerFiltres();
+preparerNotifications();
 preparerBalayage();
 afficher();
 window.addEventListener("online", afficher);

@@ -1,0 +1,4 @@
+# Adresse du service de notifications (Cloudflare Worker, dossier notifications/).
+# Vide : la page ne propose pas les notifications. À renseigner après la première
+# publication (tâche GitHub « Service de notifications », étape « Adresse du service »).
+adresse: ""

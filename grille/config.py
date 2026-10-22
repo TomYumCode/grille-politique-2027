@@ -63,6 +63,8 @@ class Configuration:
     mots_presidentielle: list[str] = field(default_factory=list)
     # Événements ajoutés à la main (config/evenements.yaml, grille/evenements.py).
     evenements: list[dict] = field(default_factory=list)
+    # Adresse du service de notifications (config/notifications.yaml) ; vide : pas de notifications.
+    notifications: str = ""
     anomalies: list[str] = field(default_factory=list)
 
     def candidats_officiels(self) -> set[str]:
@@ -194,6 +196,17 @@ def _lire_evenements(chemin: Path, anomalies: list[str]) -> list[dict]:
     return evenements
 
 
+def _lire_notifications(chemin: Path, anomalies: list[str]) -> str:
+    """Adresse https du service de notifications, terminée par « / » ; vide si absente."""
+    if not chemin.exists():
+        return ""
+    adresse = str(_lire_yaml(chemin).get("adresse") or "").strip()
+    if adresse and not re.fullmatch(r"https://[\w.-]+(/[\w./-]*)?", adresse):
+        anomalies.append(f"notifications.yaml : adresse invalide « {adresse} », notifications désactivées")
+        return ""
+    return adresse if not adresse or adresse.endswith("/") else adresse + "/"
+
+
 def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
     anomalies: list[str] = []
     chaines = _lire_chaines(_lire_yaml(dossier / "chaines.yaml").get("chaines"), anomalies)
@@ -251,5 +264,6 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         fonctions_politiques=fonctions_politiques,
         mots_presidentielle=mots_presidentielle,
         evenements=_lire_evenements(dossier / "evenements.yaml", anomalies),
+        notifications=_lire_notifications(dossier / "notifications.yaml", anomalies),
         anomalies=anomalies,
     )
