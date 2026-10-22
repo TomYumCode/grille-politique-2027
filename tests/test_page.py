@@ -77,3 +77,30 @@ def test_logos_de_la_base_et_de_la_configuration(connexion, tmp_path):
     donnees = _donnees_de(page.generer(connexion, conf, MAINTENANT, tmp_path / "site"))
     # TF1 n'a pas d'émission : son logo n'est pas embarqué ; BFMTV prend le logo imposé.
     assert donnees["logos"] == {"France 2": "https://source/france2.png", "BFMTV": "https://moi/bfm.png"}
+
+
+def test_version_legere_pour_les_notifications(connexion, tmp_path):
+    """notifications.json : ce que relit le service de notifications, sans liens ni résumés."""
+    debut = MAINTENANT + timedelta(hours=2)
+    db.enregistrer_collecte(connexion, [_emission("tv:soir", debut, invites=["Raphaël Glucksmann"],
+                                                  lien=["https://www.france.tv/france-2/direct.html"])],
+                            "tv", set(), MAINTENANT)
+    index = page.generer(connexion, config.charger(), MAINTENANT, tmp_path / "site")
+    legere = json.loads((tmp_path / "site" / "notifications.json").read_text(encoding="utf-8"))
+    [e] = legere["emissions"]
+    assert set(e) == set(page.CHAMPS_NOTIFICATIONS)
+    assert e["id"] == "tv:soir" and e["invites"] == ["Raphaël Glucksmann"] and "lien" not in e
+    assert legere["genere_le"] == _donnees_de(index)["genere_le"]
+    # Sans adresse de service (config/notifications.yaml vide), la page ne propose pas les notifications.
+    assert _donnees_de(index)["notifications"] == config.charger().notifications
+
+
+def test_adresse_du_service_de_notifications(tmp_path):
+    for f in ("chaines.yaml", "politique.yaml"):
+        (tmp_path / f).write_text((config.DOSSIER_CONFIG / f).read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "notifications.yaml").write_text('adresse: "https://grille-2027-notifications.exemple.workers.dev"\n',
+                                                 encoding="utf-8")
+    assert config.charger(tmp_path).notifications == "https://grille-2027-notifications.exemple.workers.dev/"
+    (tmp_path / "notifications.yaml").write_text('adresse: "http://pas-chiffre.fr"\n', encoding="utf-8")
+    conf = config.charger(tmp_path)
+    assert conf.notifications == "" and "adresse invalide" in conf.anomalies[0]

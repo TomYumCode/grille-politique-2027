@@ -23,6 +23,8 @@ MODELE = Path(__file__).resolve().parent / "modele_page"
 SORTIE = Path(__file__).resolve().parent.parent / "site"
 CHAMPS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "categorie", "invites", "cites", "lien", "statut",
           "filtre")
+# Ce dont les favoris ont besoin (grille/modele_page/favoris.js), sans les liens ni les résumés.
+CHAMPS_NOTIFICATIONS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "invites", "statut", "campagne")
 
 
 def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
@@ -50,6 +52,8 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
         # Directs des stations de radio : « Écouter en direct », les autres liens radio menant à l'émission.
         "directs": sorted({d for c in config.chaines if c.plateforme == "radio" for d in c.direct}),
         "sigles": {p["nom"]: p["sigle"] for p in config.candidats + config.personnalites if p.get("sigle")},
+        # Service de notifications (vide : la page ne les propose pas).
+        "notifications": config.notifications,
         "emissions": emissions,
     }
 
@@ -60,7 +64,13 @@ def generer(connexion, config: Configuration, maintenant: datetime, sortie: Path
     for fichier in MODELE.iterdir():
         if fichier.name != "index.html":
             shutil.copy2(fichier, sortie / fichier.name)
-    contenu = json.dumps(donnees(connexion, config, maintenant), ensure_ascii=False, separators=(",", ":"))
+    tout = donnees(connexion, config, maintenant)
+    # Version légère relue toutes les 5 minutes par le service de notifications (notifications/).
+    legere = {"genere_le": tout["genere_le"],
+              "emissions": [{k: e[k] for k in CHAMPS_NOTIFICATIONS if k in e} for e in tout["emissions"]]}
+    (sortie / "notifications.json").write_text(json.dumps(legere, ensure_ascii=False, separators=(",", ":")),
+                                               encoding="utf-8")
+    contenu = json.dumps(tout, ensure_ascii=False, separators=(",", ":"))
     # « </ » fermerait la balise <script> qui contient les données.
     contenu = contenu.replace("</", "<\\/")
     page = (MODELE / "index.html").read_text(encoding="utf-8").replace("__DONNEES__", contenu)

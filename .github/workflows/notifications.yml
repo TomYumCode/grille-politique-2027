@@ -1,0 +1,46 @@
+# Service de notifications (Cloudflare Worker) : testé puis publié à chaque modification.
+# Secrets : CLOUDFLARE_API_TOKEN (modèle « Edit Cloudflare Workers »), CLOUDFLARE_ACCOUNT_ID.
+name: Service de notifications
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "notifications/**"
+      - "grille/modele_page/favoris.js"
+      - ".github/workflows/notifications.yml"
+      - ".github/scripts/notifications.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notifications
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tests
+        run: node --test notifications/test/*.test.mjs
+      - id: kv
+        name: Espace de stockage
+        run: .github/scripts/notifications.sh
+      - name: Publier
+        run: npx --yes wrangler@4.152.0 deploy --config notifications/wrangler.toml
+      - name: Adresse du service
+        if: steps.kv.outputs.adresse != ''
+        run: |
+          echo "Adresse : ${{ steps.kv.outputs.adresse }}"
+          sleep 10
+          curl -fsS "${{ steps.kv.outputs.adresse }}" && echo || echo "::warning::Service pas encore joignable (normal juste après la première publication)."

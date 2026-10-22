@@ -291,3 +291,16 @@ Politique » (CNews), « L'invité politique » (franceinfo), « C politique » 
 « Parlement hebdo » (LCP). Ajoutés à la liste blanche. Écartées sur décision (émissions de
 plateau généralistes, souvent politiques mais trop chargées) : « C dans l'air », « C à vous »,
 « C ce soir », « 28 minutes », « L'heure des pros », « BFM Grand Soir », « 100% Mabrouk ».
+
+## Notifications (22 octobre 2026)
+
+Web Push : page installée sur l'écran d'accueil de l'iPhone (iOS 16.4 ou plus), abonnement
+auprès d'Apple, envoi par un Cloudflare Worker (offre gratuite : 100 000 requêtes par jour,
+espace KV à 1 000 écritures par jour, déclencheurs programmés). La tournée toutes les 5
+minutes fait une lecture KV et au plus une écriture (seulement si une notification part ou
+si la trace change). Chiffrement aes128gcm (RFC 8291) vérifié avec la bibliothèque de
+référence `http_ece` 1.2.1, jeton VAPID ES256 (RFC 8292) vérifié par le module crypto de
+Node ; service essayé dans le moteur de Cloudflare (`wrangler dev`, wrangler 4.152.0) :
+clés, chiffrement et signature fonctionnent. Jeton VAPID valable une heure, sujet = adresse
+de la page (pas d'adresse email dans le dépôt). Abonnements acceptés seulement vers les
+services de notification des navigateurs (Apple, Google, Mozilla, Microsoft).

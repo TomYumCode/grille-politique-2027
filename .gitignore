@@ -221,3 +221,7 @@ __marimo__/
 
 # Base locale de la grille : sa conservation sera décidée au lot 5.
 data/
+
+# Service de notifications : état local de wrangler (clés d’essai), modules
+notifications/.wrangler/
+notifications/node_modules/

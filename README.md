@@ -166,6 +166,22 @@ bouton « ★ Favoris » n'affiche qu'eux. Règles communes : `grille/modele_pag
 Les favoris restent sur le téléphone ; sur iPhone, la page ajoutée à l'écran d'accueil a
 son propre stockage, distinct de Safari : les régler dans l'app.
 
+## Notifications
+
+Service à part, dans `notifications/` (Cloudflare Worker, gratuit), publié par la tâche
+GitHub « Service de notifications » à chaque modification (secrets `CLOUDFLARE_API_TOKEN`
+et `CLOUDFLARE_ACCOUNT_ID`). Toutes les 5 minutes, il relit `notifications.json` (version
+légère de la grille, écrite à chaque collecte) et prévient l'abonné :
+- 15 minutes avant chaque favori ;
+- quand un nouveau favori apparaît dans la grille (regroupés, jamais entre 23 h et 7 h) ;
+- au début d'un direct qui n'a pas eu de rappel (YouTube, Twitch).
+
+Sur iPhone (iOS 16.4 ou plus) : ajouter la page à l'écran d'accueil (Partager → « Sur
+l'écran d'accueil »), l'ouvrir depuis son icône, puis Filtres → « Activer les
+notifications ». L'adresse du service se règle dans `config/notifications.yaml` (vide : la
+page ne propose pas les notifications). Tests : `node --test notifications/test/*.test.mjs`
+(lancés aussi par `python -m pytest` si Node est installé).
+
 ## Événement de dernière minute
 
 Une allocution annoncée l'après-midi pour le soir même n'est dans aucun guide (le guide
