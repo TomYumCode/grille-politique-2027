@@ -7,7 +7,12 @@ Deux émissions sont la même diffusion quand :
   à 14 h pour des Questions au gouvernement à 14 h 02) ;
 - leurs titres concordent : titres identiques, ou tous les mots significatifs du
   titre le plus court (au moins deux) figurent dans l'autre (« Questions au
-  gouvernement » et « Questions au Gouvernement à l'Assemblée »).
+  gouvernement » et « Questions au Gouvernement à l'Assemblée ») ;
+- ou bien c'est le même émetteur sur deux plateformes (La France insoumise sur YouTube
+  et sur Twitch), à moins de ECART_EMETTEUR d'écart, avec au moins deux mots
+  significatifs en commun : chaque plateforme a son titre (« Réunion publique à
+  Rochefort | Présidentielle 2027 » et « Réunion publique à Rochefort avec Mathilde
+  Panot et Antoine Léaument »).
 
 Rien n'est effacé en base : la fusion se fait à l'affichage (page, email, lister),
 et une règle trop large se corrige ici sans perte.
@@ -20,6 +25,7 @@ from datetime import datetime, timedelta
 from grille.filtre import normaliser
 
 ECART_MAX = timedelta(minutes=20)
+ECART_EMETTEUR = timedelta(minutes=10)
 # Ordre de préférence pour l'émission qui porte la carte (chaîne, logo, titre).
 PRIORITE = {"tv": 0, "radio": 1, "youtube": 2, "twitch": 3, "web": 4}
 MOTS_VIDES = {
@@ -43,7 +49,14 @@ def _meme_diffusion(a: dict, b: dict) -> bool:
     ecart = abs(datetime.fromisoformat(a["debut"]) - datetime.fromisoformat(b["debut"]))
     # Même nom, autre plateforme (franceinfo à la télévision et à la radio) : deux diffuseurs.
     autre = (a["chaine"], a["plateforme"]) != (b["chaine"], b["plateforme"])
-    return autre and ecart <= ECART_MAX and meme_titre(a["titre"], b["titre"])
+    if not autre or ecart > ECART_MAX:
+        return False
+    if meme_titre(a["titre"], b["titre"]):
+        return True
+    meme_emetteur = normaliser(a["chaine"]) == normaliser(b["chaine"])
+    # Le nom de l'émetteur ne compte pas (« … sur Sud Radio » / « L'invité politique Sud Radio »).
+    communs = _mots(a["titre"]) & _mots(b["titre"]) - _mots(a["chaine"])
+    return meme_emetteur and ecart <= ECART_EMETTEUR and len(communs) >= 2
 
 
 def precision(titre: str, titre_de_tete: str) -> str:
