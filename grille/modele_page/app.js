@@ -17,9 +17,29 @@ const etat = {
   categories: new Set(CATEGORIES),
   plateformes: new Set(Object.keys(PLATEFORMES)),
   candidat: "",
-  perimetre: "campagne", // « campagne » : Présidentielle 2027 ; « tout » : toute la politique
+  perimetre: "campagne", // « campagne » : Présidentielle 2027 ; « tout » : toute la politique ; « favoris »
   chaine: "", // touché sur un logo : n'afficher que cette chaîne (non mémorisé)
+  menu: "", // carte dont le menu des favoris est ouvert
 };
+const PERIMETRES = ["campagne", "tout", "favoris"];
+
+// Favoris (favoris.js), gardés sur le téléphone. Sur iPhone, la page ajoutée à l'écran
+// d'accueil a son propre stockage : les favoris se règlent dans l'app, pas dans Safari.
+let favoris = Favoris.vides();
+
+function lireFavoris() {
+  try {
+    const f = JSON.parse(localStorage.getItem("favoris") || "null");
+    if (f) favoris = Object.assign(Favoris.vides(), f);
+    // Une diffusion passée disparaît des données : son favori n'a plus d'objet.
+    const ids = new Set(DONNEES.emissions.map((e) => e.id));
+    favoris.diffusions = favoris.diffusions.filter((id) => ids.has(id));
+  } catch (e) { /* stockage indisponible : pas de favoris */ }
+}
+
+function ecrireFavoris() {
+  try { localStorage.setItem("favoris", JSON.stringify(favoris)); } catch (e) { /* sans importance */ }
+}
 
 function lireStockage() {
   try {
@@ -31,7 +51,7 @@ function lireStockage() {
       const connues = s.connues || PLATEFORMES_ANCIENNES;
       Object.keys(PLATEFORMES).filter((p) => !connues.includes(p)).forEach((p) => etat.plateformes.add(p));
       etat.candidat = s.candidat || "";
-      if (s.perimetre === "tout" || s.perimetre === "campagne") etat.perimetre = s.perimetre;
+      if (PERIMETRES.includes(s.perimetre)) etat.perimetre = s.perimetre;
     }
   } catch (e) { /* stockage indisponible : filtres par défaut */ }
 }
@@ -75,7 +95,9 @@ function nommer(noms) {
 
 function visible(e) {
   const s = sources(e);
-  return (etat.perimetre === "tout" || !!e.campagne)
+  const perimetre = etat.perimetre === "tout" || (etat.perimetre === "campagne" ? !!e.campagne
+    : Favoris.raisons(e, favoris).length > 0);
+  return perimetre
     && etat.categories.has(e.categorie) && s.some((x) => etat.plateformes.has(x.plateforme))
     && (!etat.candidat || e.invites.includes(etat.candidat) || (e.cites || []).includes(etat.candidat))
     && (!etat.chaine || s.some((x) => x.chaine === etat.chaine));
@@ -162,7 +184,8 @@ function carte(e, maintenant) {
     el("span", { classe: "horaire", texte: horaire }),
     direct ? el("span", { classe: "badge-direct", texte: "En direct" }) : null,
     el("span", { classe: "chaine", texte: [...new Set(s.map((x) => x.chaine))].join(" · ") }),
-    el("span", { texte: plateformes.join(" · ") }));
+    el("span", { texte: plateformes.join(" · ") }),
+    boutonEtoile(e));
   const bas = el("div", { classe: "ligne-bas" }, el("span", { classe: "categorie", texte: e.categorie }));
   const vus = new Set();
   for (const x of s) {
@@ -184,7 +207,43 @@ function carte(e, maintenant) {
     e.presentation ? el("p", { classe: "invites", texte: e.presentation }) : null,
     // Personnes seulement citées (sujet d'un commentaire), sans être sur le plateau.
     (e.cites || []).length ? el("p", { classe: "cites", texte: "À propos de " + nommer(e.cites) }) : null,
-    bas);
+    bas,
+    etat.menu === e.id ? menuFavoris(e) : null);
+}
+
+function boutonEtoile(e) {
+  const raisons = Favoris.raisons(e, favoris);
+  const b = el("button", { classe: "etoile" + (raisons.length ? " active" : ""), type: "button",
+    "aria-expanded": String(etat.menu === e.id),
+    "aria-label": raisons.length ? "Favori : " + raisons.join(", ") : "Ajouter aux favoris",
+    texte: raisons.length ? "★" : "☆" });
+  b.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    etat.menu = etat.menu === e.id ? "" : e.id;
+    afficher();
+  });
+  return b;
+}
+
+// Ce qu'on peut suivre depuis une carte : cette diffusion, l'émission, chaque personne présente.
+function menuFavoris(e) {
+  const nom = Favoris.nomEmission(e);
+  const cle = Favoris.cleEmission(e);
+  const choix = [
+    ["Cette diffusion", favoris.diffusions.includes(e.id), () => Favoris.basculer(favoris.diffusions, e.id)],
+    ["Chaque diffusion de « " + nom + " » (" + e.chaine + ")", favoris.emissions.some((x) => x.cle === cle),
+      () => Favoris.basculer(favoris.emissions, { cle, titre: nom, chaine: e.chaine }, (a, b) => a.cle === b.cle)],
+    ...e.invites.map((p) => ["Chaque passage de " + nommer([p]), favoris.personnes.includes(p),
+      () => Favoris.basculer(favoris.personnes, p)]),
+  ];
+  const menu = el("div", { classe: "menu-favoris" }, el("p", { classe: "etiquette", texte: "Suivre :" }));
+  for (const [libelle, actif, action] of choix) {
+    const b = el("button", { classe: "choix-favori", type: "button", "aria-pressed": String(actif),
+      texte: (actif ? "★ " : "☆ ") + libelle });
+    b.addEventListener("click", (ev) => { ev.stopPropagation(); action(); ecrireFavoris(); afficher(); });
+    menu.append(b);
+  }
+  return menu;
 }
 
 // Séparateur d'une tranche d'une heure : « Entre 14 h et 15 h ». L'heure de diffusion
@@ -227,10 +286,11 @@ function afficherGrille(aujourdhui) {
   }
   if (!duJour.length) {
     const filtre = etat.categories.size < CATEGORIES.length || etat.plateformes.size < Object.keys(PLATEFORMES).length || etat.candidat;
-    const quoi = etat.perimetre === "campagne" ? "Aucune émission sur la présidentielle annoncée ce jour"
-      : "Aucune émission politique annoncée ce jour";
+    const quoi = { campagne: "Aucune émission sur la présidentielle annoncée ce jour",
+      tout: "Aucune émission politique annoncée ce jour", favoris: "Aucun favori annoncé ce jour" }[etat.perimetre];
     main.append(el("p", { classe: "vide", texte: quoi + (filtre ? " avec ces filtres." : ".")
-      + (etat.perimetre === "campagne" ? " Voir « Toute la politique »." : "") }));
+      + (etat.perimetre === "campagne" ? " Voir « Toute la politique »." : "")
+      + (etat.perimetre === "favoris" ? " Touchez ☆ sur une émission pour la suivre." : "") }));
     return;
   }
   let heureCourante = null;
@@ -283,11 +343,34 @@ function afficherFiltres() {
   }
 }
 
+// Liste des favoris dans le panneau « Filtres » : tout ce qui est suivi, avec ✕ pour l'enlever.
+function afficherFavoris() {
+  const zone = document.getElementById("liste-favoris");
+  zone.replaceChildren();
+  const presidentielle = document.getElementById("favori-presidentielle");
+  presidentielle.setAttribute("aria-pressed", String(favoris.presidentielle));
+  presidentielle.textContent = (favoris.presidentielle ? "★ " : "☆ ") + "Toute la présidentielle 2027";
+  const elements = [
+    ...favoris.personnes.map((p) => [nommer([p]), () => Favoris.basculer(favoris.personnes, p)]),
+    ...favoris.emissions.map((x) => ["« " + x.titre + " » (" + x.chaine + ")",
+      () => Favoris.basculer(favoris.emissions, x, (a, b) => a.cle === b.cle)]),
+  ];
+  const diffusions = favoris.diffusions.length;
+  if (diffusions) elements.push([diffusions + (diffusions > 1 ? " diffusions précises" : " diffusion précise"),
+    () => { favoris.diffusions = []; }]);
+  for (const [libelle, retirer] of elements) {
+    const b = el("button", { classe: "puce", type: "button", "aria-label": "Ne plus suivre " + libelle, texte: libelle + "  ✕" });
+    b.addEventListener("click", () => { retirer(); ecrireFavoris(); afficher(); });
+    zone.append(b);
+  }
+}
+
 function afficher() {
   const aujourdhui = aujourdhuiParis();
   if (!DONNEES.jours.includes(etat.jour)) etat.jour = DONNEES.jours.includes(aujourdhui) ? aujourdhui : DONNEES.jours[0];
   afficherFraicheur();
   afficherFiltres();
+  afficherFavoris();
   afficherFiltreChaine();
   afficherJours(aujourdhui);
   afficherGrille(aujourdhui);
@@ -336,6 +419,11 @@ function preparerFiltres() {
     ecrireStockage();
     afficher();
   });
+  document.getElementById("favori-presidentielle").addEventListener("click", () => {
+    favoris.presidentielle = !favoris.presidentielle;
+    ecrireFavoris();
+    afficher();
+  });
   const bouton = document.getElementById("bouton-filtres");
   bouton.addEventListener("click", () => {
     const panneau = document.getElementById("filtres");
@@ -364,6 +452,7 @@ function preparerBalayage() {
 }
 
 lireStockage();
+lireFavoris();
 preparerFiltres();
 preparerBalayage();
 afficher();

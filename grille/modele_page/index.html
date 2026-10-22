@@ -24,6 +24,7 @@
   <div class="perimetre" role="group" aria-label="Émissions affichées">
     <button type="button" data-perimetre="campagne">Présidentielle 2027</button>
     <button type="button" data-perimetre="tout">Toute la politique</button>
+    <button type="button" data-perimetre="favoris" aria-label="Mes favoris">★ Favoris</button>
   </div>
   <p id="fraicheur" class="fraicheur"></p>
   <nav id="jours" class="jours" aria-label="Jours"></nav>
@@ -36,12 +37,18 @@
       <select id="filtre-candidat"><option value="">Tous</option></select>
     </div>
     <button id="tout-afficher" class="lien-discret">Tout réafficher</button>
+    <div class="groupe">
+      <span class="etiquette">Favoris (☆ sur une émission pour en ajouter)</span>
+      <button id="favori-presidentielle" class="puce favori" type="button"></button>
+      <span id="liste-favoris" class="groupe"></span>
+    </div>
   </section>
 </header>
 <main id="grille" class="grille"></main>
 <footer class="pied"><a href="sources.html">Sources et confidentialité</a></footer>
 <noscript><p class="vide">Cette page a besoin de JavaScript pour afficher la grille.</p></noscript>
 <script id="donnees" type="application/json">__DONNEES__</script>
+<script src="favoris.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
