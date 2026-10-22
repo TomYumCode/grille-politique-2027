@@ -1,0 +1,28 @@
+# TEMPORAIRE : diagnostic des secrets Cloudflare (aucune valeur affichée), retiré avant fusion.
+name: Sonde temporaire
+on:
+  push:
+    branches: [claude/busy-cerf-497c8s]
+    paths: [".github/workflows/sonde.yml"]
+permissions:
+  contents: read
+jobs:
+  sonder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - run: |
+          j="$CLOUDFLARE_API_TOKEN"; a="$CLOUDFLARE_ACCOUNT_ID"
+          echo "Jeton : ${#j} caractères ; espaces ou retours : $(printf '%s' "$j" | tr -cd ' \t\r\n' | wc -c) ; forme : $(printf '%s' "$j" | grep -qE '^[A-Za-z0-9_-]+$' && echo correcte || echo inattendue)"
+          echo "Compte : ${#a} caractères ; forme : $(printf '%s' "$a" | grep -qE '^[0-9a-f]{32}$' && echo 32-hexa || echo inattendue)"
+          echo "Vérification du jeton (jeton de compte) :"
+          curl -sS -H "Authorization: Bearer $j" "https://api.cloudflare.com/client/v4/accounts/$a/tokens/verify" | jq -c '{success, errors, status: .result.status}'
+          echo "Vérification du jeton (jeton d'utilisateur) :"
+          curl -sS -H "Authorization: Bearer $j" "https://api.cloudflare.com/client/v4/user/tokens/verify" | jq -c '{success, errors, status: .result.status}'
+          echo "Comptes visibles par le jeton :"
+          curl -sS -H "Authorization: Bearer $j" "https://api.cloudflare.com/client/v4/accounts" | jq -c '{success, errors, nombre: (.result | length), meme_compte: ([.result[]?.id] | index(env.CLOUDFLARE_ACCOUNT_ID) != null)}'
+          echo "Espaces KV :"
+          curl -sS -H "Authorization: Bearer $j" "https://api.cloudflare.com/client/v4/accounts/$a/storage/kv/namespaces" | jq -c '{success, errors}'
