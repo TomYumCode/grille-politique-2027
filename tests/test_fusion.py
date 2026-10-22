@@ -48,6 +48,26 @@ def test_trop_eloignees_ou_titres_differents():
     assert len(fusion.fusionner([autre, LCP])) == 2
 
 
+def test_meme_emetteur_sur_deux_plateformes():
+    """22 octobre 2026 : le même meeting en direct sur YouTube et sur Twitch, titré autrement."""
+    yt = emission("youtube:r", "Réunion publique à Rochefort | Présidentielle 2027", "2026-10-22T19:31:00+02:00",
+                  "youtube", "La France insoumise", ["https://www.youtube.com/watch?v=x"], categorie="meeting")
+    tw = emission("twitch:r", "Réunion publique à Rochefort avec Mathilde Panot et Antoine Léaument",
+                  "2026-10-22T19:30:00+02:00", "twitch", "La France insoumise", ["https://www.twitch.tv/lfi"],
+                  categorie="meeting", invites=["Mathilde Panot"])
+    [carte] = fusion.fusionner([yt, tw])
+    assert carte["plateforme"] == "youtube" and carte["invites"] == ["Mathilde Panot"]
+    assert carte["lien"] == ["https://www.youtube.com/watch?v=x", "https://www.twitch.tv/lfi"]
+    # Autre émetteur, ou un seul mot en commun, ou trop d'écart : deux cartes.
+    assert len(fusion.fusionner([yt, dict(tw, chaine="Clemovitch (Clément Viktorovitch)")])) == 2
+    assert len(fusion.fusionner([yt, dict(tw, titre="Rochefort ce soir")])) == 2
+    assert len(fusion.fusionner([yt, dict(tw, debut="2026-10-22T19:45:00+02:00")])) == 2
+    # Le nom de l'émetteur dans les deux titres ne suffit pas.
+    sud = emission("radio:s", "L'invité politique Sud Radio", "2026-10-14T08:30:00+02:00", "radio", "Sud Radio", [])
+    agenda = emission("web:s", "Sébastien Chenu sur Sud Radio", "2026-10-14T08:30:00+02:00", "web", "Sud Radio", [])
+    assert len(fusion.fusionner([sud, agenda])) == 2
+
+
 def test_titres():
     assert fusion.meme_titre("Face à face", "FACE À FACE")
     assert fusion.meme_titre("Meeting de Jean-Luc Mélenchon à Clermont-Ferrand",
