@@ -157,6 +157,15 @@ RMC publie la semaine en cours sans invités (« Face à Face » à 8 h 29, diff
 BFMTV) ; Radio Classique nomme l'invité de la matinale (8 h 15). Radio Nova n'a pas de
 grille sur son site : elle reste suivie par YouTube.
 
+## Favoris
+
+L'étoile ☆ d'une carte ouvre « Suivre » : cette diffusion, chaque diffusion de l'émission
+(sur cette chaîne), ou chaque passage d'une personne présente. Le panneau « Filtres »
+liste les favoris (✕ pour en retirer un) et propose « Toute la présidentielle 2027 ». Le
+bouton « ★ Favoris » n'affiche qu'eux. Règles communes : `grille/modele_page/favoris.js`.
+Les favoris restent sur le téléphone ; sur iPhone, la page ajoutée à l'écran d'accueil a
+son propre stockage, distinct de Safari : les régler dans l'app.
+
 ## Événement de dernière minute
 
 Une allocution annoncée l'après-midi pour le soir même n'est dans aucun guide (le guide
