@@ -54,6 +54,18 @@ CRENEAU_INVITE = re.compile(r"\b(invit\w*|interview\w*|entretien\w*|grand jury|f
 _REDIFFUSION = ["retransmission", "rediffusion", "extraits", "en differe"]
 _EVENEMENTS = ["meeting", "discours", "reunion publique"]
 FENETRE_AVANT, FENETRE_APRES = 6, 4  # mots examinés autour du nom
+# Homonymes : un nom de famille seul (« Bompard ») précédé d'un autre prénom (« Alexandre
+# Bompard », PDG de Carrefour) n'est pas la personne suivie (Manuel Bompard). Ces mots à
+# majuscule devant un nom ne sont pas des prénoms.
+_PAS_PRENOMS = {
+    "le", "la", "les", "l", "un", "une", "de", "du", "des", "d", "et", "ou", "mais", "pour", "avec", "selon", "face",
+    "chez", "contre", "par", "sur", "sans", "sous", "vers", "entre", "avant", "apres", "quand", "pourquoi", "comment",
+    "qui", "que", "si", "ce", "cette", "monsieur", "madame", "mademoiselle", "m", "mme", "mr", "president",
+    "presidente", "ministre", "depute", "deputee", "senateur", "senatrice", "maire", "candidat", "candidate",
+    "invite", "invitee", "interview", "debat", "meeting", "discours", "affaire", "equipe", "clan", "effet", "camp",
+    "famille", "generation", "france", "gouvernement", "premier", "premiere", "secretaire", "porte", "chef", "leader",
+}
+_MOT_MAJUSCULE = re.compile(r"(?<![\w'’-])([A-ZÀ-Ý][a-zà-ÿ]+(?:-[A-ZÀ-Ý][a-zà-ÿ]+)?)\s+$")
 # « avec » sert à tout (« vainqueur avec près de 66 % des voix, Raphaël Glucksmann… ») :
 # il ne compte que dans le même membre de phrase que le nom (pas de virgule ni de point entre).
 _COUPURE = "0coupure0"
@@ -110,7 +122,29 @@ class FiltrePolitique:
         self._mots_douteux = [(m, normaliser(m)) for m in (douteux.get("mots") or []) + partis_ambigus]
         self._emissions_a_invites = [(e, normaliser(e)) for e in douteux.get("emissions_a_invites") or []]
         self._fonctions = [(m, normaliser(m)) for m in config.fonctions_politiques]
+        # Noms de famille employés seuls (alias d'un mot, fin du nom complet), avec le prénom attendu.
+        self._noms_seuls = []
+        for p in config.candidats + config.personnalites:
+            for a in p.get("alias") or []:
+                if " " not in a.strip() and normaliser(p["nom"]).endswith(" " + normaliser(a)):
+                    prenom = normaliser(p["nom"])[: -len(normaliser(a))].strip()
+                    self._noms_seuls.append((re.compile(rf"(?<![\w-]){re.escape(a)}(?![\w-])", re.IGNORECASE), prenom))
         self.douteux: list[dict] = []  # cas douteux vus pendant la collecte en cours
+
+    def sans_homonymes(self, texte: str) -> str:
+        """Texte où « Alexandre Bompard » ne peut plus passer pour Manuel Bompard (nom de famille
+        seul précédé d'un autre prénom) ; « Manuel Bompard », « Bompard » seul ou « M. Bompard » restent."""
+        if not texte:
+            return texte
+        for motif, prenom in self._noms_seuls:
+            def remplacer(m, prenom=prenom):
+                avant = _MOT_MAJUSCULE.search(texte[: m.start()])
+                if avant and normaliser(avant.group(1)) not in _PAS_PRENOMS and normaliser(avant.group(1)) != prenom \
+                        and not prenom.endswith(normaliser(avant.group(1))):
+                    return "(homonyme)"
+                return m.group(0)
+            texte = motif.sub(remplacer, texte)
+        return texte
 
     def invites(self, texte: str) -> list[str]:
         t = normaliser(texte)
@@ -228,6 +262,8 @@ class FiltrePolitique:
         """Renvoie la décision si l'émission est politique, None sinon. Le sous-titre d'un
         guide TV (« L'interview » — « Jean-Luc Mélenchon ») compte avec la description pour
         les mots-clés, et avec le titre pour repérer qui est présent."""
+        titre, sous_titre, description = self.sans_homonymes(titre), self.sans_homonymes(sous_titre), \
+            self.sans_homonymes(description)
         titre_complet = f"{titre} — {sous_titre}" if sous_titre else titre
         if sous_titre:
             description = f"{sous_titre}\n{description}"
