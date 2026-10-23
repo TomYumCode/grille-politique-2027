@@ -1,0 +1,21 @@
+# TEMPORAIRE : sonde de la page du direct de France 5, retirée avant fusion.
+name: Sonde temporaire
+on:
+  push:
+    branches: [claude/busy-cerf-497c8s]
+    paths: [".github/sonde/**", ".github/workflows/sonde.yml"]
+permissions:
+  contents: read
+jobs:
+  sonder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+      - run: python .github/sonde/sonde.py
+        env:
+          PYTHONPATH: .
