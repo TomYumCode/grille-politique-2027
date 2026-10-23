@@ -304,3 +304,17 @@ Node ; service essayé dans le moteur de Cloudflare (`wrangler dev`, wrangler 4.
 clés, chiffrement et signature fonctionnent. Jeton VAPID valable une heure, sujet = adresse
 de la page (pas d'adresse email dans le dépôt). Abonnements acceptés seulement vers les
 services de notification des navigateurs (Apple, Google, Mozilla, Microsoft).
+
+## Sujet du jour sur france.tv (22 et 23 octobre 2026)
+
+« C ce soir » du 22 octobre (« LFI - gouvernement : la stratégie de la tension ? »)
+manquait : le guide XMLTV ne donne qu'une description générale, la même chaque soir. La
+page du direct (https://www.france.tv/france-5/direct.html) donne, pour l'émission à
+l'antenne, des données schema.org (VideoObject : nom, description, publication.startDate
+et endDate) et un titre `<h2>` (nom de l'émission, puis sujet précédé de « S18 - »). Vérifié
+le 23 octobre à 18 h : rien sur les émissions suivantes (pas de liste « à suivre ») ; les
+pages des émissions ne listent que les replays. Lecteur : `grille/directs.py`, à chaque
+collecte. Réponse enregistrée : `tests/reponses/francetv_direct_france5.html` (« C à vous »).
+Constat au passage : « Bompard » seul faisait d'Alexandre Bompard (Carrefour) Manuel
+Bompard (LFI) ; un nom de famille seul précédé d'un autre prénom ne compte plus
+(`FiltrePolitique.sans_homonymes`).
