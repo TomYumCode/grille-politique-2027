@@ -1,21 +1,21 @@
-"""TEMPORAIRE : où france.tv publie-t-il le sujet du jour de « C ce soir » ?"""
+"""TEMPORAIRE : vers 18 h, france.tv annonce-t-il déjà les sujets de la soirée ?"""
 import re
 import requests
 from grille.tv import EN_TETES
 
-CLE = "strat"  # « la stratégie de la tension »
-for url in ["https://www.france.tv/france-5/direct.html", "https://www.france.tv/france-5/c-ce-soir/",
-            "https://www.france.tv/france-5/c-dans-l-air/", "https://www.france.tv/france-5/c-a-vous/",
-            "https://www.france.tv/programme-tv/", "https://www.france.tv/france-5/programme-tv/",
-            "https://www.francetvpro.fr/france-5/grille-des-programmes"]:
-    try:
-        r = requests.get(url, headers=EN_TETES, timeout=30)
-    except Exception as e:
-        print("=====", url, "ERREUR", e); continue
-    t = r.text
-    print("=====", url, r.status_code, r.url, len(t))
-    for m in list(re.finditer(r"(?i)strat[ée]gie de la tension|LFI", t))[:4]:
-        print("   ...", re.sub(r"\s+", " ", t[max(0, m.start() - 300):m.end() + 200]))
-    # Liens d'épisodes de C ce soir et API éventuelles
-    print("   épisodes:", sorted(set(re.findall(r'/france-5/c-ce-soir/[^"\'\s<>]+', t)))[:12])
-    print("   api:", sorted(set(re.findall(r'https://[a-z0-9.-]*(?:api|yatta)[a-z0-9.-]*\.[a-z]+/[^"\'\s<>]{0,80}', t)))[:10])
+def propre(x):
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", x)).replace("\\u0026", "&").strip()
+
+for url in ["https://www.france.tv/france-5/direct.html", "https://www.france.tv/france-2/direct.html"]:
+    t = requests.get(url, headers=EN_TETES, timeout=30).text
+    print("=====", url, len(t))
+    # Titres de programme : <h2>…</h2>, et tout ce qui ressemble à un horaire « 22h45 » ou « 22:45 » près d'un titre.
+    for h in re.findall(r"(?s)<h2>(.*?)</h2>", t)[:6]:
+        print("  h2:", propre(h)[:160])
+    for nom in ["C ce soir", "C dans l", "C à vous", "C l'hebdo", "Quelle époque", "20h30"]:
+        n = [m.start() for m in re.finditer(re.escape(nom), t)]
+        print(f"  « {nom} » : {len(n)} occurrences")
+        for i in n[:3]:
+            print("     ", propre(t[max(0, i - 200):i + 400])[:420])
+    heures = re.findall(r'(?:"(?:startDate|start|begin|broadcastBeginDate|beginDate|diffusionDate)[^"]*"\s*:\s*"[^"]+")', t)
+    print("  champs d'horaire :", heures[:15])
