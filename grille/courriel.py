@@ -25,7 +25,8 @@ MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août
         "novembre", "décembre"]
 PLATEFORMES = {"tv": "TV", "radio": "Radio", "youtube": "YouTube", "twitch": "Twitch", "web": "Agenda"}
 SOURCES = {"tv": "Télévision", "radio": "Radios", "youtube": "YouTube", "twitch": "Twitch",
-           "web": "Agendas des partis", "annonces": "Invités annoncés (France Télévisions)"}
+           "web": "Agendas des partis", "annonces": "Invités annoncés (France Télévisions)",
+           "directs": "Sujet du jour des émissions en cours (france.tv)"}
 JOURS_TEMPS_FORTS = 3
 EXEMPLES_DOUTEUX = 10
 NOMS_SOURCES = {"tv": "télévision", "radio": "radio", "youtube": "YouTube", "twitch": "Twitch"}

@@ -12,8 +12,8 @@ from pathlib import Path
 
 import requests
 
-from grille import (acces, affichage, agendas, annonces, config, courriel, db, evenements, page, radio, radios_privees,
-                    tv, twitch, youtube)
+from grille import (acces, affichage, agendas, annonces, config, courriel, db, directs, evenements, page, radio,
+                    radios_privees, tv, twitch, youtube)
 from grille.campagne import Campagne
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -135,6 +135,22 @@ def _etape_tv(conf, connexion, maintenant, args) -> bool:
     if args.motifs:
         _motifs(rapport.retenues)
     return reussie
+
+
+def _etape_directs(conf, connexion, maintenant, args) -> bool:
+    print("Sujet du jour des émissions en cours (pages du direct de france.tv) :")
+    rapport = directs.collecter(conf, requests.Session(), connexion, maintenant)
+    db.noter_collecte(connexion, "directs", maintenant, not rapport.interrompu, len(rapport.retenues),
+                      rapport.anomalies, rapport.interrompu)
+    if rapport.interrompu:
+        print(f"  ERREUR {rapport.interrompu}")
+        return False
+    print(f"  {rapport.pages_lues} pages lues ; {_resume(rapport.retenues)}")
+    for anomalie in rapport.anomalies:
+        print(f"  ATTENTION {anomalie}")
+    if args.motifs:
+        _motifs(rapport.retenues)
+    return True
 
 
 def _etape_radio(conf, connexion, maintenant, args) -> bool:
@@ -271,9 +287,11 @@ def _etape_twitch(conf, connexion, maintenant, args) -> bool:
 
 
 ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch,
-          "annonces": _etape_annonces, "web": _etape_agendas, "evenements": _etape_evenements}
+          "annonces": _etape_annonces, "web": _etape_agendas, "evenements": _etape_evenements,
+          "directs": _etape_directs}
 NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch",
-        "annonces": "avec invités annoncés", "web": "dans les agendas", "evenements": "ajoutées à la main"}
+        "annonces": "avec invités annoncés", "web": "dans les agendas", "evenements": "ajoutées à la main",
+        "directs": "en cours (france.tv)"}
 
 
 def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
@@ -326,7 +344,8 @@ def cmd_collecter_twitch(args: argparse.Namespace) -> int:
 
 
 def cmd_collecter(args: argparse.Namespace) -> int:
-    return _collecter(args, ["tv", "radio", "youtube", "twitch", "web", "annonces", "evenements"])
+    # « directs » juste après la télévision : il évite les doublons avec les émissions du guide.
+    return _collecter(args, ["tv", "directs", "radio", "youtube", "twitch", "web", "annonces", "evenements"])
 
 
 def _generer_page(args: argparse.Namespace) -> Path | None:
