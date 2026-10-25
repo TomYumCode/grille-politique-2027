@@ -318,3 +318,12 @@ collecte. Réponse enregistrée : `tests/reponses/francetv_direct_france5.html` 
 Constat au passage : « Bompard » seul faisait d'Alexandre Bompard (Carrefour) Manuel
 Bompard (LFI) ; un nom de famille seul précédé d'un autre prénom ne compte plus
 (`FiltrePolitique.sans_homonymes`).
+
+## Parties d'une émission dans la grille Radio France (25 octobre 2026)
+
+La grille de France Culture donnait « L'Esprit public » entier (11 h 00 – 11 h 58) et ses
+deux parties (11 h 01 – 11 h 29, 11 h 29 – 11 h 58), toutes sous le même nom d'émission :
+deux cartes pour une émission. Même cas pour « Interception » (France Inter, 18 octobre).
+Une partie incluse dans l'émission entière du même nom y est désormais fondue
+(`radio.sans_parties_incluses`) ; une chronique d'un autre nom dans une matinale reste à
+part. Réponse enregistrée : `tests/reponses/radiofrance_parties_incluses.json`.

@@ -1,0 +1,79 @@
+{
+ "_note": "Vraie réponse de l'API Radio France (France Culture, 25 octobre 2026, 10 h 55 – 12 h 05), enregistrée le jour même : « L'Esprit public » entier (11 h 00 – 11 h 58) et ses deux parties, sous le même nom d'émission.",
+ "grille": {
+  "data": {
+   "grid": [
+    {
+     "id": "2329d198-6ecb-46ca-8adf-04e2527e6015_5",
+     "start": 1792919100,
+     "end": 1792922325,
+     "diffusion": {
+      "id": "eb26a389-86fe-476f-baf1-33bbd909dd12_5",
+      "title": "MESSE du dimanche 25 octobre 2026",
+      "standFirst": "",
+      "url": null,
+      "show": {
+       "title": "La Messe"
+      }
+     }
+    },
+    {
+     "id": "7a35e9a7-0f8e-40a2-a0ae-95879b5d8e47_5",
+     "start": 1792922400,
+     "end": 1792925925,
+     "diffusion": {
+      "id": "c383a235-1868-4ea9-afd9-f276d08f798e_5",
+      "title": "Comment défendre l’Etat de Droit sans toucher aux libertés publiques?/Comment le monde regarde la «France du 17 octobre»",
+      "standFirst": "Couvre-feu, manifestations non syndicales ou non déclarées interdites, Macron serre la vis suite aux débordements du samedi 17 octobre. Mais comment défendre l'État de droit sans toucher aux libertés publiques ? Comment le monde voit la France ?\n",
+      "url": "https://www.franceculture.fr/franceculture/podcasts/l-esprit-public/comment-defendre-l-etat-de-droit-sans-toucher-aux-libertes-publiques-comment-le-monde-regarde-la-france-du-17-octobre-5729236",
+      "show": {
+       "title": "L'Esprit public"
+      }
+     }
+    },
+    {
+     "id": "7ea0da55-ee47-4086-a393-309b3487779a_5",
+     "start": 1792922460,
+     "end": 1792924170,
+     "diffusion": {
+      "id": "46db7b0a-b71b-40af-b252-bf809ee8bb90_5",
+      "title": "Peut-on défendre l’Etat de Droit sans toucher aux libertés publiques ?",
+      "standFirst": "Depuis la manifestation du 17 octobre, plusieurs villes sont sous couvre-feu. Pour celle du 24 octobre, Macron a annoncé que les manifestations non syndicales ou non déclarées seraient interdites partout où cela est possible. Comment défendre l'État de droit sans toucher aux libertés publiques ?",
+      "url": "https://www.franceculture.fr/franceculture/podcasts/l-esprit-public/peut-on-defendre-l-etat-de-droit-sans-toucher-aux-libertes-publiques-2043208",
+      "show": {
+       "title": "L'Esprit public"
+      }
+     }
+    },
+    {
+     "id": "043d7f37-8e6e-4b04-a05a-1607e96751a1_5",
+     "start": 1792924170,
+     "end": 1792925925,
+     "diffusion": {
+      "id": "83a43573-b240-47b0-b9b4-6e9203260951_5",
+      "title": "Comment le monde regarde cette « France du 17 octobre » ?",
+      "standFirst": "Lors des manifestations contre la vie chère et en soutien au mouvement lycéen du samedi 17 octobre, on a pu voir des scènes de violence, des dégradations et des pillages. Comment le monde observe-t-il \"le french chaos\" ?",
+      "url": "https://www.franceculture.fr/franceculture/podcasts/l-esprit-public/comment-le-monde-regarde-cette-france-du-17-octobre-9654959",
+      "show": {
+       "title": "L'Esprit public"
+      }
+     }
+    },
+    {
+     "id": "6e79e2e4-3771-45ab-891a-6c8314fba3ae_5",
+     "start": 1792926000,
+     "end": 1792927725,
+     "diffusion": {
+      "id": "859e3310-0c97-420a-8e53-87fea55cc6ef_5",
+      "title": "Que mangeait-on à Woodstock ?",
+      "standFirst": "Avec La Faim de l’histoire, le dessinateur Jul et le journaliste et critique gastronomique Aïtor Alfonso proposent une autre façon de raconter le passé : en partant de ce que les hommes mangent.\n",
+      "url": "https://www.franceculture.fr/franceculture/podcasts/les-bonnes-choses/jul-et-aitor-alfonso-8041295",
+      "show": {
+       "title": "Les Bonnes Choses"
+      }
+     }
+    }
+   ]
+  }
+ }
+}
