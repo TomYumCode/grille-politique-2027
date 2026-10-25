@@ -68,6 +68,8 @@ personnalites:
   - {nom: "Aleksandar Nikolic", alias: [], sigle: "RN", campagne: true}
   - {nom: "Andréa Kotarac", alias: ["Kotarac"], sigle: "RN", campagne: true}
   - {nom: "Jean-Philippe Tanguy", alias: [], sigle: "RN", campagne: true}
+  # Ajouté le 25 octobre 2026 (sur LCI avec Natacha Polony) ; pas annoncé dans l'équipe de campagne.
+  - {nom: "Julien Odoul", alias: ["Odoul"], sigle: "RN"}
   # Bruno Retailleau : porte-parole annoncés le 8 septembre 2026.
   - {nom: "Othman Nasrou", alias: ["Nasrou"], sigle: "LR", campagne: true}
   - {nom: "Agnès Evren", alias: ["Evren"], sigle: "LR", campagne: true}
@@ -238,6 +240,8 @@ liste_blanche:
     - {titre: "L'invité politique", chaine: "franceinfo"}
     - {titre: "C politique", chaine: "France 5"}
     - {titre: "Parlement hebdo", chaine: "LCP / Public Sénat"}
+    # Rendez-vous politique du dimanche : le guide perd parfois sa description (25 octobre 2026).
+    - {titre: "Objectif 2027", chaine: "LCI"}
     # LCP le lundi soir (titre du guide : « LCP-Lundi c'est politique »), aussi sur Twitch.
     - "Lundi c'est politique"
     - {titre: "LCP-Lundi c'est politique", chaine: "LCP / Public Sénat"}

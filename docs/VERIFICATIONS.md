@@ -327,3 +327,14 @@ deux cartes pour une émission. Même cas pour « Interception » (France Inter,
 Une partie incluse dans l'émission entière du même nom y est désormais fondue
 (`radio.sans_parties_incluses`) ; une chronique d'un autre nom dans une matinale reste à
 part. Réponse enregistrée : `tests/reponses/radiofrance_parties_incluses.json`.
+
+## LCI, soir du 25 octobre 2026
+
+Natacha Polony puis Julien Odoul sur LCI vers 21 h : le guide annonçait « 20H Haddad »
+(20 h – 22 h) sans description, et la page du direct (https://www.tf1info.fr/direct/,
+données schema.org) seulement « grand entretien » puis « débat », sans invité. Rien à
+repérer. Constat au passage : « Objectif 2027 dimanche » (LCI, 11 h), retenu le 21 octobre
+grâce à sa description, avait été annulé le 22 quand le guide l'avait perdue. Désormais une
+émission encore au guide à la même heure, sous le même titre, reste dans la grille ; un autre
+programme à sa place l'annule. « Objectif 2027 » (LCI) rejoint la liste blanche, Julien Odoul
+les personnalités.

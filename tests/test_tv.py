@@ -119,3 +119,26 @@ def test_chercher_explique_le_verdict(conf, tmp_path):
 def test_logo_du_guide(conf, connexion, tmp_path):
     tv.collecter(conf, _gz(tmp_path, EXTRAIT.read_bytes()), connexion, MAINTENANT)
     assert db.logos(connexion) == {"France 2": "https://example.org/logos/france2.png"}
+
+
+def _guide_lci(titre, description=""):
+    desc = f"<desc lang=\"fr\">{description}</desc>" if description else ""
+    return (f'<?xml version="1.0" encoding="UTF-8"?><tv><channel id="LCI.fr"><display-name>LCI</display-name></channel>'
+            f'<programme start="20261025110000 +0100" stop="20261025120000 +0100" channel="LCI.fr">'
+            f'<title lang="fr">{titre}</title>{desc}</programme></tv>').encode()
+
+
+def test_description_perdue_par_le_guide(conf, connexion, tmp_path):
+    """Comme « Objectif 2027 dimanche » (LCI) le 22 octobre 2026 : retenu grâce à sa description,
+    puis annulé quand le guide l'a perdue. Même programme, même heure : il reste."""
+    avant = datetime(2026, 10, 21, 10, 0, tzinfo=tv.PARIS)
+    tv.collecter(conf, _gz(tmp_path, _guide_lci("Le grand dossier week-end", "Un nouveau rendez-vous hebdomadaire avec "
+                 "des personnalités politiques, avec toujours en ligne de mire les élections présidentielles.")),
+                 connexion, avant)
+    rapport = tv.collecter(conf, _gz(tmp_path, _guide_lci("Le grand dossier week-end")), connexion, avant + timedelta(hours=1))
+    assert rapport.annulees == 0
+    [e] = db.lister(connexion, datetime(2026, 10, 25, tzinfo=tv.PARIS), datetime(2026, 10, 26, tzinfo=tv.PARIS))
+    assert e["titre"] == "Le grand dossier week-end" and "présidentielles" in e["resume"]
+    # Un autre programme à la même heure, lui, annule l'émission.
+    rapport = tv.collecter(conf, _gz(tmp_path, _guide_lci("Histoires criminelles")), connexion, avant + timedelta(hours=2))
+    assert rapport.annulees == 1
