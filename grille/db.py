@@ -145,6 +145,7 @@ def enregistrer_collecte(
     chaines_couvertes: set[str],
     maintenant: datetime,
     jours: set | None = None,
+    gardees: set[str] | None = None,
 ) -> int:
     """Écrit les émissions d'une collecte et renvoie le nombre d'émissions passées en « annulé ».
 
@@ -172,7 +173,9 @@ def enregistrer_collecte(
              "resume": " ".join((e.get("resume") or "").split())[:500],
              "lien": json.dumps(e["lien"], ensure_ascii=False), "vu_le": vu_le},
         )
-    ids_vus = {e["id"] for e in emissions}
+    # `gardees` : émissions toujours présentes dans la source, mais qui ne passent plus le filtre
+    # (le guide a perdu leur description) ; elles restent telles quelles, sans passer en « annulé ».
+    ids_vus = {e["id"] for e in emissions} | (gardees or set())
     annulees = [
         id_
         for id_, debut, chaine in connexion.execute(
@@ -214,6 +217,11 @@ def annuler(connexion: sqlite3.Connection, ids: list[str], maintenant: datetime)
                                (vu_le, id_)).rowcount
     connexion.commit()
     return n
+
+
+def titres(connexion: sqlite3.Connection, ids: set[str]) -> dict[str, str]:
+    """Titre des émissions encore valables (non annulées) parmi `ids`."""
+    return {i: t for i, t, s in connexion.execute("SELECT id, titre, statut FROM emissions") if i in ids and s != "annulé"}
 
 
 def lister(connexion: sqlite3.Connection, depuis: datetime, jusqua: datetime) -> list[dict]:

@@ -157,6 +157,14 @@ RMC publie la semaine en cours sans invités (« Face à Face » à 8 h 29, diff
 BFMTV) ; Radio Classique nomme l'invité de la matinale (8 h 15). Radio Nova n'a pas de
 grille sur son site : elle reste suivie par YouTube.
 
+## Sujet du jour des émissions en cours
+
+Le guide télé ne donne pour « C ce soir », « C dans l'air » ou « C à vous » qu'une
+description générale. À chaque collecte, `grille/directs.py` lit la page du direct de
+france.tv des chaînes télévision dont le direct y est (France 2, 3, 5) : si le sujet du
+jour de l'émission en cours est politique, elle entre dans la grille pendant sa diffusion.
+France Télévisions ne publie ce sujet qu'au début de l'émission.
+
 ## Favoris
 
 L'étoile ☆ d'une carte ouvre « Suivre » : cette diffusion, chaque diffusion de l'émission

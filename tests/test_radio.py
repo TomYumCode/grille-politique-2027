@@ -198,3 +198,33 @@ def test_creneau_vide_nomme_d_apres_la_semaine_precedente(tmp_path, connexion):
     # La semaine précédente n'est lue que pour le jour qui a des créneaux vides (le 25, jour de
     # 25 heures, demande deux requêtes).
     assert lus == [date(2026, 10, d) for d in (19, 12, 20, 25, 25)]
+
+
+def test_partie_incluse_fondue_dans_l_emission_entiere(tmp_path, connexion):
+    """25 octobre 2026 : la grille donne « L'Esprit public » entier et ses parties, sous le même nom."""
+    (tmp_path / "chaines.yaml").write_text(
+        'chaines:\n- {plateforme: radio, nom: "France Culture", adresse: "FRANCECULTURE", categorie: "Radio publique"}\n',
+        encoding="utf-8")
+    shutil.copy(Path(config.DOSSIER_CONFIG) / "politique.yaml", tmp_path / "politique.yaml")
+    conf = config.charger(tmp_path)
+    grille = charger("radiofrance_parties_incluses.json")["grille"]
+
+    def repondre(methode, url, corps):
+        debut = datetime.fromtimestamp(int(re.search(r"start: (\d+)", corps["query"]).group(1)), PARIS)
+        return Reponse(corps=grille if debut.date() == date(2026, 10, 25) else {"data": {"grid": []}})
+
+    rapport = radio.collecter(conf, Session(repondre), connexion, datetime(2026, 10, 25, 8, 0, tzinfo=PARIS), cle=CLE)
+    esprit = [e for e in rapport.retenues if e["titre"].startswith("L'Esprit public")]
+    assert [(e["id"], e["fin"]) for e in esprit] == [("radio:FRANCECULTURE:202610251100", "2026-10-25T11:58:45+01:00")]
+    assert esprit[0]["cites"] == ["Emmanuel Macron"]
+    assert "_emission" not in db.lister(connexion, datetime(2026, 10, 25, tzinfo=PARIS),
+                                        datetime(2026, 10, 26, tzinfo=PARIS))[0]
+
+
+def test_chronique_d_un_autre_nom_gardee():
+    """Une chronique incluse dans une matinale mais d'un autre nom reste une émission à part."""
+    matinale = {"chaine": "France Culture", "debut": "2026-10-26T06:30:00+01:00", "fin": "2026-10-26T09:00:00+01:00",
+                "_emission": "les matins", "invites": [], "cites": []}
+    chronique = dict(matinale, debut="2026-10-26T06:46:00+01:00", fin="2026-10-26T06:53:00+01:00",
+                     _emission="les chantiers de la recherche")
+    assert len(radio.sans_parties_incluses([chronique, matinale])) == 2

@@ -304,3 +304,37 @@ Node ; service essayé dans le moteur de Cloudflare (`wrangler dev`, wrangler 4.
 clés, chiffrement et signature fonctionnent. Jeton VAPID valable une heure, sujet = adresse
 de la page (pas d'adresse email dans le dépôt). Abonnements acceptés seulement vers les
 services de notification des navigateurs (Apple, Google, Mozilla, Microsoft).
+
+## Sujet du jour sur france.tv (22 et 23 octobre 2026)
+
+« C ce soir » du 22 octobre (« LFI - gouvernement : la stratégie de la tension ? »)
+manquait : le guide XMLTV ne donne qu'une description générale, la même chaque soir. La
+page du direct (https://www.france.tv/france-5/direct.html) donne, pour l'émission à
+l'antenne, des données schema.org (VideoObject : nom, description, publication.startDate
+et endDate) et un titre `<h2>` (nom de l'émission, puis sujet précédé de « S18 - »). Vérifié
+le 23 octobre à 18 h : rien sur les émissions suivantes (pas de liste « à suivre ») ; les
+pages des émissions ne listent que les replays. Lecteur : `grille/directs.py`, à chaque
+collecte. Réponse enregistrée : `tests/reponses/francetv_direct_france5.html` (« C à vous »).
+Constat au passage : « Bompard » seul faisait d'Alexandre Bompard (Carrefour) Manuel
+Bompard (LFI) ; un nom de famille seul précédé d'un autre prénom ne compte plus
+(`FiltrePolitique.sans_homonymes`).
+
+## Parties d'une émission dans la grille Radio France (25 octobre 2026)
+
+La grille de France Culture donnait « L'Esprit public » entier (11 h 00 – 11 h 58) et ses
+deux parties (11 h 01 – 11 h 29, 11 h 29 – 11 h 58), toutes sous le même nom d'émission :
+deux cartes pour une émission. Même cas pour « Interception » (France Inter, 18 octobre).
+Une partie incluse dans l'émission entière du même nom y est désormais fondue
+(`radio.sans_parties_incluses`) ; une chronique d'un autre nom dans une matinale reste à
+part. Réponse enregistrée : `tests/reponses/radiofrance_parties_incluses.json`.
+
+## LCI, soir du 25 octobre 2026
+
+Natacha Polony puis Julien Odoul sur LCI vers 21 h : le guide annonçait « 20H Haddad »
+(20 h – 22 h) sans description, et la page du direct (https://www.tf1info.fr/direct/,
+données schema.org) seulement « grand entretien » puis « débat », sans invité. Rien à
+repérer. Constat au passage : « Objectif 2027 dimanche » (LCI, 11 h), retenu le 21 octobre
+grâce à sa description, avait été annulé le 22 quand le guide l'avait perdue. Désormais une
+émission encore au guide à la même heure, sous le même titre, reste dans la grille ; un autre
+programme à sa place l'annule. « Objectif 2027 » (LCI) rejoint la liste blanche, Julien Odoul
+les personnalités.

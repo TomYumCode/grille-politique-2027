@@ -25,7 +25,7 @@ import requests
 from grille import db
 from grille.acces import RADIOFRANCE_API
 from grille.config import Configuration
-from grille.filtre import FiltrePolitique
+from grille.filtre import FiltrePolitique, normaliser
 from grille.radios_privees import jours_a_lire
 from grille.tv import JOURS_AFFICHES, PARIS, statut
 
@@ -101,6 +101,27 @@ def _date(horodatage) -> datetime | None:
 def _vide(etape: dict) -> bool:
     """Créneau de diffusion pas encore relié à sa diffusion (l'API renvoie « diffusion: null »)."""
     return "diffusion" in etape and not etape["diffusion"]
+
+
+def sans_parties_incluses(retenues: list[dict]) -> list[dict]:
+    """La grille donne parfois l'émission entière et l'une de ses parties, sous le même nom
+    (« L'Esprit public » 11 h 00 – 11 h 58 et 11 h 01 – 11 h 29, le 25 octobre 2026) : la partie
+    est fondue dans l'émission entière (ses invités et personnes citées s'y ajoutent).
+    Une chronique d'un autre nom dans une matinale reste à part."""
+    def bornes(e):
+        debut = datetime.fromisoformat(e["debut"])
+        return debut, datetime.fromisoformat(e["fin"]) if e["fin"] else debut
+    gardees = []
+    for e in sorted(retenues, key=lambda x: (x["chaine"], bornes(x)[0], -(bornes(x)[1] - bornes(x)[0]).total_seconds())):
+        d, f = bornes(e)
+        hote = next((g for g in gardees if g["chaine"] == e["chaine"] and e["_emission"] and g["_emission"] == e["_emission"]
+                     and bornes(g)[0] <= d and f <= bornes(g)[1] and g is not e), None)
+        if hote is None:
+            gardees.append(e)
+            continue
+        hote["invites"] = list(dict.fromkeys(hote["invites"] + e["invites"]))
+        hote["cites"] = [n for n in dict.fromkeys(hote["cites"] + e["cites"]) if n not in hote["invites"]]
+    return gardees
 
 
 def emissions_par_heure(etapes: list[dict]) -> dict[str, str]:
@@ -213,13 +234,15 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
                 "statut": statut(debut, fin, maintenant),
                 "filtre": decision.filtre,
                 "motif": decision.motif,
+                "_emission": normaliser(emission),
             })
 
+    rapport.retenues = sans_parties_incluses(rapport.retenues)
     rapport.douteux = db.noter_douteux(connexion, filtre.douteux, maintenant)
     if not couvertes:
         rapport.interrompu = "API Radio France inaccessible : " + "; ".join(rapport.anomalies)
         rapport.anomalies = []
-    a_ecrire = [{k: v for k, v in e.items() if k != "motif"} for e in rapport.retenues]
+    a_ecrire = [{k: v for k, v in e.items() if k not in ("motif", "_emission")} for e in rapport.retenues]
     # Seuls les jours relus peuvent voir des émissions passer en « annulé ».
     rapport.annulees = db.enregistrer_collecte(connexion, a_ecrire, "radio", couvertes, maintenant, jours)
     return rapport
