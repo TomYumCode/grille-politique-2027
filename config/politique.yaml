@@ -135,7 +135,8 @@ partis:
   - {nom: "Reconquête", alias: [], ambigu: true}
   - {nom: "UDR", alias: []}
   - {nom: "Nouvelle Énergie", alias: [], ambigu: true}
-  - {nom: "Génération.s", alias: []}
+  # Ponctuation ignorée : « Génération.s » = « génération s'approprie… » (documentaire TF1 du 31 octobre 2026).
+  - {nom: "Génération.s", alias: [], ambigu: true}
   - {nom: "Génération Écologie", alias: []}
 
 # Émissions à invités (« L'Invité de 7h50 », « Le grand entretien », « Face à face »…) :

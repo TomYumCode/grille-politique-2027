@@ -338,3 +338,12 @@ grâce à sa description, avait été annulé le 22 quand le guide l'avait perdu
 émission encore au guide à la même heure, sous le même titre, reste dans la grille ; un autre
 programme à sa place l'annule. « Objectif 2027 » (LCI) rejoint la liste blanche, Julien Odoul
 les personnalités.
+
+## Faux positif « Génération.s » (31 octobre 2026)
+
+« Les Docs du week-end » (TF1, 16 h 10, la country) était retenu : la ponctuation étant
+ignorée, le parti « Génération.s » se lisait dans « une nouvelle génération s'approprie… ».
+Le parti est désormais « ambigu » : il ne retient plus une émission à lui seul et compte
+seulement parmi les cas douteux. Revue de la base : seul autre texte concerné, l'extrait
+YouTube de RMC où Ali Rabeh (« maire Génération•s de Trappes ») est l'invité du « Face à face »,
+émission elle-même retenue en direct par la liste blanche (BFMTV, RMC).
