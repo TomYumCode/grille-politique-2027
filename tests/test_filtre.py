@@ -35,6 +35,9 @@ def test_normaliser():
         ("Élection de Miss France 2027", "", None),
         ("Les Horizons perdus", "Film d'aventure", None),  # parti ambigu
         ("Attalens, village suisse", "", None),  # « Attal » seulement en mot entier
+        # Parti « Génération.s » : la ponctuation ignorée en faisait « génération s'approprie » (TF1, 31 octobre 2026).
+        ("Les Docs du week-end", "Sur les réseaux sociaux ou en soirée, une nouvelle génération s'approprie désormais "
+         "la culture western.", None),
     ],
 )
 def test_decider(politique, titre, description, attendu):
