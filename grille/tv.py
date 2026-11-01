@@ -137,7 +137,7 @@ def collecter(config: Configuration, chemin: Path, connexion, maintenant: dateti
     maintenant = maintenant.astimezone(PARIS)
     fin_horizon = datetime.combine(maintenant.date() + timedelta(days=JOURS_AFFICHES), datetime.min.time(), PARIS)
     rapport = Rapport()
-    non_retenus: dict[str, str] = {}  # id → titre normalisé des programmes écartés par le filtre
+    non_retenus: dict[str, tuple[str, str]] = {}  # id → (titre, description) normalisés des programmes écartés
 
     with _ouvrir(chemin) as flux:
         icones: dict[str, str] = {}
@@ -154,7 +154,8 @@ def collecter(config: Configuration, chemin: Path, connexion, maintenant: dateti
             titre = f"{p.titre} — {p.sous_titre}" if p.sous_titre else p.titre
             decision = filtre.decider(chaine, p.titre, p.description, sous_titre=p.sous_titre)
             if decision is None:
-                non_retenus[f"tv:{p.chaine_xmltv}:{p.debut.strftime('%Y%m%d%H%M')}"] = normaliser(p.titre)
+                non_retenus[f"tv:{p.chaine_xmltv}:{p.debut.strftime('%Y%m%d%H%M')}"] = (normaliser(p.titre),
+                                                                                normaliser(p.description))
                 filtre.noter_douteux(f"tv:{p.chaine_xmltv}:{p.debut.strftime('%Y%m%d%H%M')}", "tv", chaine, titre,
                                      p.description, p.debut)
                 continue
@@ -185,8 +186,11 @@ def collecter(config: Configuration, chemin: Path, connexion, maintenant: dateti
     # Même émission, même horaire, mais le guide a perdu sa description (« Objectif 2027 dimanche »
     # sur LCI, retenu le 21 octobre grâce à « élections présidentielles », annulé le lendemain) :
     # elle reste dans la grille. Un autre programme à la même heure, lui, l'annule.
-    gardees = {i for i, titre in db.titres(connexion, set(non_retenus)).items()
-               if normaliser(titre).startswith(non_retenus[i])}
+    # Seulement si la description a changé : à description égale, c'est le filtre qui a changé
+    # d'avis (« Flo », film sur Florence Arthaud, n'est plus pris pour Nathalie Arthaud) et
+    # l'émission doit sortir de la grille.
+    gardees = {i for i, (titre, resume) in db.titres(connexion, set(non_retenus)).items()
+               if normaliser(titre).startswith(non_retenus[i][0]) and normaliser(resume) != non_retenus[i][1]}
     rapport.annulees = db.enregistrer_collecte(connexion, a_ecrire, "tv", couvertes, maintenant, gardees=gardees)
     return rapport
 

@@ -347,3 +347,11 @@ Le parti est désormais « ambigu » : il ne retient plus une émission à lui s
 seulement parmi les cas douteux. Revue de la base : seul autre texte concerné, l'extrait
 YouTube de RMC où Ali Rabeh (« maire Génération•s de Trappes ») est l'invité du « Face à face »,
 émission elle-même retenue en direct par la liste blanche (BFMTV, RMC).
+
+## « Flo » sur France 2 (1er novembre 2026)
+
+Le film « Flo » (Florence Arthaud, navigatrice) restait dans la grille, avec « à propos de
+Nathalie Arthaud » : retenu le 26 octobre, avant le garde-fou des homonymes. Depuis, le filtre
+l'écartait, mais la règle « le guide a perdu la description » le gardait. Elle ne joue plus
+que si la description du guide a réellement changé ; à description égale, une émission que
+le filtre n'accepte plus sort de la grille.

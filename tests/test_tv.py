@@ -142,3 +142,21 @@ def test_description_perdue_par_le_guide(conf, connexion, tmp_path):
     # Un autre programme à la même heure, lui, annule l'émission.
     rapport = tv.collecter(conf, _gz(tmp_path, _guide_lci("Histoires criminelles")), connexion, avant + timedelta(hours=2))
     assert rapport.annulees == 1
+
+
+def test_filtre_corrige_meme_description(conf, connexion, tmp_path):
+    """« Flo » (France 2, 1er novembre 2026) : retenu le 26 octobre pour « Arthaud » (Florence, la
+    navigatrice, prise pour Nathalie). Le filtre corrigé l'écarte ; même description : il sort."""
+    resume = ('Surnommée la "petite fiancée de l\'Atlantique", Florence Arthaud fut une grande navigatrice au '
+              "palmarès exceptionnel et une femme aussi libre qu'excessive.")
+    guide = (f'<?xml version="1.0" encoding="UTF-8"?><tv><channel id="France2.fr"><display-name>France 2</display-name>'
+             f'</channel><programme start="20261101211000 +0100" stop="20261101225000 +0100" channel="France2.fr">'
+             f'<title lang="fr">Flo</title><desc lang="fr">{resume}</desc></programme></tv>').encode()
+    avant = datetime(2026, 10, 26, 12, 0, tzinfo=tv.PARIS)
+    ancienne = {"id": "tv:France2.fr:202611012110", "titre": "Flo", "debut": "2026-11-01T21:10:00+01:00",
+                "fin": "2026-11-01T22:50:00+01:00", "plateforme": "tv", "chaine": "France 2", "categorie": "analyse",
+                "invites": [], "cites": ["Nathalie Arthaud"], "resume": resume, "lien": [], "statut": "annoncé",
+                "filtre": "mots-clés"}
+    db.enregistrer_collecte(connexion, [ancienne], "tv", set(), avant)  # retenu par l'ancien filtre
+    rapport = tv.collecter(conf, _gz(tmp_path, guide), connexion, avant + timedelta(days=6))
+    assert rapport.annulees == 1
