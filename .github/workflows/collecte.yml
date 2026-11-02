@@ -8,7 +8,14 @@ on:
   schedule:
     - cron: "17 * * * *"   # chaque heure à :17 (l'heure pile est la plus encombrée chez GitHub)
     - cron: "47 * * * *"   # seconde occasion, utile seulement si celle de :17 a été sautée
-  workflow_dispatch:         # bouton « Run workflow » pour lancer une collecte à la main
+  # Bouton « Run workflow » ; cron-job.org déclenche la collecte complète à :45 et, à :00, :15
+  # et :30, une collecte rapide (inputs « rapide »: "true") : directs de france.tv et Twitch.
+  workflow_dispatch:
+    inputs:
+      rapide:
+        description: "Collecte rapide (directs de france.tv et Twitch seulement)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write            # enregistrer la base sur la branche donnees
@@ -52,7 +59,11 @@ jobs:
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
         run: |
-          python -m grille collecter || echo "::warning::Au moins une source a échoué, voir le détail ci-dessus et l'email du matin."
+          if [ "${{ inputs.rapide }}" = "true" ]; then
+            python -m grille collecter-rapide || echo "::warning::Collecte rapide incomplète, voir le détail ci-dessus."
+          else
+            python -m grille collecter || echo "::warning::Au moins une source a échoué, voir le détail ci-dessus et l'email du matin."
+          fi
       - name: Générer la page
         if: steps.utile.outputs.faite == 'true'
         run: python -m grille page
