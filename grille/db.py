@@ -219,9 +219,10 @@ def annuler(connexion: sqlite3.Connection, ids: list[str], maintenant: datetime)
     return n
 
 
-def titres(connexion: sqlite3.Connection, ids: set[str]) -> dict[str, str]:
-    """Titre des émissions encore valables (non annulées) parmi `ids`."""
-    return {i: t for i, t, s in connexion.execute("SELECT id, titre, statut FROM emissions") if i in ids and s != "annulé"}
+def titres(connexion: sqlite3.Connection, ids: set[str]) -> dict[str, tuple[str, str]]:
+    """(titre, résumé) des émissions encore valables (non annulées) parmi `ids`."""
+    return {i: (t, r or "") for i, t, r, s in connexion.execute("SELECT id, titre, resume, statut FROM emissions")
+            if i in ids and s != "annulé"}
 
 
 def lister(connexion: sqlite3.Connection, depuis: datetime, jusqua: datetime) -> list[dict]:
