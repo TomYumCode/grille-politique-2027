@@ -343,6 +343,13 @@ def cmd_collecter_twitch(args: argparse.Namespace) -> int:
     return _collecter(args, ["twitch"])
 
 
+def cmd_collecter_rapide(args: argparse.Namespace) -> int:
+    """Entre deux collectes complètes (toutes les 15 minutes) : seulement les sources qui révèlent
+    au dernier moment un invité ou un direct, sans quota serré (pages du direct de france.tv,
+    Twitch). Radio France (1 000 requêtes par jour) et YouTube (10 000 unités) restent à l'heure."""
+    return _collecter(args, ["directs", "twitch"])
+
+
 def cmd_collecter(args: argparse.Namespace) -> int:
     # « directs » juste après la télévision : il évite les doublons avec les émissions du guide.
     return _collecter(args, ["tv", "directs", "radio", "youtube", "twitch", "web", "annonces", "evenements"])
@@ -468,10 +475,11 @@ def cmd_courriel(args: argparse.Namespace) -> int:
 
 
 def cmd_collecte_recente(args: argparse.Namespace) -> int:
-    """Affiche « oui » si une collecte a eu lieu il y a moins de --minutes, « non » sinon
-    (pour la tâche GitHub : un second déclenchement par heure ne refait pas la collecte)."""
+    """Affiche « oui » si une collecte complète a eu lieu il y a moins de --minutes, « non » sinon
+    (pour la tâche GitHub : un second déclenchement par heure ne refait pas la collecte). La
+    télévision ne se lit qu'en collecte complète : une collecte rapide ne compte pas."""
     connexion = db.ouvrir(args.base)
-    derniere = db.derniere_collecte(connexion)
+    derniere = db.derniere_collecte(connexion, "tv")
     connexion.close()
     recente = derniere is not None and datetime.now(tv.PARIS) - derniere < timedelta(minutes=args.minutes)
     print("oui" if recente else "non")
@@ -555,6 +563,7 @@ def main(argv: list[str] | None = None) -> int:
         ("collecter-radio", cmd_collecter_radio, "grille des stations Radio France (France Inter, franceinfo…)"),
         ("collecter-youtube", cmd_collecter_youtube, "directs YouTube programmés et en cours des chaînes suivies"),
         ("collecter-twitch", cmd_collecter_twitch, "chaînes Twitch en direct et plannings publiés"),
+        ("collecter-rapide", cmd_collecter_rapide, "entre deux collectes : directs de france.tv et Twitch"),
         ("collecter", cmd_collecter, "toutes les sources (télévision, radio, YouTube, Twitch, agendas, invités annoncés), chacune indépendamment"),
     ]:
         sp = sous.add_parser(nom, help=aide)

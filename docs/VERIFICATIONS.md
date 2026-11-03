@@ -355,3 +355,13 @@ Nathalie Arthaud » : retenu le 26 octobre, avant le garde-fou des homonymes. De
 l'écartait, mais la règle « le guide a perdu la description » le gardait. Elle ne joue plus
 que si la description du guide a réellement changé ; à description égale, une émission que
 le filtre n'accepte plus sort de la grille.
+
+## Collecte rapide toutes les 15 minutes (2 novembre 2026)
+
+Le sujet du jour de « C à vous » (18 h 57) n'était lu qu'à la collecte de 19 h 45. Toutes les
+sources au quart d'heure dépasseraient les quotas : Radio France jusqu'à 18 requêtes par
+collecte (96 × 18 = 1 728 > 1 000 par jour), YouTube environ 115 unités (112 chaînes ;
+96 × 115 > 10 000 par jour) ; le guide télé n'est mis à jour qu'une fois par jour. D'où une
+collecte rapide (`collecter-rapide` : pages du direct de france.tv, 3 requêtes, et Twitch) à
+:00, :15 et :30, la complète restant à :45. « collecte-recente » ne regarde que la télévision
+(collecte complète), pour que la collecte de secours de GitHub passe si la complète manque.

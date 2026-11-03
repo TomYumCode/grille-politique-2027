@@ -74,6 +74,15 @@ def test_derniere_collecte_et_commandes_pour_github(tmp_path, capsys):
     connexion.close()
     cli.main(["--base", str(chemin), "envoi-du-jour"])
     assert capsys.readouterr().out.split() == ["oui", "non", "a-faire", "fait"]
+    # Une collecte rapide (directs, Twitch) ne compte pas : la complète de secours doit passer.
+    connexion = db.ouvrir(chemin)
+    db.noter_collecte(connexion, "directs", maintenant - timedelta(minutes=2), True, 0, [])
+    db.noter_collecte(connexion, "twitch", maintenant - timedelta(minutes=2), True, 0, [])
+    connexion.commit()
+    assert db.derniere_collecte(connexion, "tv") == (maintenant - timedelta(minutes=10)).replace(microsecond=0)
+    connexion.close()
+    cli.main(["--base", str(chemin), "collecte-recente", "--minutes", "5"])
+    assert capsys.readouterr().out.split() == ["non"]
 
 
 def test_oublier_les_donnees_non_relues(tmp_path):

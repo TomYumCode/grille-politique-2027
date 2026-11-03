@@ -164,6 +164,9 @@ description générale. À chaque collecte, `grille/directs.py` lit la page du d
 france.tv des chaînes télévision dont le direct y est (France 2, 3, 5) : si le sujet du
 jour de l'émission en cours est politique, elle entre dans la grille pendant sa diffusion.
 France Télévisions ne publie ce sujet qu'au début de l'émission.
+Pour le voir sans attendre l'heure suivante, une collecte rapide (`collecter-rapide` :
+pages du direct de france.tv et Twitch) tourne à :00, :15 et :30, la collecte complète à :45.
+Toutes deux sont déclenchées par cron-job.org (la rapide avec `"inputs":{"rapide":"true"}`).
 
 ## Favoris
 
