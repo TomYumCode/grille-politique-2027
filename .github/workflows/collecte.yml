@@ -4,7 +4,8 @@ name: Collecte horaire
 on:
   # GitHub abandonne des déclenchements quand il est chargé (une collecte toutes les 3 à 5 h
   # les 14 et 15 octobre 2026) : deux occasions par heure ; la seconde ne refait rien si une
-  # collecte a eu lieu il y a moins de 40 minutes.
+  # collecte complète a eu lieu il y a moins de 55 minutes (GitHub retarde souvent ses
+  # déclenchements : celui de :17 partait à :37, en plus de la complète de cron-job.org à :45).
   schedule:
     - cron: "17 * * * *"   # chaque heure à :17 (l'heure pile est la plus encombrée chez GitHub)
     - cron: "47 * * * *"   # seconde occasion, utile seulement si celle de :17 a été sautée
@@ -43,9 +44,9 @@ jobs:
       - name: Récupérer la base
         run: .github/scripts/base.sh recuperer
       - id: utile
-        name: Collecte déjà faite il y a moins de 40 minutes ?
+        name: Collecte complète déjà faite il y a moins de 55 minutes ?
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(python -m grille collecte-recente --minutes 40)" = "oui" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(python -m grille collecte-recente --minutes 55)" = "oui" ]; then
             echo "Collecte récente : rien à refaire."
             echo "faite=false" >> "$GITHUB_OUTPUT"
           else

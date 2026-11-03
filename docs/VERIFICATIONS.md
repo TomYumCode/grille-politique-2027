@@ -365,3 +365,8 @@ collecte (96 × 18 = 1 728 > 1 000 par jour), YouTube environ 115 unités (112 c
 collecte rapide (`collecter-rapide` : pages du direct de france.tv, 3 requêtes, et Twitch) à
 :00, :15 et :30, la complète restant à :45. « collecte-recente » ne regarde que la télévision
 (collecte complète), pour que la collecte de secours de GitHub passe si la complète manque.
+
+Le 3 novembre, un déclenchement de secours de GitHub prévu à :17 est parti à 10 h 37 et a
+refait une collecte complète (la précédente datait de 9 h 45, plus de 40 minutes). Seuil
+porté à 55 minutes : un secours retardé ne double plus la complète de cron-job.org, et celui
+de :47 passe toujours si la complète de :45 a manqué.
