@@ -74,16 +74,19 @@ chaines:
 # « episodes » : séries politiques publiées en vidéos ordinaires (ni direct ni première), par
 # leur liste de lecture (PL…) ou « toutes » (vidéos de 20 minutes et plus de la chaîne) :
 # « Les Dossiers » (Gaspard G), « Dans les yeux d'Agathe » (franceinfo), « Les aspirants » (RTL),
-# « Pourquoi président(e) ? » (TF1 Info), « Le Meilleur Candidat » (Sam Zirah).
+# « Pourquoi président(e) ? » (TF1 Info), « Le Meilleur Candidat » (Sam Zirah) ; en entier : les
+# grands formats de HugoDécrypte (interview d'Emmanuel Macron, 28 octobre 2026), Thinkerview,
+# Konbini, Brut et LEGEND (le filtre ne garde que les vidéos politiques).
 - {plateforme: youtube, nom: "Hugo au Perchoir", adresse: "https://www.youtube.com/@HugoauPerchoir", categorie: "Interviews politiques (rediffusions)"}
-- {plateforme: youtube, nom: "HugoDécrypte - Actus du jour", adresse: "https://www.youtube.com/channel/UCAcAnMF0OrCtUep3Y4M-ZPw", categorie: "Décryptage"}
+- {plateforme: youtube, nom: "HugoDécrypte - Actus du jour", adresse: "https://www.youtube.com/channel/UCAcAnMF0OrCtUep3Y4M-ZPw", categorie: "Décryptage", episodes: toutes}
+- {plateforme: youtube, nom: "HugoDécrypte - Grands formats", adresse: "https://www.youtube.com/channel/UCUo1RqYV8tGjV38sQ8S5p9A", categorie: "Interviews et reportages", episodes: toutes}
 - {plateforme: youtube, nom: "Clément Viktorovitch", adresse: "https://www.youtube.com/@Clemovitch", categorie: "Décryptage"}
 - {plateforme: youtube, nom: "Gaspard G", adresse: "https://www.youtube.com/@GaspardG", categorie: "Décryptage", episodes: toutes}
 - {plateforme: youtube, nom: "Sam Zirah", adresse: "https://www.youtube.com/@SamZirah", categorie: "Divertissement (« Le Meilleur Candidat »)", episodes: [PLW9jTDYMgwgE]}
 - {plateforme: youtube, nom: "Blast", adresse: "https://www.youtube.com/@blastinfo", categorie: "Média indépendant"}
 - {plateforme: youtube, nom: "Le Média", adresse: "https://www.youtube.com/channel/UCT67YOMntJxfRnO_9bXDpvw", categorie: "Média indépendant"}
 - {plateforme: youtube, nom: "L'Humanité", adresse: "https://www.youtube.com/@lhumanitefr", categorie: "Média indépendant"}
-- {plateforme: youtube, nom: "Thinkerview", adresse: "https://www.youtube.com/@thinkerview", categorie: "Débats et interviews"}
+- {plateforme: youtube, nom: "Thinkerview", adresse: "https://www.youtube.com/@thinkerview", categorie: "Débats et interviews", episodes: toutes}
 - {plateforme: youtube, nom: "C dans l'air", adresse: "https://www.youtube.com/@Cdanslairofficiel", categorie: "Débats et interviews"}
 - {plateforme: youtube, nom: "Sciences Po", adresse: "https://www.youtube.com/@sciencespo", categorie: "École"}
 - {plateforme: youtube, nom: "HEC Paris", adresse: "https://www.youtube.com/user/hecparis", categorie: "École"}
@@ -133,13 +136,13 @@ chaines:
 - {plateforme: youtube, nom: "Le JDD", adresse: "https://www.youtube.com/@le_jdd", categorie: "Presse, droite"}
 - {plateforme: youtube, nom: "Le Parisien", adresse: "https://www.youtube.com/@leparisien", categorie: "Presse, généraliste"}
 - {plateforme: youtube, nom: "Ouest-France", adresse: "https://www.youtube.com/@ouestfrance", categorie: "Presse régionale, généraliste"}
-- {plateforme: youtube, nom: "Konbini", adresse: "https://www.youtube.com/@konbini", categorie: "Média jeune, interviews ponctuelles"}
-- {plateforme: youtube, nom: "Brut", adresse: "https://www.youtube.com/@BrutFR", categorie: "Média jeune, interviews ponctuelles"}
+- {plateforme: youtube, nom: "Konbini", adresse: "https://www.youtube.com/@konbini", categorie: "Média jeune, interviews ponctuelles", episodes: toutes}
+- {plateforme: youtube, nom: "Brut", adresse: "https://www.youtube.com/@BrutFR", categorie: "Média jeune, interviews ponctuelles", episodes: toutes}
 - {plateforme: youtube, nom: "Valeurs actuelles", adresse: "https://www.youtube.com/user/valeursactuelles", categorie: "Presse, droite"}
 
 # --- Annexe : Médias du Web, émissions et cercles de réflexion ---
 - {plateforme: youtube, nom: "Le Crayon", adresse: "https://www.youtube.com/@LeCrayonMedia", categorie: "Débats contradictoires, pluraliste"}
-- {plateforme: youtube, nom: "LEGEND", adresse: "https://www.youtube.com/@LEGENDmedia", categorie: "Longues interviews, non classé"}
+- {plateforme: youtube, nom: "LEGEND", adresse: "https://www.youtube.com/@LEGENDmedia", categorie: "Longues interviews, non classé", episodes: toutes}
 - {plateforme: youtube, nom: "Mediapart", adresse: "https://www.youtube.com/@mediapart", categorie: "Gauche (déjà suivi sur Twitch)"}
 - {plateforme: youtube, nom: "Arrêt sur images", adresse: "https://www.youtube.com/channel/UCXHWT_QoQSsdGXbqF0hAMtg", categorie: "Critique des médias, gauche"}
 - {plateforme: youtube, nom: "QG TV", adresse: "https://www.youtube.com/channel/UCCDPdHuBGfjMxlM3xZANgGQ", categorie: "Gauche"}
