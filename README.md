@@ -173,7 +173,7 @@ Toutes deux sont déclenchées par cron-job.org (la rapide avec `"inputs":{"rapi
 Certaines séries politiques sont publiées sur YouTube en vidéos ordinaires, sans heure de
 diffusion : « Les Dossiers » (Gaspard G), « Dans les yeux d'Agathe » (franceinfo), « Les
 aspirants » (RTL), « Pourquoi président(e) ? » (TF1 Info), « Le Meilleur Candidat » (Sam
-Zirah). Dans `config/chaines.yaml`, la clé `episodes:` d'une chaîne YouTube donne la liste de
+Zirah), les grands formats de HugoDécrypte, Thinkerview, Konbini, Brut et LEGEND. Dans `config/chaines.yaml`, la clé `episodes:` d'une chaîne YouTube donne la liste de
 lecture de la série (`PL…`, retenue d'office) ou `toutes` (vidéos de 20 minutes et plus de la
 chaîne, si le filtre les juge politiques ; les extraits courts sont écartés). Un épisode mis en
 ligne aujourd'hui apparaît à son heure de mise en ligne, marqué « Nouvel épisode », et un

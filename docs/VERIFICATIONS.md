@@ -383,3 +383,16 @@ PLW9jTDYMgwgE (2). Pas de liste pour « Les Dossiers » : chaîne suivie en enti
 20 minutes et plus (épisode complet du 2 novembre : 46 min 11 ; extraits des jours suivants :
 1 à 2 minutes). Coût : 1 unité par liste et par collecte ; la durée (contentDetails) est lue
 dans le même appel videos.list. Réponses enregistrées : `tests/reponses/youtube_episodes.json`.
+
+## Chaînes suivies en entier : HugoDécrypte, Thinkerview, Konbini, Brut, LEGEND (6 novembre 2026)
+
+L'interview d'Emmanuel Macron par HugoDécrypte (28 octobre 2026, 1 h 21, xRIw-ZmDzj4) est sur
+une deuxième chaîne, « HugoDécrypte - Grands formats » (UCUo1RqYV8tGjV38sQ8S5p9A,
+@hugodecryptegrandsformats), que la grille ne suivait pas ; « HugoDécrypte - Actus du jour »
+(UCAcAnMF0OrCtUep3Y4M-ZPw) ne publie que des vidéos courtes. Relevé des 50 dernières vidéos par
+chaîne (playlistItems + videos.list), filtre appliqué aux vidéos de 20 minutes et plus :
+Grands formats, 3 retenues sur 9 (Macron ; Fabrice Arfi, titre qui cite Bardella ; ministre de
+l'Éducation nationale), écartées : Vincent Lindon, Bigflo et Oli, Zendaya, reportages ;
+Thinkerview, que des directs (déjà suivis) ; Konbini, Brut, LEGEND : aucune vidéo politique ces
+derniers jours, rien de retenu. Aucun coût de plus : les vidéos de la chaîne sont déjà lues
+pour les directs.
