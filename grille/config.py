@@ -23,6 +23,7 @@ _YOUTUBE = re.compile(
 _TWITCH = re.compile(r"^https?://(?:www\.)?twitch\.tv/(?P<login>[A-Za-z0-9_]{3,25})/?$")
 _XMLTV_ID = re.compile(r"^[\w.\-]+$")
 _STATION = re.compile(r"^[A-Z][A-Z0-9_]+$")  # code de station Radio France, ex. FRANCEINTER
+_LISTE_YOUTUBE = re.compile(r"^(PL|UU|OL)[\w-]{8,}$")
 _WEB = re.compile(r"^https?://\S+$")
 
 
@@ -43,6 +44,9 @@ class Chaine:
     logo: str = ""
     # Identifiant extrait de l'adresse : handle ou ID YouTube, login Twitch, ID XMLTV, station…
     cle: dict = field(default_factory=dict, hash=False, compare=False)
+    # YouTube : épisodes de séries politiques publiés en vidéos ordinaires (ni direct ni première).
+    # Identifiants de listes de lecture (PL…), ou « toutes » pour toutes les vidéos de la chaîne.
+    episodes: tuple[str, ...] = ()
 
 
 @dataclass
@@ -166,11 +170,19 @@ def _lire_chaines(brut: object, anomalies: list[str]) -> list[Chaine]:
         if logo and not _WEB.match(logo):
             anomalies.append(f"{etiquette} : adresse de logo invalide « {logo} », ignorée")
             logo = ""
+        brut = ligne.get("episodes") or []
+        episodes = []
+        for e in [brut] if isinstance(brut, str) else brut:
+            e = str(e).strip()
+            if plateforme == "youtube" and (e == "toutes" or _LISTE_YOUTUBE.match(e)):
+                episodes.append(e)
+            else:
+                anomalies.append(f"{etiquette} : « episodes » invalide « {e} » (liste de lecture PL… ou « toutes »), ignoré")
         vues.add((plateforme, adresse.lower()))
         chaines.append(
             Chaine(
                 plateforme, nom, adresse, str(ligne["categorie"]).strip(), bool(ligne.get("a_confirmer")), direct,
-                logo, cle
+                logo, cle, tuple(episodes)
             )
         )
     return chaines

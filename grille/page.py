@@ -22,9 +22,10 @@ from grille.tv import JOURS_AFFICHES, PARIS
 MODELE = Path(__file__).resolve().parent / "modele_page"
 SORTIE = Path(__file__).resolve().parent.parent / "site"
 CHAMPS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "categorie", "invites", "cites", "lien", "statut",
-          "filtre")
+          "filtre", "nature")
 # Ce dont les favoris ont besoin (grille/modele_page/favoris.js), sans les liens ni les résumés.
-CHAMPS_NOTIFICATIONS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "invites", "statut", "campagne")
+CHAMPS_NOTIFICATIONS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "invites", "statut", "campagne",
+                        "nature")
 
 
 def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:

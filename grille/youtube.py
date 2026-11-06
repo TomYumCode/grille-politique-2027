@@ -10,6 +10,7 @@ search.list (100 unités) n'est jamais utilisé.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
@@ -18,11 +19,15 @@ import requests
 from grille import db
 from grille.acces import YOUTUBE_API
 from grille.config import Chaine, Configuration
-from grille.filtre import FiltrePolitique
+from grille.filtre import LISTE_BLANCHE, Decision, FiltrePolitique
 from grille.tv import JOURS_AFFICHES, PARIS, statut
 
 DELAI = 30
 VIDEOS_PAR_CHAINE = 15  # vidéos récentes examinées par chaîne
+EPISODES_PAR_SERIE = 5  # derniers épisodes d'une série suivie par sa liste de lecture
+# Chaîne suivie en entier (« toutes ») : seulement les vidéos longues, pas les extraits du
+# lendemain (Gaspard G publie l'épisode complet, puis un extrait de quelques minutes par jour).
+DUREE_EPISODE_MIN = timedelta(minutes=20)
 CONSERVATION = timedelta(days=30)  # YouTube API Services, Developer Policies
 LIGNE_MIN = 20  # une ligne plus courte (« 🔔🔔 ») ne compte pas comme texte de présentation
 # Un direct annoncé dont l'heure est passée depuis plus longtemps a été abandonné sans être supprimé.
@@ -162,6 +167,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     try:
         resolues = _resoudre(client, chaines, connexion, rapport)
         chaine_de_la_video: dict[str, Chaine] = {}
+        episodes: dict[str, str] = {}  # vidéo → « serie » (liste de lecture suivie) ou « chaine » (« toutes »)
         for c in chaines:
             if c.adresse not in resolues:
                 continue
@@ -177,6 +183,21 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
             couvertes.add(c.nom)
             for it in items.get("items") or []:
                 chaine_de_la_video[it["contentDetails"]["videoId"]] = c
+                if "toutes" in c.episodes:
+                    episodes[it["contentDetails"]["videoId"]] = "chaine"
+            # Séries suivies par leur liste de lecture : leurs derniers épisodes (1 unité par liste).
+            for liste in c.episodes:
+                if liste == "toutes":
+                    continue
+                try:
+                    serie = client.appeler("playlistItems", part="contentDetails", playlistId=liste,
+                                           maxResults=EPISODES_PAR_SERIE)
+                except requests.RequestException as e:
+                    rapport.anomalies.append(f"liste de lecture YouTube illisible : {c.nom} {liste} ({e})")
+                    continue
+                for it in serie.get("items") or []:
+                    chaine_de_la_video[it["contentDetails"]["videoId"]] = c
+                    episodes[it["contentDetails"]["videoId"]] = "serie"
         # On relit aussi les directs déjà en base : ils ont pu sortir des 15 dernières vidéos.
         ids_en_cours = _en_cours_en_base(connexion)
         identifiants = list(dict.fromkeys(list(chaine_de_la_video) + ids_en_cours))
@@ -184,7 +205,9 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
         videos = []
         for i in range(0, len(identifiants), 50):
             lot = identifiants[i:i + 50]
-            reponse = client.appeler("videos", part="snippet,liveStreamingDetails", id=",".join(lot), maxResults=50)
+            # « contentDetails » (durée) ne coûte rien de plus : toujours 1 unité par lot.
+            reponse = client.appeler("videos", part="snippet,liveStreamingDetails,contentDetails", id=",".join(lot),
+                                     maxResults=50)
             videos += reponse.get("items") or []
         sans_presentation(videos)
         ecartees: set[str] = set()
@@ -193,7 +216,8 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
             chaine = chaine_de_la_video.get(video["id"]) or par_canal.get(video["snippet"]["channelId"])
             if chaine is None:
                 continue
-            emission = _emission(video, chaine, filtre, maintenant, debut_du_jour, fin_horizon, ecartees)
+            emission = _emission(video, chaine, filtre, maintenant, debut_du_jour, fin_horizon, ecartees,
+                                 episodes.get(video["id"], ""))
             if emission:
                 rapport.retenues.append(emission)
     except QuotaEpuise as e:
@@ -234,12 +258,62 @@ def sans_presentation(videos: list[dict]) -> None:
         v["snippet"]["description"] = "\n".join(l for l in gardees if l)
 
 
+def duree_iso(texte: str | None) -> timedelta | None:
+    """Durée YouTube au format ISO 8601 (« PT1H2M3S ») ; None si absente ou illisible."""
+    m = re.fullmatch(r"P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", texte or "")
+    if not texte or not m:
+        return None
+    j, h, mi, s = (int(x or 0) for x in m.groups())
+    return timedelta(days=j, hours=h, minutes=mi, seconds=s)
+
+
+def _episode(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: datetime, debut_du_jour: datetime,
+             serie: bool) -> dict | None:
+    """Vidéo ordinaire d'une série politique (« Dans les yeux d'Agathe », « Les Dossiers »…), mise
+    en ligne aujourd'hui : elle entre dans la grille à son heure de mise en ligne. Une série suivie
+    par sa liste de lecture est politique d'office ; une chaîne suivie en entier (« toutes ») passe
+    par le filtre."""
+    publie = _date(video["snippet"].get("publishedAt"))
+    if publie is None or publie < debut_du_jour or publie > maintenant:
+        return None
+    duree = duree_iso((video.get("contentDetails") or {}).get("duration"))
+    if not serie and (duree is None or duree < DUREE_EPISODE_MIN):
+        return None
+    titre = video["snippet"].get("title", "")
+    description = video["snippet"].get("description", "")
+    decision = filtre.decider(chaine, titre, description)
+    if decision is None:
+        if not serie:
+            return None
+        invites, cites = filtre.presences(chaine, titre, description, emission_blanche=True)
+        decision = Decision(LISTE_BLANCHE, "interview", invites, f"série suivie ({chaine.nom})", cites)
+    return {
+        "id": f"youtube:{video['id']}",
+        "titre": titre,
+        "debut": publie.isoformat(timespec="seconds"),
+        "fin": None,  # à voir quand on veut : ni heure de fin ni « en direct »
+        "plateforme": "youtube",
+        "chaine": chaine.nom,
+        "categorie": decision.categorie,
+        "invites": decision.invites,
+        "cites": decision.cites,
+        "resume": description,
+        "lien": [f"https://www.youtube.com/watch?v={video['id']}"],
+        "statut": "terminé",
+        "filtre": decision.filtre,
+        "motif": decision.motif,
+        "nature": "episode",
+    }
+
+
 def _emission(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: datetime,
-              debut_du_jour: datetime, fin_horizon: datetime, ecartees: set[str] | None = None) -> dict | None:
+              debut_du_jour: datetime, fin_horizon: datetime, ecartees: set[str] | None = None,
+              episode: str = "") -> dict | None:
     details = video.get("liveStreamingDetails")
     etat = video["snippet"].get("liveBroadcastContent")
     if not details:
-        return None  # vidéo ordinaire, ni direct ni première
+        # Vidéo ordinaire, ni direct ni première : seulement l'épisode d'une série suivie.
+        return _episode(video, chaine, filtre, maintenant, debut_du_jour, episode == "serie") if episode else None
     prevu, reel_debut, reel_fin = (_date(details.get(k)) for k in
                                    ("scheduledStartTime", "actualStartTime", "actualEndTime"))
     debut = reel_debut or prevu

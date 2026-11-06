@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 8
+VERSION_SCHEMA = 9
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS emissions (
     vu_le       TEXT NOT NULL,
     -- Version 8 : personnes seulement citées, et résumé donné par la source (500 caractères).
     cites       TEXT NOT NULL DEFAULT '[]',
-    resume      TEXT NOT NULL DEFAULT ''
+    resume      TEXT NOT NULL DEFAULT '',
+    -- Version 9 : « episode » pour une vidéo de série mise en ligne (YouTube), vide sinon.
+    nature      TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS emissions_debut ON emissions (debut);
 
@@ -111,9 +113,11 @@ def ouvrir(chemin: Path = CHEMIN_BASE) -> sqlite3.Connection:
 
 def _ajouter_colonnes(connexion: sqlite3.Connection) -> None:
     """Version 8 : colonnes « cites » et « resume », ajoutées en fin de table (les émissions
-    déjà en base n'ont personne de cité ni de résumé jusqu'à la collecte suivante)."""
+    déjà en base n'ont personne de cité ni de résumé jusqu'à la collecte suivante).
+    Version 9 : « nature » (« episode » : vidéo d'une série mise en ligne, pas un direct)."""
     colonnes = {r[1] for r in connexion.execute("PRAGMA table_info(emissions)")}
-    for nom, definition in (("cites", "TEXT NOT NULL DEFAULT '[]'"), ("resume", "TEXT NOT NULL DEFAULT ''")):
+    for nom, definition in (("cites", "TEXT NOT NULL DEFAULT '[]'"), ("resume", "TEXT NOT NULL DEFAULT ''"),
+                            ("nature", "TEXT NOT NULL DEFAULT ''")):
         if nom not in colonnes:
             connexion.execute(f"ALTER TABLE emissions ADD COLUMN {nom} {definition}")
 
@@ -159,19 +163,19 @@ def enregistrer_collecte(
         connexion.execute(
             """
             INSERT INTO emissions (id, titre, debut, fin, plateforme, chaine, categorie, invites, lien, statut, filtre,
-                                   vu_le, cites, resume)
+                                   vu_le, cites, resume, nature)
             VALUES (:id, :titre, :debut, :fin, :plateforme, :chaine, :categorie, :invites, :lien, :statut, :filtre,
-                    :vu_le, :cites, :resume)
+                    :vu_le, :cites, :resume, :nature)
             ON CONFLICT (id) DO UPDATE SET
                 titre = excluded.titre, debut = excluded.debut, fin = excluded.fin, chaine = excluded.chaine,
                 categorie = excluded.categorie, invites = excluded.invites, lien = excluded.lien,
                 statut = excluded.statut, filtre = excluded.filtre, vu_le = excluded.vu_le,
-                cites = excluded.cites, resume = excluded.resume
+                cites = excluded.cites, resume = excluded.resume, nature = excluded.nature
             """,
             {**e, "invites": json.dumps(e["invites"], ensure_ascii=False),
              "cites": json.dumps(e.get("cites") or [], ensure_ascii=False),
              "resume": " ".join((e.get("resume") or "").split())[:500],
-             "lien": json.dumps(e["lien"], ensure_ascii=False), "vu_le": vu_le},
+             "lien": json.dumps(e["lien"], ensure_ascii=False), "vu_le": vu_le, "nature": e.get("nature") or ""},
         )
     # `gardees` : émissions toujours présentes dans la source, mais qui ne passent plus le filtre
     # (le guide a perdu leur description) ; elles restent telles quelles, sans passer en « annulé ».

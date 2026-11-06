@@ -174,3 +174,63 @@ def test_video_ecartee_a_la_relecture_sort_de_la_grille(tmp_path):
     assert db.annuler(connexion, ["youtube:tocsin1", "youtube:inconnue"], debut) == 1
     assert db.lister(connexion, debut.replace(hour=0), debut.replace(hour=23)) == []
     connexion.close()
+
+
+EPISODES = charger("youtube_episodes.json")
+CHAINES_EPISODES = """\
+chaines:
+- {plateforme: youtube, nom: "Gaspard G", adresse: "https://www.youtube.com/channel/UCI-8QMy9n3I5Pv6mTmXoAXA", categorie: "Décryptage", episodes: toutes}
+- {plateforme: youtube, nom: "franceinfo", adresse: "https://www.youtube.com/channel/UCO6K_kkdP-lnSCiO3tPx7WA", categorie: "Média public", episodes: [PLg6GanYvTasXMpDNnfw4fDbaSCj_X0jeR]}
+"""
+
+
+def _routeur_episodes(methode, url, params):
+    ressource = url.removeprefix(YOUTUBE_API + "/")
+    if ressource == "channels":
+        return Reponse(corps={"items": [{"id": i, "snippet": {}, "contentDetails": {"relatedPlaylists": {"uploads": "UU" + i[2:]}}}
+                                        for i in params["id"].split(",")]})
+    if ressource == "playlistItems":
+        return Reponse(corps=EPISODES[f"playlistItems_{params['playlistId']}"])
+    if ressource == "videos":
+        assert "contentDetails" in params["part"]
+        demandes = params["id"].split(",")
+        return Reponse(corps={"items": [v for v in EPISODES["videos"]["items"] if v["id"] in demandes]})
+    raise AssertionError(url)
+
+
+@pytest.fixture
+def conf_episodes(tmp_path):
+    (tmp_path / "chaines.yaml").write_text(CHAINES_EPISODES, encoding="utf-8")
+    shutil.copy(Path(config.DOSSIER_CONFIG) / "politique.yaml", tmp_path / "politique.yaml")
+    return config.charger(tmp_path)
+
+
+def test_episode_complet_retenu_extrait_ecarte(conf_episodes, connexion):
+    """Gaspard G, 2 novembre 2026 : « Bruno Retailleau face à ses dossiers » (46 min) est un épisode ;
+    l'extrait du même soir (1 min 31) ne l'est pas. L'épisode d'Agathe Lambret du 10 octobre est trop ancien."""
+    soir = datetime(2026, 11, 2, 19, 0, tzinfo=PARIS)
+    rapport = youtube.collecter(conf_episodes, Session(_routeur_episodes), connexion, soir, cle_api="cle")
+    [e] = rapport.retenues
+    assert e["id"] == "youtube:BruJBhcIdKI" and e["nature"] == "episode" and e["statut"] == "terminé"
+    assert e["debut"] == "2026-11-02T18:31:16+01:00" and e["fin"] is None
+    assert e["invites"] == ["Bruno Retailleau"]
+    [en_base] = db.lister(connexion, datetime(2026, 11, 2, tzinfo=PARIS), datetime(2026, 11, 3, tzinfo=PARIS))
+    assert en_base["nature"] == "episode"
+
+
+def test_episode_d_une_serie_suivie_par_sa_liste(conf_episodes, connexion):
+    """« Dans les yeux d'Agathe » (franceinfo), mis en ligne le 10 octobre 2026 à 11 h : retenu d'office."""
+    midi = datetime(2026, 10, 10, 12, 0, tzinfo=PARIS)
+    rapport = youtube.collecter(conf_episodes, Session(_routeur_episodes), connexion, midi, cle_api="cle")
+    [e] = rapport.retenues
+    assert e["id"] == "youtube:csnIz_lEiYA" and e["nature"] == "episode"
+    assert e["filtre"] in ("liste blanche", "mots-clés") and "Bruno Le Maire" in e["invites"] + e["cites"]
+
+
+def test_episodes_mal_configures_signales(tmp_path):
+    (tmp_path / "chaines.yaml").write_text(
+        'chaines:\n- {plateforme: youtube, nom: "X", adresse: "https://www.youtube.com/@x", categorie: "c", '
+        'episodes: [pas-une-liste]}\n', encoding="utf-8")
+    shutil.copy(Path(config.DOSSIER_CONFIG) / "politique.yaml", tmp_path / "politique.yaml")
+    conf = config.charger(tmp_path)
+    assert conf.chaines[0].episodes == () and "« episodes » invalide" in conf.anomalies[0]

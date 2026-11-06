@@ -12,7 +12,7 @@ def test_ouvrir_cree_une_base_vide_et_reste_idempotent(tmp_path):
     colonnes = [ligne[1] for ligne in connexion.execute("PRAGMA table_info(emissions)")]
     assert colonnes == [
         "id", "titre", "debut", "fin", "plateforme", "chaine", "categorie",
-        "invites", "lien", "statut", "filtre", "vu_le", "cites", "resume",
+        "invites", "lien", "statut", "filtre", "vu_le", "cites", "resume", "nature",
     ]
     assert connexion.execute("SELECT COUNT(*) FROM emissions").fetchone()[0] == 0
     assert connexion.execute("PRAGMA user_version").fetchone()[0] == db.VERSION_SCHEMA
