@@ -10,6 +10,7 @@ search.list (100 unités) n'est jamais utilisé.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
@@ -24,6 +25,9 @@ from grille.tv import JOURS_AFFICHES, PARIS, statut
 DELAI = 30
 VIDEOS_PAR_CHAINE = 15  # vidéos récentes examinées par chaîne
 EPISODES_PAR_SERIE = 5  # derniers épisodes d'une série suivie par sa liste de lecture
+# Chaîne suivie en entier (« toutes ») : seulement les vidéos longues, pas les extraits du
+# lendemain (Gaspard G publie l'épisode complet, puis un extrait de quelques minutes par jour).
+DUREE_EPISODE_MIN = timedelta(minutes=20)
 CONSERVATION = timedelta(days=30)  # YouTube API Services, Developer Policies
 LIGNE_MIN = 20  # une ligne plus courte (« 🔔🔔 ») ne compte pas comme texte de présentation
 # Un direct annoncé dont l'heure est passée depuis plus longtemps a été abandonné sans être supprimé.
@@ -201,7 +205,9 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
         videos = []
         for i in range(0, len(identifiants), 50):
             lot = identifiants[i:i + 50]
-            reponse = client.appeler("videos", part="snippet,liveStreamingDetails", id=",".join(lot), maxResults=50)
+            # « contentDetails » (durée) ne coûte rien de plus : toujours 1 unité par lot.
+            reponse = client.appeler("videos", part="snippet,liveStreamingDetails,contentDetails", id=",".join(lot),
+                                     maxResults=50)
             videos += reponse.get("items") or []
         sans_presentation(videos)
         ecartees: set[str] = set()
@@ -252,6 +258,15 @@ def sans_presentation(videos: list[dict]) -> None:
         v["snippet"]["description"] = "\n".join(l for l in gardees if l)
 
 
+def duree_iso(texte: str | None) -> timedelta | None:
+    """Durée YouTube au format ISO 8601 (« PT1H2M3S ») ; None si absente ou illisible."""
+    m = re.fullmatch(r"P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", texte or "")
+    if not texte or not m:
+        return None
+    j, h, mi, s = (int(x or 0) for x in m.groups())
+    return timedelta(days=j, hours=h, minutes=mi, seconds=s)
+
+
 def _episode(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: datetime, debut_du_jour: datetime,
              serie: bool) -> dict | None:
     """Vidéo ordinaire d'une série politique (« Dans les yeux d'Agathe », « Les Dossiers »…), mise
@@ -260,6 +275,9 @@ def _episode(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: d
     par le filtre."""
     publie = _date(video["snippet"].get("publishedAt"))
     if publie is None or publie < debut_du_jour or publie > maintenant:
+        return None
+    duree = duree_iso((video.get("contentDetails") or {}).get("duration"))
+    if not serie and (duree is None or duree < DUREE_EPISODE_MIN):
         return None
     titre = video["snippet"].get("title", "")
     description = video["snippet"].get("description", "")
@@ -273,7 +291,7 @@ def _episode(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: d
         "id": f"youtube:{video['id']}",
         "titre": titre,
         "debut": publie.isoformat(timespec="seconds"),
-        "fin": None,
+        "fin": None,  # à voir quand on veut : ni heure de fin ni « en direct »
         "plateforme": "youtube",
         "chaine": chaine.nom,
         "categorie": decision.categorie,

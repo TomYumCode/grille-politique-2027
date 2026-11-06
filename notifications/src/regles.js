@@ -7,6 +7,7 @@ const MINUTE = 60 * 1000;
 export const RAPPEL = 15 * MINUTE; // rappel au plus 15 minutes avant le début
 export const DEBUT_MAX = 30 * MINUTE; // « en direct » seulement dans la première demi-heure
 const OUBLI = 2 * 24 * 60 * MINUTE; // trace d'un envoi gardée deux jours après le début
+const EPISODE_RECENT = 24 * 60 * MINUTE; // « Nouvel épisode » seulement dans les 24 heures après la mise en ligne
 const ANNONCES_MAX = 4; // lignes d'une notification qui regroupe plusieurs annonces
 const JOURS = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
 
@@ -47,7 +48,10 @@ export function suivies(emissions, favoris) {
 export function marquerConnues(emissions, favoris, envoyes, maintenant) {
   const r = { ...envoyes };
   for (const e of suivies(emissions, favoris)) {
-    if (Date.parse(e.debut) > maintenant) r[e.id] = { ...(r[e.id] || {}), a: 1, t: Date.parse(e.debut) };
+    // Épisode déjà en ligne au moment de l'abonnement : pas de « Nouvel épisode » non plus.
+    if (Date.parse(e.debut) > maintenant || e.nature === "episode") {
+      r[e.id] = { ...(r[e.id] || {}), a: 1, t: Date.parse(e.debut) };
+    }
   }
   return r;
 }
@@ -57,7 +61,8 @@ export function marquerConnues(emissions, favoris, envoyes, maintenant) {
  * - annonce : un nouveau favori apparaît dans la grille (regroupées ; jamais la nuit) ;
  * - rappel : au plus 15 minutes avant le début ;
  * - en direct : au début, pour ce qui n'a pas eu de rappel (direct YouTube ou Twitch connu
- *   seulement à son lancement, grille mise à jour trop tard pour le rappel).
+ *   seulement à son lancement, grille mise à jour trop tard pour le rappel) ;
+ * - nouvel épisode : vidéo d'une série mise en ligne dans les dernières 24 heures (jamais la nuit).
  */
 export function aEnvoyer(emissions, favoris, envoyes, maintenant) {
   const trace = {};
@@ -68,6 +73,13 @@ export function aEnvoyer(emissions, favoris, envoyes, maintenant) {
     const debut = Date.parse(e.debut);
     const deja = trace[e.id] || {};
     const raison = F.raisons(e, favoris).join(", ");
+    if (e.nature === "episode") {
+      if (!deja.a && maintenant - debut <= EPISODE_RECENT && !nuit(maintenant)) {
+        messages.push({ titre: `Nouvel épisode · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id });
+        trace[e.id] = { ...deja, a: 1, t: debut };
+      }
+      continue;
+    }
     if (!deja.r && !deja.d && debut > maintenant && debut - maintenant <= RAPPEL) {
       const minutes = Math.max(1, Math.round((debut - maintenant) / MINUTE));
       messages.push({ titre: `Dans ${minutes} min · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id });

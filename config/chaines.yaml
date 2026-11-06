@@ -71,10 +71,15 @@ chaines:
 - {plateforme: twitch, nom: "La France insoumise", adresse: "https://www.twitch.tv/la_france_insoumise", categorie: "Parti"}
 - {plateforme: twitch, nom: "Au Poste (David Dufresne)", adresse: "https://www.twitch.tv/auposte_fr", categorie: "Média indépendant"}
 - {plateforme: twitch, nom: "Hugo au Perchoir", adresse: "https://www.twitch.tv/hugoauperchoir", categorie: "Interviews politiques"}
+# « episodes » : séries politiques publiées en vidéos ordinaires (ni direct ni première), par
+# leur liste de lecture (PL…) ou « toutes » (vidéos de 20 minutes et plus de la chaîne) :
+# « Les Dossiers » (Gaspard G), « Dans les yeux d'Agathe » (franceinfo), « Les aspirants » (RTL),
+# « Pourquoi président(e) ? » (TF1 Info), « Le Meilleur Candidat » (Sam Zirah).
 - {plateforme: youtube, nom: "Hugo au Perchoir", adresse: "https://www.youtube.com/@HugoauPerchoir", categorie: "Interviews politiques (rediffusions)"}
 - {plateforme: youtube, nom: "HugoDécrypte - Actus du jour", adresse: "https://www.youtube.com/channel/UCAcAnMF0OrCtUep3Y4M-ZPw", categorie: "Décryptage"}
 - {plateforme: youtube, nom: "Clément Viktorovitch", adresse: "https://www.youtube.com/@Clemovitch", categorie: "Décryptage"}
-- {plateforme: youtube, nom: "Gaspard G", adresse: "https://www.youtube.com/@GaspardG", categorie: "Décryptage"}
+- {plateforme: youtube, nom: "Gaspard G", adresse: "https://www.youtube.com/@GaspardG", categorie: "Décryptage", episodes: toutes}
+- {plateforme: youtube, nom: "Sam Zirah", adresse: "https://www.youtube.com/@SamZirah", categorie: "Divertissement (« Le Meilleur Candidat »)", episodes: [PLW9jTDYMgwgE]}
 - {plateforme: youtube, nom: "Blast", adresse: "https://www.youtube.com/@blastinfo", categorie: "Média indépendant"}
 - {plateforme: youtube, nom: "Le Média", adresse: "https://www.youtube.com/channel/UCT67YOMntJxfRnO_9bXDpvw", categorie: "Média indépendant"}
 - {plateforme: youtube, nom: "L'Humanité", adresse: "https://www.youtube.com/@lhumanitefr", categorie: "Média indépendant"}
@@ -95,7 +100,7 @@ chaines:
 
 # --- Annexe : Grands médias : télévision, radio, presse ---
 - {plateforme: youtube, nom: "France Inter", adresse: "https://www.youtube.com/@franceinter", categorie: "Radio publique, matinale et interviews"}
-- {plateforme: youtube, nom: "franceinfo", adresse: "https://www.youtube.com/@franceinfo", categorie: "Média public, info en continu"}
+- {plateforme: youtube, nom: "franceinfo", adresse: "https://www.youtube.com/@franceinfo", categorie: "Média public, info en continu", episodes: [PLg6GanYvTasXMpDNnfw4fDbaSCj_X0jeR]}
 - {plateforme: youtube, nom: "France Culture", adresse: "https://www.youtube.com/@franceculture", categorie: "Radio publique, débats d'idées"}
 - {plateforme: youtube, nom: "France Télévisions", adresse: "https://www.youtube.com/@FranceTelevisions", categorie: "Média public"}
 - {plateforme: youtube, nom: "C à vous", adresse: "https://www.youtube.com/@cavousofficiel", categorie: "Média public, talk-show"}
@@ -107,10 +112,10 @@ chaines:
 - {plateforme: youtube, nom: "France 24", adresse: "https://www.youtube.com/@FRANCE24", categorie: "Média public international"}
 - {plateforme: youtube, nom: "BFMTV", adresse: "https://www.youtube.com/@BFMTV", categorie: "Info en continu, généraliste"}
 - {plateforme: youtube, nom: "LCI", adresse: "https://www.youtube.com/@LCI", categorie: "Info en continu, généraliste"}
-- {plateforme: youtube, nom: "TF1 Info", adresse: "https://www.youtube.com/@TF1INFO", categorie: "Généraliste"}
+- {plateforme: youtube, nom: "TF1 Info", adresse: "https://www.youtube.com/@TF1INFO", categorie: "Généraliste", episodes: [PLOInMnMM0_fcA_TQw8cdc54Oen0HnUIH4]}
 - {plateforme: youtube, nom: "CNews", adresse: "https://www.youtube.com/@CNEWSofficiel", categorie: "Info en continu, droite"}
 - {plateforme: youtube, nom: "Europe 1", adresse: "https://www.youtube.com/@Europe1", categorie: "Radio privée, droite"}
-- {plateforme: youtube, nom: "RTL", adresse: "https://www.youtube.com/@rtl_france", categorie: "Radio privée, généraliste"}
+- {plateforme: youtube, nom: "RTL", adresse: "https://www.youtube.com/@rtl_france", categorie: "Radio privée, généraliste", episodes: [PLY8WvIcEK2TM]}
 - {plateforme: youtube, nom: "RMC", adresse: "https://www.youtube.com/@RMC", categorie: "Radio privée, généraliste"}
 - {plateforme: youtube, nom: "Sud Radio", adresse: "https://www.youtube.com/@SudRadioOfficiel", categorie: "Radio privée, généraliste"}
 # Ajoutée le 10 octobre 2026 : émission politique « 2027 raisons de voter ». @RADIONOVAChannel (annuaire de radios)

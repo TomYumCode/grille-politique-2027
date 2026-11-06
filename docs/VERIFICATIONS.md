@@ -370,3 +370,16 @@ Le 3 novembre, un déclenchement de secours de GitHub prévu à :17 est parti à
 refait une collecte complète (la précédente datait de 9 h 45, plus de 40 minutes). Seuil
 porté à 55 minutes : un secours retardé ne double plus la complète de cron-job.org, et celui
 de :47 passe toujours si la complète de :45 a manqué.
+
+## Séries publiées en vidéos ordinaires sur YouTube (6 novembre 2026)
+
+Les épisodes de « Les Dossiers » (Gaspard G), « Dans les yeux d'Agathe » (franceinfo) et « Les
+aspirants » (RTL) n'entraient jamais dans la grille : le collecteur YouTube ne gardait que les
+directs et les premières. Listes de lecture relevées par l'API (playlists.list) : « Dans les
+yeux d'Agathe » PLg6GanYvTasXMpDNnfw4fDbaSCj_X0jeR (8 vidéos), « Les Aspirants »
+PLY8WvIcEK2TM (2), « POURQUOI PRÉSIDENT(E) ? Le podcast spécial 2027 » (TF1 Info)
+PLOInMnMM0_fcA_TQw8cdc54Oen0HnUIH4 (13), « LE MEILLEUR CANDIDAT » (Sam Zirah, @SamZirah)
+PLW9jTDYMgwgE (2). Pas de liste pour « Les Dossiers » : chaîne suivie en entier, vidéos de
+20 minutes et plus (épisode complet du 2 novembre : 46 min 11 ; extraits des jours suivants :
+1 à 2 minutes). Coût : 1 unité par liste et par collecte ; la durée (contentDetails) est lue
+dans le même appel videos.list. Réponses enregistrées : `tests/reponses/youtube_episodes.json`.

@@ -168,6 +168,17 @@ Pour le voir sans attendre l'heure suivante, une collecte rapide (`collecter-rap
 pages du direct de france.tv et Twitch) tourne à :00, :15 et :30, la collecte complète à :45.
 Toutes deux sont déclenchées par cron-job.org (la rapide avec `"inputs":{"rapide":"true"}`).
 
+## Nouveaux épisodes (podcasts vidéo)
+
+Certaines séries politiques sont publiées sur YouTube en vidéos ordinaires, sans heure de
+diffusion : « Les Dossiers » (Gaspard G), « Dans les yeux d'Agathe » (franceinfo), « Les
+aspirants » (RTL), « Pourquoi président(e) ? » (TF1 Info), « Le Meilleur Candidat » (Sam
+Zirah). Dans `config/chaines.yaml`, la clé `episodes:` d'une chaîne YouTube donne la liste de
+lecture de la série (`PL…`, retenue d'office) ou `toutes` (vidéos de 20 minutes et plus de la
+chaîne, si le filtre les juge politiques ; les extraits courts sont écartés). Un épisode mis en
+ligne aujourd'hui apparaît à son heure de mise en ligne, marqué « Nouvel épisode », et un
+favori suivi déclenche la notification « Nouvel épisode ».
+
 ## Favoris
 
 L'étoile ☆ d'une carte ouvre « Suivre » : cette diffusion, chaque diffusion de l'émission

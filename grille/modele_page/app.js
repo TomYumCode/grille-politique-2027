@@ -298,8 +298,10 @@ function libelleLien(url, source, plusieurs, fini) {
 }
 
 function carte(e, maintenant) {
-  const direct = enDirect(e, maintenant);
-  const fini = !direct && termine(e, maintenant);
+  // Épisode d'une série mis en ligne : à voir quand on veut, jamais grisé ni « en direct ».
+  const episode = e.nature === "episode";
+  const direct = !episode && enDirect(e, maintenant);
+  const fini = !episode && !direct && termine(e, maintenant);
   const horaire = e.debut.slice(11, 16) + (e.fin && e.fin.slice(0, 10) === e.debut.slice(0, 10) ? "–" + e.fin.slice(11, 16) : "");
   const s = sources(e);
   const plateformes = [...new Set(s.map((x) => PLATEFORMES[x.plateforme] || x.plateforme))];
@@ -307,6 +309,7 @@ function carte(e, maintenant) {
     ...s.map((x) => logo(x.chaine, true)),
     el("span", { classe: "horaire", texte: horaire }),
     direct ? el("span", { classe: "badge-direct", texte: "En direct" }) : null,
+    episode ? el("span", { classe: "badge-episode", texte: "Nouvel épisode" }) : null,
     el("span", { classe: "chaine", texte: [...new Set(s.map((x) => x.chaine))].join(" · ") }),
     el("span", { texte: plateformes.join(" · ") }),
     boutonEtoile(e));
@@ -317,7 +320,7 @@ function carte(e, maintenant) {
       if (vus.has(url)) continue;
       vus.add(url);
       bas.append(el("a", { classe: "regarder", href: url, target: "_blank", rel: "noopener",
-        texte: libelleLien(url, x, s.length > 1, fini) }));
+        texte: episode ? "Voir l'épisode" : libelleLien(url, x, s.length > 1, fini) }));
     }
   }
   return el("article", {
@@ -401,7 +404,7 @@ function afficherGrille(aujourdhui) {
 
   if (etat.jour === aujourdhui) {
     // Directs en tête : ceux du jour et ceux commencés la veille, toujours en cours.
-    const directs = DONNEES.emissions.filter((e) => visible(e) && enDirect(e, maintenant));
+    const directs = DONNEES.emissions.filter((e) => visible(e) && e.nature !== "episode" && enDirect(e, maintenant));
     if (directs.length) {
       main.append(el("h2", { classe: "section-titre direct", texte: "En direct maintenant" }));
       directs.forEach((e) => main.append(carte(e, maintenant)));

@@ -157,3 +157,5 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .aide { font-size: .8rem; color: var(--discret); width: 100%; }
 #bouton-notifications[aria-pressed="false"] { opacity: 1; text-decoration: none; }
 #bouton-notifications[aria-pressed="true"] { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
+.badge-episode { color: var(--accent); font-weight: 700; }
+.badge-episode::before { content: "▶ "; }

@@ -1,0 +1,107 @@
+{
+ "_note": "Vraies réponses de l'API YouTube (videos.list avec contentDetails, relevées le 6 novembre 2026) : épisode complet des « Dossiers » de Gaspard G (46 min), extrait du même jour (1 min 31), épisode de « Dans les yeux d'Agathe » (franceinfo). Les listes playlistItems sont réduites aux identifiants relevés le même jour.",
+ "playlistItems_UUI-8QMy9n3I5Pv6mTmXoAXA": {
+  "items": [
+   {
+    "contentDetails": {
+     "videoId": "V_b0En7ceyo"
+    }
+   },
+   {
+    "contentDetails": {
+     "videoId": "BruJBhcIdKI"
+    }
+   }
+  ]
+ },
+ "playlistItems_UUO6K_kkdP-lnSCiO3tPx7WA": {
+  "items": []
+ },
+ "playlistItems_PLg6GanYvTasXMpDNnfw4fDbaSCj_X0jeR": {
+  "items": [
+   {
+    "contentDetails": {
+     "videoId": "csnIz_lEiYA",
+     "videoPublishedAt": "2026-10-10T09:00:31Z"
+    }
+   }
+  ]
+ },
+ "videos": {
+  "kind": "youtube#videoListResponse",
+  "items": [
+   {
+    "kind": "youtube#video",
+    "id": "BruJBhcIdKI",
+    "snippet": {
+     "publishedAt": "2026-11-02T17:31:16Z",
+     "channelId": "UCI-8QMy9n3I5Pv6mTmXoAXA",
+     "title": "Bruno Retailleau face à ses dossiers",
+     "description": "Qui est vraiment Bruno Retailleau ? Dans ce cinquième épisode des Dossiers, en partenariat avec @TF1INFO, je reçois le président des Républicains, ancien ministre de l'Intérieur sous Emmanuel Macron, pour un entretien long, exigeant et immersif. À travers des archives rares, je retrace sa trajectoir",
+     "channelTitle": "Gaspard G",
+     "categoryId": "25",
+     "liveBroadcastContent": "none",
+     "defaultLanguage": "fr",
+     "defaultAudioLanguage": "fr"
+    },
+    "contentDetails": {
+     "duration": "PT46M11S",
+     "dimension": "2d",
+     "definition": "hd",
+     "caption": "false",
+     "licensedContent": true,
+     "contentRating": {},
+     "projection": "rectangular"
+    }
+   },
+   {
+    "kind": "youtube#video",
+    "id": "V_b0En7ceyo",
+    "snippet": {
+     "publishedAt": "2026-11-02T17:33:25Z",
+     "channelId": "UCI-8QMy9n3I5Pv6mTmXoAXA",
+     "title": "Pourquoi Bruno Retailleau refuse de s’allier avec Marine Le Pen, avec @TF1INFO",
+     "description": "🎙️« Madame Le Pen, pour moi, c'est une démagogue. Sur le plan économique, elle est à gauche. » \n\nBruno Retailleau, président des Républicains, revient sur son refus de l'union des droites et sur ses désaccords avec le programme économique de Marine Le Pen. \n\n👉L'entretien complet est à retrouver sur ",
+     "channelTitle": "Gaspard G",
+     "categoryId": "25",
+     "liveBroadcastContent": "none",
+     "defaultLanguage": "fr",
+     "defaultAudioLanguage": "fr"
+    },
+    "contentDetails": {
+     "duration": "PT1M31S",
+     "dimension": "2d",
+     "definition": "hd",
+     "caption": "false",
+     "licensedContent": true,
+     "contentRating": {},
+     "projection": "rectangular"
+    }
+   },
+   {
+    "kind": "youtube#video",
+    "id": "csnIz_lEiYA",
+    "snippet": {
+     "publishedAt": "2026-10-10T09:00:31Z",
+     "channelId": "UCO6K_kkdP-lnSCiO3tPx7WA",
+     "title": "Bruno Le Maire : \"En 2024, j'ai été laissé pour mort sur le bord de la route\"",
+     "description": "L'ancien ministre de l'Economie Bruno Le Maire est l'invité du nouvel épisode du podcast \"Dans les yeux d'Agathe\". Il se confie à Agathe Lambret.\n\n#politique #présidentielle2027\n\n▶️ ABONNEZ-VOUS À franceinfo pour suivre l’actualité en direct et en continu 👉 https://www.youtube.com/franceinfo/?sub_co",
+     "channelTitle": "franceinfo",
+     "categoryId": "25",
+     "liveBroadcastContent": "none",
+     "defaultLanguage": "fr",
+     "defaultAudioLanguage": "fr"
+    },
+    "contentDetails": {
+     "duration": "PT1H23M50S",
+     "dimension": "2d",
+     "definition": "hd",
+     "caption": "false",
+     "licensedContent": true,
+     "contentRating": {},
+     "projection": "rectangular"
+    }
+   }
+  ]
+ }
+}

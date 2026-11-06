@@ -66,3 +66,18 @@ test("favoris reçus réduits à leur forme", () => {
   assert.deepEqual(f, { presidentielle: false, diffusions: [], personnes: ["A"],
     emissions: [{ cle: "c|f5", titre: "C politique", chaine: "France 5" }] });
 });
+
+test("nouvel épisode d'une série : une notification à la mise en ligne, pas de rappel ni de direct", () => {
+  const episode = e("yt:ep", "2026-10-22T13:40:00+02:00", { plateforme: "youtube", chaine: "franceinfo",
+    titre: "Bruno Le Maire : \"En 2024, j'ai été laissé pour mort\"", invites: ["Bruno Le Maire"], nature: "episode",
+    statut: "terminé" });
+  const fav = { ...F.vides(), personnes: ["Bruno Le Maire"] };
+  const r = aEnvoyer([episode], fav, {}, MAINTENANT);
+  assert.deepEqual(r.messages.map((m) => m.titre), ["Nouvel épisode · franceinfo"]);
+  assert.equal(aEnvoyer([episode], fav, r.envoyes, MAINTENANT + 60000).messages.length, 0, "une seule fois");
+  // Déjà en ligne au moment de l'abonnement : rien.
+  assert.equal(aEnvoyer([episode], fav, marquerConnues([episode], fav, {}, MAINTENANT), MAINTENANT).messages.length, 0);
+  // Mis en ligne il y a plus de 24 heures : rien.
+  const vieux = { ...episode, id: "yt:vieux", debut: "2026-10-20T13:40:00+02:00" };
+  assert.equal(aEnvoyer([vieux], fav, {}, MAINTENANT).messages.length, 0);
+});
