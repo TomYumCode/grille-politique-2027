@@ -106,6 +106,12 @@ personnalites:
   - {nom: "Ségolène Royal", alias: [], sigle: "PS"}
   - {nom: "Jérôme Guedj", alias: ["Guedj"], sigle: "PS"}
   - {nom: "Emmanuel Maurel", alias: ["Maurel"], sigle: "GRS"}
+  # Ajoutés le 6 novembre 2026 : invités de Thinkerview en direct, jusque-là écartés faute d'être
+  # dans la liste. « Bellamy » seul attraperait Matt Bellamy (Muse) : nom complet seulement.
+  - {nom: "Agnès Pannier-Runacher", alias: ["Pannier-Runacher"], sigle: "Renaissance"}
+  - {nom: "François-Xavier Bellamy", alias: [], sigle: "LR"}
+  - {nom: "Arnaud Montebourg", alias: ["Montebourg"], sigle: "ancien ministre"}
+  - {nom: "Jean Messiha", alias: ["Messiha"], sigle: "ex-RN"}
 
 # « ambigu: true » : nom trop courant pour servir seul de mot-clé
 # (« Renaissance » attrape les documentaires sur la Renaissance italienne).
