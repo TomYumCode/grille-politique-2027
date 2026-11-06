@@ -24,16 +24,15 @@ for poignee in ("@SamZirah", "@samzirah", "@SamZirahOfficiel"):
         for _ in range(4):
             r = api("playlists", part="snippet,contentDetails", channelId=c["id"], maxResults=50, **({"pageToken": jeton} if jeton else {}))
             for p in r.get("items", []):
-                print("  LISTE", p["id"], "|", p["snippet"]["title"], "|", p["contentDetails"]["itemCount"])
+                if any(m in p["snippet"]["title"].lower() for m in ("candidat", "dossier", "politi", "2027")):
+                    print("  LISTE", p["id"], "|", p["snippet"]["title"], "|", p["contentDetails"]["itemCount"])
             jeton = r.get("nextPageToken")
             if not jeton:
                 break
-# Réponses à enregistrer : 3 derniers éléments de la liste d'Agathe et détails des vidéos.
-items = api("playlistItems", part="contentDetails", playlistId="PLg6GanYvTasXMpDNnfw4fDbaSCj_X0jeR", maxResults=3)
-print("PLAYLISTITEMS", json.dumps(items, ensure_ascii=False))
-ids = ",".join(i["contentDetails"]["videoId"] for i in items["items"])
-videos = api("videos", part="snippet,liveStreamingDetails", id=ids)
-for v in videos["items"]:
-    v["snippet"].pop("thumbnails", None); v["snippet"]["description"] = v["snippet"].get("description", "")[:400]
-    v["snippet"].pop("localized", None); v["snippet"].pop("tags", None)
-print("VIDEOS", json.dumps(videos, ensure_ascii=False))
+for cid in ("UCO6K_kkdP-lnSCiO3tPx7WA",):
+    pass
+up = api("channels", part="contentDetails", forHandle="@GaspardG")["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+it = api("playlistItems", part="contentDetails", playlistId=up, maxResults=6)
+ids = ",".join(i["contentDetails"]["videoId"] for i in it["items"])
+for v in api("videos", part="snippet,liveStreamingDetails", id=ids)["items"]:
+    print("GASPARD", v["id"], v["snippet"]["publishedAt"], v["snippet"]["liveBroadcastContent"], "live" if v.get("liveStreamingDetails") else "-", "|", v["snippet"]["title"])
