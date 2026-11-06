@@ -111,17 +111,17 @@ personnalites:
   - {nom: "Agnès Pannier-Runacher", alias: ["Pannier-Runacher"], sigle: "Renaissance"}
   - {nom: "François-Xavier Bellamy", alias: [], sigle: "LR"}
   - {nom: "Arnaud Montebourg", alias: ["Montebourg"], sigle: "ancien ministre"}
-  - {nom: "Jean Messiha", alias: ["Messiha"], sigle: "ex-RN"}
+  - {nom: "Jean Messiha", alias: ["Messiha"], sigle: "Reconquête"}
 
 # « ambigu: true » : nom trop courant pour servir seul de mot-clé
 # (« Renaissance » attrape les documentaires sur la Renaissance italienne).
 # Ces émissions iront au classement par modèle au lot 6.
 partis:
   - {nom: "La France insoumise", alias: ["LFI", "France insoumise"]}
-  - {nom: "Parti socialiste", alias: []}
+  - {nom: "Parti socialiste", alias: [PS]}
   - {nom: "Renaissance", alias: [], ambigu: true}
   - {nom: "Horizons", alias: [], ambigu: true}
-  - {nom: "Rassemblement national", alias: []}
+  - {nom: "Rassemblement national", alias: [RN]}
   - {nom: "Les Républicains", alias: []}
   - {nom: "Les Écologistes", alias: []}
   - {nom: "MoDem", alias: []}
@@ -138,7 +138,7 @@ partis:
   - {nom: "UPR", alias: ["Union populaire républicaine"]}
   # Mouvement de Natacha Polony ; « nous sommes la France » est aussi une phrase courante.
   - {nom: "Nous sommes la France", alias: [], ambigu: true}
-  - {nom: "Reconquête", alias: [], ambigu: true}
+  - {nom: "Reconquête", alias: [R!], ambigu: true}
   - {nom: "UDR", alias: []}
   - {nom: "Nouvelle Énergie", alias: [], ambigu: true}
   # Ponctuation ignorée : « Génération.s » = « génération s'approprie… » (documentaire TF1 du 31 octobre 2026).
