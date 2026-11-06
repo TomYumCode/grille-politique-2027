@@ -396,3 +396,7 @@ l'Éducation nationale), écartées : Vincent Lindon, Bigflo et Oli, Zendaya, re
 Thinkerview, que des directs (déjà suivis) ; Konbini, Brut, LEGEND : aucune vidéo politique ces
 derniers jours, rien de retenu. Aucun coût de plus : les vidéos de la chaîne sont déjà lues
 pour les directs.
+Directs de Thinkerview écartés faute de nom dans la liste (Agnès Pannier-Runacher, 25 mars ;
+François-Xavier Bellamy, 23 octobre 2025 ; Arnaud Montebourg, 12 mai ; Jean Messiha, 15 janvier) :
+ces quatre personnalités sont ajoutées à `config/politique.yaml` ; leurs titres sont désormais
+retenus, « Matt Bellamy » (Muse) ne l'est pas.
