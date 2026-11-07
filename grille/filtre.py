@@ -82,6 +82,18 @@ def _contient(texte_normalise: str, terme_normalise: str) -> bool:
     return bool(terme_normalise) and f" {terme_normalise} " in f" {texte_normalise} "
 
 
+def _sigle_court(mot: str) -> bool:
+    """Sigle de deux lettres au plus (« PS », « RN », « R! ») : trop court pour être cherché comme
+    un mot ordinaire (« la RN 7 », « PS : abonnez-vous », « PS Plus »)."""
+    return len(normaliser(mot).replace(" ", "")) <= 2
+
+
+def _motif_sigle(mot: str) -> re.Pattern:
+    """Sigle court tel qu'écrit (majuscules comprises), dans le titre seulement, sans numéro de
+    route ni « Plus » après."""
+    return re.compile(rf"(?<![\w-]){re.escape(mot)}(?![\w-])(?!\s*(?:\d|[Pp]lus\b))")
+
+
 def _fenetre_contient(mots: list[str], signes: list[str]) -> bool:
     return any(_contient(" ".join(mots), s) for s in signes)
 
@@ -110,7 +122,9 @@ class FiltrePolitique:
             (normaliser(e), "") if isinstance(e, str) else (normaliser(e["titre"]), normaliser(e.get("chaine", "")))
             for e in lb.get("emissions") or []
         ]
-        self._mots = [(m, normaliser(m)) for m in config.mots_cles + config.noms_a_reperer()]
+        mots = config.mots_cles + config.noms_a_reperer()
+        self._mots = [(m, normaliser(m)) for m in mots if not _sigle_court(m)]
+        self._sigles = [(m, _motif_sigle(m)) for m in mots if _sigle_court(m)]
         self._mots_titre = [(m, normaliser(m)) for m in config.mots_cles_titre]
         # Personnes repérables comme invités : forme affichée + toutes ses formes normalisées.
         self._personnes = [
@@ -119,7 +133,9 @@ class FiltrePolitique:
         ]
         douteux = config.cas_douteux
         partis_ambigus = [n for p in config.partis if p.get("ambigu") for n in [p["nom"]] + (p.get("alias") or [])]
-        self._mots_douteux = [(m, normaliser(m)) for m in (douteux.get("mots") or []) + partis_ambigus]
+        mots_douteux = (douteux.get("mots") or []) + partis_ambigus
+        self._mots_douteux = [(m, normaliser(m)) for m in mots_douteux if not _sigle_court(m)]
+        self._sigles_douteux = [(m, _motif_sigle(m)) for m in mots_douteux if _sigle_court(m)]
         self._emissions_a_invites = [(e, normaliser(e)) for e in douteux.get("emissions_a_invites") or []]
         self._fonctions = [(m, normaliser(m)) for m in config.fonctions_politiques]
         # Noms de famille employés seuls (alias d'un mot, fin du nom complet), avec le prénom attendu.
@@ -248,6 +264,9 @@ class FiltrePolitique:
         for mot, mot_n in self._mots_douteux:
             if _contient(texte_n, mot_n):
                 return f"« {mot} »"
+        for mot, motif in self._sigles_douteux:
+            if motif.search(titre):
+                return f"« {mot} » dans le titre"
         return None
 
     def noter_douteux(self, id_: str, source: str, chaine: Chaine, titre: str, description: str, debut) -> None:
@@ -290,6 +309,9 @@ class FiltrePolitique:
                 return decision(MOTS_CLES, f"« {mot} »")
         for mot, mot_n in self._mots_titre:
             if _contient(titre_n, mot_n):
+                return decision(MOTS_CLES, f"« {mot} » dans le titre")
+        for mot, motif in self._sigles:
+            if motif.search(titre_complet):
                 return decision(MOTS_CLES, f"« {mot} » dans le titre")
         # Émission à invités dont l'invité a une fonction politique, même absent des listes
         # (« L'Invité de 7h50 — Edouard Geffray, ministre de l'Education nationale »).

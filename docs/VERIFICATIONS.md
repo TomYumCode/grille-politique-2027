@@ -400,3 +400,11 @@ Directs de Thinkerview écartés faute de nom dans la liste (Agnès Pannier-Runa
 François-Xavier Bellamy, 23 octobre 2025 ; Arnaud Montebourg, 12 mai ; Jean Messiha, 15 janvier) :
 ces quatre personnalités sont ajoutées à `config/politique.yaml` ; leurs titres sont désormais
 retenus, « Matt Bellamy » (Muse) ne l'est pas.
+
+## Sigles de deux lettres (7 novembre 2026)
+
+Alias « PS », « RN » et « R! » ajoutés à la main dans `config/politique.yaml`. Cherchés comme des
+mots ordinaires, « PS » et « RN » faisaient entrer « PS : abonnez-vous » (fin de description
+YouTube), « PS Plus » (jeux vidéo) et « la RN 7 » (route nationale), et « R! » devenait la lettre
+« r » seule. Un sigle de deux lettres au plus compte désormais seulement dans le titre, écrit tel
+quel (majuscules comprises), sans chiffre ni « Plus » juste après (`grille/filtre.py`).
