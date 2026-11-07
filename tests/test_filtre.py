@@ -131,3 +131,28 @@ def test_rendez_vous_politiques_sans_invite_nomme(politique, chaine, titre):
     """Vus seulement en cas douteux jusqu'au 21 octobre 2026 : le guide ne nomme pas l'invité."""
     f, chaines = politique
     assert f.decider(chaines[chaine], titre, "").filtre == "liste blanche"
+
+
+@pytest.mark.parametrize(
+    "titre, description, retenu",
+    [
+        # Sigles de deux lettres (alias « PS », « RN ») : dans le titre, en majuscules, seuls.
+        ("Le RN en tête des sondages", "", True),
+        ("Le PS choisit son candidat", "", True),
+        ("Sondage : le RN à 35 %", "", True),
+        ("Accident sur la RN 7 : bouchons", "", False),  # route nationale
+        ("Les jeux PS Plus de novembre", "", False),
+        ("Test de la PS5 Pro", "", False),
+        ("Recette du gâteau", "PS : abonnez-vous à la chaîne", False),  # post-scriptum
+        ("Les ps de la vie", "", False),
+    ],
+)
+def test_sigles_courts(politique, titre, description, retenu):
+    f, chaines = politique
+    assert (f.decider(chaines["France 2"], titre, description) is not None) == retenu
+
+
+def test_sigle_court_douteux(politique):
+    f, _ = politique
+    assert f.motif_douteux("Meeting de R! à Paris") == "« R! » dans le titre"
+    assert f.motif_douteux("Le meilleur du R&B") is None
