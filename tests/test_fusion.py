@@ -130,3 +130,34 @@ def test_invite_ajoute_a_la_main():
     assert resultat[0]["invites"] == ["Laurent Wauquiez"] and resultat[0]["id"] == inter["id"]
     annule = dict(ev, statut="annulé")
     assert fusion.fusionner([inter, annule])[0]["invites"] == []
+
+
+def test_groupes_qui_se_rejoignent():
+    """Franc-jeu (8 novembre 2026) : France Inter ne ressemble pas au direct YouTube, mais bien à
+    France 2, qui rejoint ensuite le groupe du direct : une seule carte pour les trois."""
+    youtube = emission("youtube:yOtZhthbySc", "Franc-jeu avec Benjamin Duhamel 02 Nov 2026",
+                       "2026-11-08T13:19:00+01:00", "youtube", "franceinfo", ["https://www.youtube.com/watch?v=yOtZhthbySc"])
+    inter = emission("radio:FRANCEINTER:202611081319", "Franc-jeu du dimanche 08 novembre 2026",
+                     "2026-11-08T13:19:50+01:00", "radio", "France Inter", ["https://www.radiofrance.fr/franceinter"])
+    france2 = emission("tv:France2.fr:202611081320", "Franc-jeu", "2026-11-08T13:20:00+01:00", "tv", "France 2",
+                       ["https://www.france.tv/france-2/direct.html"])
+    resultat = fusion.fusionner([youtube, inter, france2])
+    assert len(resultat) == 1
+    assert resultat[0]["chaine"] == "France 2"
+    assert [s["chaine"] for s in resultat[0]["sources"]] == ["France 2", "franceinfo", "France Inter"]
+
+
+def test_invite_ajoute_a_la_main_titre_renomme():
+    """Radio France renomme la diffusion une fois l'invité connu : l'ajout à la main la reconnaît
+    toujours, et France Inter rejoint France 2 (une seule carte)."""
+    inter = emission("radio:FRANCEINTER:202611081319", "Le député Laurent Wauquiez, invité de Franc-Jeu",
+                     "2026-11-08T13:19:50+01:00", "radio", "France Inter", ["https://www.radiofrance.fr/franceinter"],
+                     invites=["Laurent Wauquiez"], filtre="mots-clés")
+    ev = emission("evenement:202611081320:radio:france-inter", "Franc-jeu — Laurent Wauquiez",
+                  "2026-11-08T13:20:00+01:00", "radio", "France Inter", [], invites=["Laurent Wauquiez"])
+    france2 = emission("tv:France2.fr:202611081320", "Franc-jeu", "2026-11-08T13:20:00+01:00", "tv", "France 2",
+                       ["https://www.france.tv/france-2/direct.html"])
+    resultat = fusion.fusionner([inter, ev, france2])
+    assert len(resultat) == 1
+    assert [s["chaine"] for s in resultat[0]["sources"]] == ["France 2", "France Inter"]
+    assert resultat[0]["invites"] == ["Laurent Wauquiez"]

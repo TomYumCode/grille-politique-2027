@@ -27,3 +27,8 @@ evenements:
     duree: 40
     chaines: ["France Inter", "France 2"]
     resume: "Laurent Wauquiez, annoncé en direct sur France Inter."
+  - titre: "Le grand oral 2027 — Raphaël Glucksmann"
+    debut: "2026-11-08 18:00"
+    duree: 60
+    chaines: ["BFMTV"]
+    resume: "Raphaël Glucksmann, invité du Grand oral 2027."
