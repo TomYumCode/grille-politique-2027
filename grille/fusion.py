@@ -78,13 +78,16 @@ def _representant(groupe: list[dict]) -> dict:
 
 def _complete(evenement: dict, e: dict) -> bool:
     """L'événement écrit à la main annonce l'invité d'une émission déjà dans la grille, sur la
-    même chaîne : « Franc-jeu — Laurent Wauquiez » pour « Franc-jeu du dimanche 08 novembre »."""
+    même chaîne : « Franc-jeu — Laurent Wauquiez » pour « Franc-jeu du dimanche 08 novembre » ou
+    « Le député Laurent Wauquiez, invité de Franc-Jeu »."""
     if (e["chaine"], e["plateforme"]) != (evenement["chaine"], evenement["plateforme"]) \
             or str(e["id"]).startswith(PREFIXE_EVENEMENT):
         return False
     ecart = abs(datetime.fromisoformat(e["debut"]) - datetime.fromisoformat(evenement["debut"]))
     nom = normaliser(evenement["titre"].split(" — ")[0])
-    return ecart <= ECART_MAX and bool(nom) and f"{normaliser(e['titre'])} ".startswith(f"{nom} ")
+    # Le nom de l'émission n'importe où dans le titre : Radio France renomme parfois la diffusion
+    # une fois l'invité connu (« Le député Laurent Wauquiez, invité de Franc-Jeu »).
+    return ecart <= ECART_MAX and bool(nom) and f" {nom} " in f" {normaliser(e['titre'])} "
 
 
 def avec_evenements(emissions: list[dict]) -> list[dict]:
@@ -123,6 +126,22 @@ def fusionner(emissions: list[dict]) -> list[dict]:
                 break
         else:
             groupes.append([e])
+    # Les groupes formés dans l'ordre des heures peuvent encore se rejoindre : France Inter
+    # (13 h 19) ne ressemble pas au direct YouTube (13 h 19) mais bien à France 2 (13 h 20),
+    # arrivée ensuite dans le groupe du direct (Franc-jeu, 8 novembre 2026).
+    fusion_faite = True
+    while fusion_faite:
+        fusion_faite = False
+        for i, a in enumerate(groupes):
+            for b in groupes[i + 1:]:
+                if not {(m["chaine"], m["plateforme"]) for m in a} & {(m["chaine"], m["plateforme"]) for m in b} \
+                        and any(_meme_diffusion(x, y) for x in a for y in b):
+                    a.extend(b)
+                    groupes.remove(b)
+                    fusion_faite = True
+                    break
+            if fusion_faite:
+                break
 
     resultat = []
     for groupe in groupes:
