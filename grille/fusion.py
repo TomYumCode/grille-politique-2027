@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from grille.filtre import normaliser
 
 ECART_MAX = timedelta(minutes=20)
+PREFIXE_EVENEMENT = "evenement:"  # config/evenements.yaml (grille/evenements.py)
 ECART_EMETTEUR = timedelta(minutes=10)
 # Ordre de préférence pour l'émission qui porte la carte (chaîne, logo, titre).
 PRIORITE = {"tv": 0, "radio": 1, "youtube": 2, "twitch": 3, "web": 4}
@@ -75,10 +76,43 @@ def _representant(groupe: list[dict]) -> dict:
                                       len(e["titre"]), e["debut"]))
 
 
+def _complete(evenement: dict, e: dict) -> bool:
+    """L'événement écrit à la main annonce l'invité d'une émission déjà dans la grille, sur la
+    même chaîne : « Franc-jeu — Laurent Wauquiez » pour « Franc-jeu du dimanche 08 novembre »."""
+    if (e["chaine"], e["plateforme"]) != (evenement["chaine"], evenement["plateforme"]) \
+            or str(e["id"]).startswith(PREFIXE_EVENEMENT):
+        return False
+    ecart = abs(datetime.fromisoformat(e["debut"]) - datetime.fromisoformat(evenement["debut"]))
+    nom = normaliser(evenement["titre"].split(" — ")[0])
+    return ecart <= ECART_MAX and bool(nom) and f"{normaliser(e['titre'])} ".startswith(f"{nom} ")
+
+
+def avec_evenements(emissions: list[dict]) -> list[dict]:
+    """Un événement qui complète une émission déjà connue (son invité annoncé en direct) ne fait
+    pas une deuxième carte : ses invités et son résumé passent sur l'émission."""
+    reste = [e for e in emissions if not str(e["id"]).startswith(PREFIXE_EVENEMENT)]
+    resultat = list(reste)
+    for ev in (e for e in emissions if str(e["id"]).startswith(PREFIXE_EVENEMENT)):
+        cible = next((i for i, e in enumerate(resultat) if _complete(ev, e)), None)
+        if cible is None or ev["statut"] == "annulé":
+            if cible is None:
+                resultat.append(ev)
+            continue
+        e = dict(resultat[cible])
+        e["invites"] = list(dict.fromkeys(list(e["invites"]) + list(ev["invites"])))
+        e["cites"] = [n for n in dict.fromkeys(list(e.get("cites") or []) + list(ev.get("cites") or []))
+                      if n not in e["invites"]]
+        if ev.get("resume") and not e.get("resume"):
+            e["resume"] = ev["resume"]
+        resultat[cible] = e
+    return resultat
+
+
 def fusionner(emissions: list[dict]) -> list[dict]:
     """Regroupe les doublons. Chaque émission fusionnée garde les champs de son
     représentant, réunit invités et liens, et liste ses `sources` (chaîne,
     plateforme, liens), représentant en premier. Une émission seule est rendue telle quelle."""
+    emissions = avec_evenements(emissions)
     groupes: list[list[dict]] = []
     for e in sorted(emissions, key=lambda e: e["debut"]):
         for groupe in groupes:

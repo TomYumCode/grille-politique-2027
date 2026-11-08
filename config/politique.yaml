@@ -111,6 +111,8 @@ personnalites:
   - {nom: "Agnès Pannier-Runacher", alias: ["Pannier-Runacher"], sigle: "Renaissance"}
   - {nom: "François-Xavier Bellamy", alias: [], sigle: "LR"}
   - {nom: "Arnaud Montebourg", alias: ["Montebourg"], sigle: "ancien ministre"}
+  # Ajouté le 8 novembre 2026 : annoncé en direct dans Franc-jeu (France Inter).
+  - {nom: "Laurent Wauquiez", alias: ["Wauquiez"], sigle: "LR"}
   - {nom: "Jean Messiha", alias: ["Messiha"], sigle: "Reconquête"}
 
 # « ambigu: true » : nom trop courant pour servir seul de mot-clé
