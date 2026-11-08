@@ -114,3 +114,19 @@ def test_page_et_email(tmp_path):
     assert "LCP / Public Sénat (TV), BackSeat (Jean Massiet) (Twitch)" in courriel.texte(c)
     assert "Aussi sur" in courriel.page_html(c) and "https://www.twitch.tv/jeanmassiet" in courriel.page_html(c)
     connexion.close()
+
+
+def test_invite_ajoute_a_la_main():
+    """Invité annoncé en direct (config/evenements.yaml) : il s'ajoute à l'émission déjà connue
+    de la même chaîne, sans deuxième carte (Franc-jeu, France Inter, 8 novembre 2026)."""
+    inter = emission("radio:FRANCEINTER:202611081319", "Franc-jeu du dimanche 08 novembre 2026",
+                     "2026-11-08T13:19:50+01:00", "radio", "France Inter", ["https://www.radiofrance.fr/franceinter"])
+    ev = emission("evenement:202611081320:radio:france-inter", "Franc-jeu — Laurent Wauquiez",
+                  "2026-11-08T13:20:00+01:00", "radio", "France Inter", [], invites=["Laurent Wauquiez"])
+    autre = emission("evenement:202611081320:radio:france-culture", "Allocution", "2026-11-08T13:20:00+01:00",
+                     "radio", "France Inter", [])
+    resultat = fusion.fusionner([inter, ev, autre])
+    assert [e["titre"] for e in resultat] == ["Franc-jeu du dimanche 08 novembre 2026", "Allocution"]
+    assert resultat[0]["invites"] == ["Laurent Wauquiez"] and resultat[0]["id"] == inter["id"]
+    annule = dict(ev, statut="annulé")
+    assert fusion.fusionner([inter, annule])[0]["invites"] == []

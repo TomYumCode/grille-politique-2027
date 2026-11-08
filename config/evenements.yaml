@@ -11,6 +11,9 @@
 #   resume   : facultatif, une phrase affichée sous le titre
 #   categorie: facultatif (interview, débat, meeting, analyse) ; sinon déduite du titre
 # Un événement passé peut rester ici ; retiré avant sa date, il passe en « annulé ».
+# Invité annoncé au dernier moment dans une émission déjà dans la grille : titre « <nom de
+# l'émission> — <invité> », même heure, même chaîne ; l'invité s'ajoute à l'émission, sans
+# deuxième carte.
 
 evenements:
   - titre: "Allocution d'Emmanuel Macron"
@@ -19,3 +22,8 @@ evenements:
     chaines: ["TF1", "France 2", "franceinfo", "BFMTV", "LCI", "CNews", "France Inter", "franceinfo (radio)"]
     resume: "Le président de la République s'adresse aux Français après les violences en marge des manifestations du 17 octobre (annonce de l'Élysée)."
     categorie: "meeting"
+  - titre: "Franc-jeu — Laurent Wauquiez"
+    debut: "2026-11-08 13:20"
+    duree: 40
+    chaines: ["France Inter", "France 2"]
+    resume: "Laurent Wauquiez, annoncé en direct sur France Inter."
