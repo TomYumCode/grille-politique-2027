@@ -1,0 +1,33 @@
+{
+  "_note": "Réponse construite d'après le format documenté de l'API (recherche web, blocs server_tool_use / web_search_tool_result / text), en attendant une réponse réelle enregistrée une fois la clé ANTHROPIC_API_KEY en place.",
+  "trouve": {
+    "stop_reason": "end_turn",
+    "usage": {"input_tokens": 9120, "output_tokens": 412, "server_tool_use": {"web_search_requests": 1}},
+    "content": [
+      {"type": "server_tool_use", "id": "srvtoolu_01", "name": "web_search",
+       "input": {"query": "Le grand oral 2027 BFMTV 8 novembre 2026 invité"}},
+      {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_01", "content": [
+        {"type": "web_search_result", "url": "https://www.bfmtv.com/politique/raphael-glucksmann-invite-du-grand-oral-2027_AV-202611080412.html",
+         "title": "Raphaël Glucksmann, invité du Grand oral 2027", "encrypted_content": "Eo8BCioI…", "page_age": "8 novembre 2026"},
+        {"type": "web_search_result", "url": "https://www.programme-tv.net/programme/chaine/bfmtv/",
+         "title": "Programme BFMTV ce soir", "encrypted_content": "Eo8BCioJ…", "page_age": null}
+      ]},
+      {"type": "text", "text": "L'invité de ce soir est Raphaël Glucksmann.",
+       "citations": [{"type": "web_search_result_location", "url": "https://www.bfmtv.com/politique/raphael-glucksmann-invite-du-grand-oral-2027_AV-202611080412.html",
+                      "title": "Raphaël Glucksmann, invité du Grand oral 2027", "encrypted_index": "EpIB…",
+                      "cited_text": "Raphaël Glucksmann est l'invité du Grand oral 2027 ce dimanche à 18 heures."}]},
+      {"type": "text", "text": "\n\n{\"invites\": [\"Raphaël Glucksmann\"], \"source\": \"https://www.bfmtv.com/politique/raphael-glucksmann-invite-du-grand-oral-2027_AV-202611080412.html\", \"extrait\": \"Raphaël Glucksmann est l'invité du Grand oral 2027 ce dimanche à 18 heures.\"}"}
+    ]
+  },
+  "rien": {
+    "stop_reason": "end_turn",
+    "usage": {"input_tokens": 7310, "output_tokens": 160, "server_tool_use": {"web_search_requests": 2}},
+    "content": [
+      {"type": "server_tool_use", "id": "srvtoolu_02", "name": "web_search", "input": {"query": "Face à face BFMTV RMC invité"}},
+      {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_02", "content": [
+        {"type": "web_search_result", "url": "https://rmc.bfmtv.com/emission/face-a-face/", "title": "Face à face", "encrypted_content": "Eo8B…", "page_age": null}
+      ]},
+      {"type": "text", "text": "Aucune page ne nomme l'invité de cette diffusion.\n\n{\"invites\": [], \"source\": \"\", \"extrait\": \"\"}"}
+    ]
+  }
+}

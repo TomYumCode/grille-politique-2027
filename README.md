@@ -67,6 +67,12 @@ GitHub.
 1. developers.radiofrance.fr : créer un compte (gratuit, usage non commercial).
 2. Une fois connecté, demander une clé (« token ») et la copier.
 
+**Claude (`ANTHROPIC_API_KEY`)**, pour chercher l'invité d'une émission sur le web (payant)
+1. console.anthropic.com : créer un compte, puis « Billing » : ajouter une carte et un crédit
+   (5 $ suffisent pour commencer). Conseillé : « Limits » → plafond de dépense mensuel.
+2. « API Keys » → « Create Key » (nom : « grille-2027 ») ; copier la clé, elle ne s'affiche qu'une fois.
+3. La coller dans le secret GitHub `ANTHROPIC_API_KEY` (jamais dans le dépôt ni dans une conversation).
+
 Vérification : `python3 -m grille verifier-acces` doit afficher quatre `ok`.
 
 ## Mise en ligne (GitHub)
@@ -238,6 +244,23 @@ Chaque heure, la collecte lit aussi les communiqués de presse de France Télév
 Lescure — Dimanche 11 octobre à 13h20 ». L'invité s'ajoute alors à l'émission du même
 jour et de la même heure (à 30 minutes près). Les autres chaînes (TF1, M6, BFMTV…)
 n'ont pas de page équivalente repérée pour l'instant.
+
+## Invité cherché sur le web (Claude)
+
+BFMTV, LCI ou CNews n'annoncent leurs invités nulle part où la grille peut les lire. À chaque
+collecte (toutes les 15 minutes), une émission à invité de la télévision ou de la radio qui
+commence dans les 10 minutes ou a commencé depuis moins de 30 minutes, sans invité connu, est
+confiée à Claude, qui cherche sur le web (annonce de la chaîne, presse, extraits publiés
+pendant l'émission) et répond par un nom et la page qui le confirme (`grille/invites_web.py`).
+
+- Un nom n'est ajouté que s'il est dans `config/politique.yaml` et que la page citée fait
+  partie des résultats de la recherche. Un nom inconnu est signalé dans l'email du matin
+  (« invités trouvés mais absents de politique.yaml ») : l'ajouter à la liste, et il sera
+  repris la fois suivante.
+- Deux essais au plus par émission, et un plafond de questions par jour.
+- Réglages sans code dans `config/recherche.yaml` : `actif: false` arrête tout, `modele`
+  choisit le modèle, `recherches_par_jour` borne le coût. Chaque collecte affiche les jetons
+  consommés et le nombre de recherches web (journal de la tâche GitHub).
 
 ## Présidentielle 2027 ou toute la politique
 
