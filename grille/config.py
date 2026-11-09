@@ -69,6 +69,8 @@ class Configuration:
     evenements: list[dict] = field(default_factory=list)
     # Adresse du service de notifications (config/notifications.yaml) ; vide : pas de notifications.
     notifications: str = ""
+    # Invité cherché sur le web par Claude (config/recherche.yaml, grille/invites_web.py).
+    recherche: dict = field(default_factory=dict)
     anomalies: list[str] = field(default_factory=list)
 
     def candidats_officiels(self) -> set[str]:
@@ -219,6 +221,30 @@ def _lire_notifications(chemin: Path, anomalies: list[str]) -> str:
     return adresse if not adresse or adresse.endswith("/") else adresse + "/"
 
 
+RECHERCHE_DEFAUT = {"actif": False, "modele": "claude-opus-5-5", "recherches_par_jour": 12, "avant_debut": 10,
+                    "apres_debut": 30}
+
+
+def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
+    """Réglages de la recherche d'invités par Claude ; absents : recherche arrêtée."""
+    if not chemin.exists():
+        return dict(RECHERCHE_DEFAUT)
+    brut = _lire_yaml(chemin)
+    reglages = dict(RECHERCHE_DEFAUT, actif=brut.get("actif") is True)
+    modele = str(brut.get("modele") or RECHERCHE_DEFAUT["modele"]).strip()
+    if not re.fullmatch(r"claude-[a-z0-9-]+", modele):
+        anomalies.append(f"recherche.yaml : modèle illisible « {modele} », recherche arrêtée")
+        return dict(reglages, actif=False)
+    reglages["modele"] = modele
+    for cle in ("recherches_par_jour", "avant_debut", "apres_debut"):
+        if cle in brut:
+            try:
+                reglages[cle] = max(0, int(brut[cle]))
+            except (TypeError, ValueError):
+                anomalies.append(f"recherche.yaml : « {cle} » doit être un nombre, {RECHERCHE_DEFAUT[cle]} gardé")
+    return reglages
+
+
 def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
     anomalies: list[str] = []
     chaines = _lire_chaines(_lire_yaml(dossier / "chaines.yaml").get("chaines"), anomalies)
@@ -277,5 +303,6 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         mots_presidentielle=mots_presidentielle,
         evenements=_lire_evenements(dossier / "evenements.yaml", anomalies),
         notifications=_lire_notifications(dossier / "notifications.yaml", anomalies),
+        recherche=_lire_recherche(dossier / "recherche.yaml", anomalies),
         anomalies=anomalies,
     )

@@ -71,6 +71,15 @@ def test_une_requete_par_jour_et_au_plus_24_heures(conf, connexion):
     assert [j.day for j in jours] == [27, 28, 29]
 
 
+def test_collecte_rapide_journee_en_cours(conf, connexion):
+    """Collecte rapide : la journée en cours seulement, une requête par station (quota)."""
+    session = Session(routeur())
+    radio.collecter(conf, session, connexion, MAINTENANT, cle=CLE, aujourdhui_seul=True)
+    bornes = [tuple(int(x) for x in re.findall(r"(?:start|end): (\d+)", c[2]["query"])) for c in session.appels]
+    assert len(bornes) == 2
+    assert {datetime.fromtimestamp(debut, PARIS).date() for debut, _ in bornes} == {MAINTENANT.date()}
+
+
 def test_jour_de_25_heures():
     """Passage à l'heure d'hiver : deux requêtes pour couvrir le jour entier."""
     creneaux = radio.fenetres(date(2026, 10, 25))

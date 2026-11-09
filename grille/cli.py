@@ -12,8 +12,8 @@ from pathlib import Path
 
 import requests
 
-from grille import (acces, affichage, agendas, annonces, config, courriel, db, directs, evenements, page, radio,
-                    radios_privees, tv, twitch, youtube)
+from grille import (acces, affichage, agendas, annonces, config, courriel, db, directs, evenements, invites_web, page,
+                    radio, radios_privees, tv, twitch, youtube)
 from grille.campagne import Campagne
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -196,6 +196,65 @@ def _etape_radio(conf, connexion, maintenant, args) -> bool:
         _motifs(retenues)
     return not erreurs
 
+def _etape_radio_jour(conf, connexion, maintenant, args) -> bool:
+    """Collecte rapide : Radio France, journée en cours seulement, de 6 h à 23 h (quota de 1 000
+    requêtes par jour, voir grille/radio.py). Les radios privées restent à l'heure."""
+    if not any(c.plateforme == "radio" and "station" in c.cle for c in conf.chaines):
+        return True
+    if not HEURES_RADIO_RAPIDE[0] <= maintenant.astimezone(tv.PARIS).hour < HEURES_RADIO_RAPIDE[1]:
+        print("Radio France (journée en cours) : la nuit, seulement à la collecte complète")
+        return True
+    print("Radio France (journée en cours) :")
+    rapport = radio.collecter(conf, requests.Session(), connexion, maintenant, aujourdhui_seul=True)
+    if rapport.interrompu == radio.SANS_CLE:
+        print(f"  en attente : {rapport.interrompu}")
+        return True
+    if rapport.interrompu:
+        print(f"  ERREUR {rapport.interrompu}")
+    else:
+        print(f"  {rapport.stations_lues} stations lues ; {_resume(rapport.retenues)}, "
+              f"{rapport.annulees} passées en « annulé »")
+    for anomalie in rapport.anomalies:
+        print(f"  ATTENTION {anomalie}")
+    db.noter_collecte(connexion, "radio", maintenant, not rapport.interrompu, len(rapport.retenues),
+                      rapport.anomalies, rapport.interrompu or "")
+    return not rapport.interrompu
+
+
+def _etape_invites(conf, connexion, maintenant, args) -> bool:
+    """Invité encore inconnu au début d'une émission politique : Claude le cherche sur le web."""
+    print("Invités cherchés sur le web (Claude) :")
+    if not conf.recherche.get("actif"):
+        print("  arrêtée (config/recherche.yaml)")
+        return True
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print(f"  en attente : {invites_web.SANS_CLE}")
+        db.noter_collecte(connexion, "invites", maintenant, True, 0, ["clé ANTHROPIC_API_KEY pas encore en place"])
+        return True
+    rapport = invites_web.collecter(conf, connexion, maintenant)
+    if rapport.interrompu:
+        print(f"  ERREUR {rapport.interrompu}")
+    else:
+        trouvees = "; ".join(f"{t} : {', '.join(n)}" for t, n in rapport.trouvees) or "aucun invité trouvé"
+        j = rapport.jetons
+        print(f"  {rapport.cherchees} émissions cherchées ; {trouvees} "
+              f"({j['entree']} jetons lus, {j['sortie']} écrits, {j['recherches']} recherches web)")
+    if rapport.plafond_atteint:
+        print(f"  plafond de {conf.recherche['recherches_par_jour']} questions par jour atteint")
+    anomalies = list(rapport.anomalies)
+    if rapport.plafond_atteint:
+        anomalies.append(f"plafond de {conf.recherche['recherches_par_jour']} questions par jour atteint "
+                         "(config/recherche.yaml)")
+    inconnus = db.inconnus_recents(connexion, maintenant)
+    if inconnus:
+        anomalies.append("invités trouvés mais absents de politique.yaml : " + ", ".join(inconnus))
+    for anomalie in anomalies:
+        print(f"  ATTENTION {anomalie}")
+    db.noter_collecte(connexion, "invites", maintenant, not rapport.interrompu,
+                      sum(len(n) for _, n in rapport.trouvees), anomalies, rapport.interrompu)
+    return not rapport.interrompu
+
+
 def _etape_annonces(conf, connexion, maintenant, args) -> bool:
     print("Invités annoncés (communiqués de France Télévisions) :")
     rapport = annonces.collecter(conf, requests.Session(), connexion, maintenant)
@@ -286,12 +345,15 @@ def _etape_twitch(conf, connexion, maintenant, args) -> bool:
     return not rapport.interrompu
 
 
+HEURES_RADIO_RAPIDE = (6, 23)  # heures de Paris où la collecte rapide relit Radio France
+
 ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch,
           "annonces": _etape_annonces, "web": _etape_agendas, "evenements": _etape_evenements,
-          "directs": _etape_directs}
+          "directs": _etape_directs, "radio-jour": _etape_radio_jour, "invites": _etape_invites}
 NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch",
         "annonces": "avec invités annoncés", "web": "dans les agendas", "evenements": "ajoutées à la main",
-        "directs": "en cours (france.tv)"}
+        "directs": "en cours (france.tv)", "radio-jour": "à la radio (aujourd'hui)",
+        "invites": "avec invités cherchés sur le web"}
 
 
 def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
@@ -345,14 +407,16 @@ def cmd_collecter_twitch(args: argparse.Namespace) -> int:
 
 def cmd_collecter_rapide(args: argparse.Namespace) -> int:
     """Entre deux collectes complètes (toutes les 15 minutes) : seulement les sources qui révèlent
-    au dernier moment un invité ou un direct, sans quota serré (pages du direct de france.tv,
-    Twitch). Radio France (1 000 requêtes par jour) et YouTube (10 000 unités) restent à l'heure."""
-    return _collecter(args, ["directs", "twitch"])
+    au dernier moment un invité ou un direct : pages du direct de france.tv, Radio France (journée
+    en cours, de 6 h à 23 h), Twitch, puis l'invité encore inconnu d'une émission qui commence,
+    cherché sur le web par Claude. YouTube (10 000 unités par jour) reste à l'heure."""
+    return _collecter(args, ["directs", "radio-jour", "twitch", "invites"])
 
 
 def cmd_collecter(args: argparse.Namespace) -> int:
     # « directs » juste après la télévision : il évite les doublons avec les émissions du guide.
-    return _collecter(args, ["tv", "directs", "radio", "youtube", "twitch", "web", "annonces", "evenements"])
+    return _collecter(args, ["tv", "directs", "radio", "youtube", "twitch", "web", "annonces", "evenements",
+                             "invites"])
 
 
 def _generer_page(args: argparse.Namespace) -> Path | None:
@@ -563,7 +627,7 @@ def main(argv: list[str] | None = None) -> int:
         ("collecter-radio", cmd_collecter_radio, "grille des stations Radio France (France Inter, franceinfo…)"),
         ("collecter-youtube", cmd_collecter_youtube, "directs YouTube programmés et en cours des chaînes suivies"),
         ("collecter-twitch", cmd_collecter_twitch, "chaînes Twitch en direct et plannings publiés"),
-        ("collecter-rapide", cmd_collecter_rapide, "entre deux collectes : directs de france.tv et Twitch"),
+        ("collecter-rapide", cmd_collecter_rapide, "entre deux collectes : directs de france.tv, Radio France (journée en cours), Twitch, invités cherchés sur le web"),
         ("collecter", cmd_collecter, "toutes les sources (télévision, radio, YouTube, Twitch, agendas, invités annoncés), chacune indépendamment"),
     ]:
         sp = sous.add_parser(nom, help=aide)

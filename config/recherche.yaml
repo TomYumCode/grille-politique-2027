@@ -1,0 +1,14 @@
+# Invité cherché sur le web par Claude (grille/invites_web.py) : au début d'une émission
+# politique à invité encore inconnu (BFMTV, LCI… ne l'annoncent nulle part ailleurs).
+# Clé dans le secret GitHub ANTHROPIC_API_KEY ; sans elle, rien n'est cherché.
+#
+#   actif               : false pour tout arrêter sans toucher au code
+#   modele              : modèle Claude (claude-opus-5-5 ; claude-haiku-5-5, moins cher)
+#   recherches_par_jour : plafond de questions par jour (le coût en dépend)
+#   avant_debut         : minutes avant le début où la recherche peut commencer
+#   apres_debut         : minutes après le début où elle s'arrête
+actif: true
+modele: claude-opus-5-5
+recherches_par_jour: 12
+avant_debut: 10
+apres_debut: 30

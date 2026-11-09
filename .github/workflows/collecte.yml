@@ -10,11 +10,11 @@ on:
     - cron: "17 * * * *"   # chaque heure à :17 (l'heure pile est la plus encombrée chez GitHub)
     - cron: "47 * * * *"   # seconde occasion, utile seulement si celle de :17 a été sautée
   # Bouton « Run workflow » ; cron-job.org déclenche la collecte complète à :45 et, à :00, :15
-  # et :30, une collecte rapide (inputs « rapide »: "true") : directs de france.tv et Twitch.
+  # et :30, une collecte rapide (inputs « rapide »: "true") : directs de france.tv, Radio France (journée en cours) et Twitch.
   workflow_dispatch:
     inputs:
       rapide:
-        description: "Collecte rapide (directs de france.tv et Twitch seulement)"
+        description: "Collecte rapide (directs de france.tv, Radio France du jour et Twitch)"
         type: boolean
         default: false
 
@@ -56,6 +56,7 @@ jobs:
         if: steps.utile.outputs.faite == 'true'
         env:
           RADIOFRANCE_API_KEY: ${{ secrets.RADIOFRANCE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}

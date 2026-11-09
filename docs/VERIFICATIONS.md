@@ -408,3 +408,26 @@ mots ordinaires, « PS » et « RN » faisaient entrer « PS : abonnez-vous » (
 YouTube), « PS Plus » (jeux vidéo) et « la RN 7 » (route nationale), et « R! » devenait la lettre
 « r » seule. Un sigle de deux lettres au plus compte désormais seulement dans le titre, écrit tel
 quel (majuscules comprises), sans chiffre ni « Plus » juste après (`grille/filtre.py`).
+
+## Radio France dans la collecte rapide (9 novembre 2026)
+
+Le 8 novembre, Radio France a renommé la diffusion de Franc-jeu en « Le député Laurent
+Wauquiez, invité de Franc-Jeu » au début de l'émission ; la collecte de l'heure suivante l'a
+vue. La collecte rapide (:00, :15, :30) relit désormais la journée en cours, de 6 h à 23 h :
+3 stations × 17 heures × 3 = 153 requêtes par jour (306 si des créneaux sont encore vides),
+plus 216 à 432 pour les collectes complètes : au plus 738 requêtes, sous la limite de 1 000.
+
+## Invité cherché sur le web par Claude (9 novembre 2026)
+
+API Messages d'Anthropic avec l'outil de recherche web (`web_search_20260209`, filtrage des
+résultats ; `web_search_20250305` pour Haiku), SDK Python `anthropic` 2.6.0 (paramètres
+`fallbacks` et `betas` vérifiés dans le SDK installé). Réponse de test construite d'après le
+format documenté (`tests/reponses/claude_invite_grand_oral.json`) : à remplacer par une
+réponse réelle enregistrée dès que la clé `ANTHROPIC_API_KEY` est en place.
+
+Volume relevé du 2 au 8 novembre 2026 : 18 à 27 émissions de télévision et de radio par jour,
+presque toutes sans invité connu ; les émissions à invité (liste blanche, interview ou débat,
+ou titre « L'invité… ») en font 6 à 10 par jour. Coût estimé par question (Claude Opus 5.5,
+effort bas, une à trois recherches) : de 0,05 à 0,15 $ ; soit 10 à 35 $ par mois. Avec
+`claude-haiku-5-5` : environ 0,02 à 0,04 $ par question (surtout le prix des recherches,
+10 $ les 1 000), soit 4 à 10 $ par mois. Plafond par défaut : 12 questions par jour.

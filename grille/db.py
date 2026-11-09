@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 9
+VERSION_SCHEMA = 10
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -88,6 +88,20 @@ CREATE TABLE IF NOT EXISTS douteux (
     debut       TEXT NOT NULL,
     motif       TEXT NOT NULL,
     vu_le       TEXT NOT NULL                     -- première fois que la collecte l'a vu
+);
+
+-- Version 10 : invités cherchés sur le web par Claude (grille/invites_web.py) ; une ligne par
+-- émission cherchée, pour ne pas reposer la question à chaque collecte. Le résultat trouvé va
+-- dans la table annonces (identifiant « web:… »), appliquée à l'affichage.
+CREATE TABLE IF NOT EXISTS recherches_invites (
+    id          TEXT PRIMARY KEY,                 -- identifiant de l'émission cherchée
+    titre       TEXT NOT NULL,
+    debut       TEXT NOT NULL,
+    essais      INTEGER NOT NULL DEFAULT 0,
+    derniere    TEXT NOT NULL,                    -- heure du dernier essai
+    invites     TEXT NOT NULL DEFAULT '[]',       -- noms retenus (dans politique.yaml)
+    inconnus    TEXT NOT NULL DEFAULT '[]',       -- noms trouvés mais absents de politique.yaml
+    source      TEXT NOT NULL DEFAULT ''          -- page qui confirme
 );
 
 -- Version 4 : logo de chaque chaîne (adresse d'image fournie par la source).
@@ -357,6 +371,48 @@ def noter_annonces(connexion: sqlite3.Connection, annonces: list[dict], maintena
 def annonces(connexion: sqlite3.Connection) -> list[dict]:
     lignes = connexion.execute("SELECT id, titre, jour, heure, invites, url FROM annonces").fetchall()
     return [{"id": i, "titre": t, "jour": j, "heure": h, "invites": json.loads(n), "url": u} for i, t, j, h, n, u in lignes]
+
+
+def recherche_invites(connexion: sqlite3.Connection, id_: str) -> dict | None:
+    ligne = connexion.execute("SELECT essais, derniere, invites FROM recherches_invites WHERE id = ?",
+                              (id_,)).fetchone()
+    if ligne is None:
+        return None
+    return {"essais": ligne[0], "derniere": datetime.fromisoformat(ligne[1]), "invites": json.loads(ligne[2])}
+
+
+def recherches_du_jour(connexion: sqlite3.Connection, maintenant: datetime) -> int:
+    """Questions posées aujourd'hui (heure de Paris) : le plafond de recherche.yaml s'y applique."""
+    jour = maintenant.date().isoformat()
+    lignes = connexion.execute("SELECT essais, derniere FROM recherches_invites WHERE derniere LIKE ?",
+                               (jour + "%",)).fetchall()
+    return sum(essais for essais, _ in lignes)
+
+
+def noter_recherche(connexion: sqlite3.Connection, emission: dict, maintenant: datetime, invites: list[str],
+                    inconnus: list[str], source: str) -> None:
+    """Un essai de plus pour cette émission ; oublie les recherches de plus de 8 jours."""
+    connexion.execute(
+        "INSERT INTO recherches_invites (id, titre, debut, essais, derniere, invites, inconnus, source) "
+        "VALUES (?, ?, ?, 1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET essais = essais + 1, "
+        "derniere = excluded.derniere, invites = excluded.invites, inconnus = excluded.inconnus, "
+        "source = excluded.source",
+        (emission["id"], emission["titre"], emission["debut"], maintenant.isoformat(timespec="seconds"),
+         json.dumps(invites, ensure_ascii=False), json.dumps(inconnus, ensure_ascii=False), source),
+    )
+    connexion.execute("DELETE FROM recherches_invites WHERE debut < ?",
+                      ((maintenant - timedelta(days=8)).isoformat(timespec="seconds"),))
+    connexion.commit()
+
+
+def inconnus_recents(connexion: sqlite3.Connection, maintenant: datetime) -> list[str]:
+    """Noms trouvés par la recherche web dans les dernières 24 heures, absents de politique.yaml."""
+    depuis = (maintenant - timedelta(hours=24)).isoformat(timespec="seconds")
+    noms = []
+    for titre, inconnus in connexion.execute(
+            "SELECT titre, inconnus FROM recherches_invites WHERE derniere >= ? ORDER BY derniere", (depuis,)):
+        noms += [f"{n} (« {titre} »)" for n in json.loads(inconnus)]
+    return list(dict.fromkeys(noms))
 
 
 def noter_douteux(connexion: sqlite3.Connection, cas: list[dict], maintenant: datetime) -> int:

@@ -75,11 +75,14 @@ def test_etat_des_sources(connexion):
     db.noter_collecte(connexion, "annonces", MAINTENANT - timedelta(hours=1), True, 1, [])
     db.noter_collecte(connexion, "web", MAINTENANT - timedelta(hours=1), True, 1, [])
     db.noter_collecte(connexion, "directs", MAINTENANT - timedelta(hours=1), True, 0, [])
+    db.noter_collecte(connexion, "invites", MAINTENANT - timedelta(hours=1), True, 0,
+                      ["clé ANTHROPIC_API_KEY pas encore en place"])
     alertes = db.etat_des_sources(connexion, MAINTENANT, courriel.SOURCES)
     assert alertes == [
         "Télévision : chaîne absente du guide : M6",
         "YouTube : aucune collecte réussie depuis 24 h (quota épuisé)",
         "Twitch : aucune collecte réussie depuis 24 h (aucune collecte enregistrée)",
+        "Invités cherchés sur le web (Claude) : clé ANTHROPIC_API_KEY pas encore en place",
     ]
 
 
