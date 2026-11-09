@@ -50,7 +50,8 @@ class Client:
 @pytest.fixture
 def conf():
     c = charger()
-    c.recherche = dict(c.recherche, actif=True, recherches_par_jour=12, a_surveiller=[])
+    # Réglages du test, indépendants de config/recherche.yaml (modèle choisi, émissions surveillées).
+    c.recherche = dict(c.recherche, actif=True, modele="claude-opus-5-5", recherches_par_jour=12, a_surveiller=[])
     return c
 
 

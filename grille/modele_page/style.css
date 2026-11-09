@@ -82,6 +82,12 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .grille { padding: 8px 16px 32px; max-width: 760px; margin: 0 auto; touch-action: pan-y; }
 .section-titre { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); margin: 16px 0 6px; }
 .section-titre.direct { color: var(--direct); }
+/* Repère de l'heure actuelle dans la liste du jour : la page s'ouvre dessus. */
+.maintenant {
+  display: flex; align-items: center; gap: 8px; margin: 10px 0 8px;
+  font-size: .8rem; font-weight: 700; color: var(--direct);
+}
+.maintenant::after { content: ""; flex: 1; border-top: 2px solid var(--direct); }
 /* Séparateur de tranche horaire : discret, pour ne pas être pris pour l'heure de diffusion. */
 .heure {
   display: flex; align-items: center; gap: 8px; margin: 18px 0 6px;
