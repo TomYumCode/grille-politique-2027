@@ -463,3 +463,12 @@ Télé Star. Ne répondent pas : Europe 1, RTL, CNews (404), LCI (renvoie vers T
 Le Point (403), Marianne (405), Ozap et Puremédias (410). Le flux TF1info contenait l'annonce
 « Présidentielle 2027 : Marine Tondelier invitée du 20H de TF1 ce lundi » (publiée à 15 h 50) :
 extrait enregistré dans `tests/reponses/rss_tf1info.xml`.
+
+## Nouveaux candidats dans les flux RSS (9 novembre 2026)
+
+Candidature de Teddy Riner annoncée le 9 novembre 2026 : absent de `politique.yaml`, il n'était
+repérable par aucune source (seule la recherche par Claude l'aurait signalé, à sa première
+émission). Articles réels enregistrés (`tests/reponses/rss_publicsenat.xml`, `rss_20minutes.xml`,
+`rss_leparisien.xml`) : le détecteur le trouve dans 7 articles de 3 flux ; faux noms relevés
+sur ces extraits : « Los Angeles » (écarté : lieu) et Yannick Jadot, cité une fois (sous le seuil
+de deux articles). Teddy Riner ajouté à `politique.yaml` (sans étiquette).

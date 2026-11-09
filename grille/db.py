@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 11
+VERSION_SCHEMA = 12
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -117,6 +117,18 @@ CREATE TABLE IF NOT EXISTS rss_annonces (
     personnes       TEXT NOT NULL DEFAULT '[]',
     chaines         TEXT NOT NULL DEFAULT '[]',
     deja_en_grille  INTEGER NOT NULL DEFAULT 0    -- la grille montrait déjà ce passage à ce moment
+);
+
+-- Version 12 : candidatures possibles repérées dans les flux RSS (personne absente de
+-- politique.yaml) ; proposées dans l'email, jamais ajoutées toutes seules.
+CREATE TABLE IF NOT EXISTS rss_candidats (
+    nom         TEXT NOT NULL,
+    id          TEXT NOT NULL,                    -- identifiant de l'article
+    flux        TEXT NOT NULL,
+    titre       TEXT NOT NULL,
+    lien        TEXT NOT NULL,
+    vu_le       TEXT NOT NULL,
+    PRIMARY KEY (nom, id)
 );
 
 -- Version 4 : logo de chaque chaîne (adresse d'image fournie par la source).
@@ -470,6 +482,28 @@ def noter_rss(connexion: sqlite3.Connection, annonces: list[dict], maintenant: d
     connexion.execute("DELETE FROM rss_annonces WHERE vu_le < ?",
                       ((maintenant - timedelta(days=14)).isoformat(timespec="seconds"),))
     connexion.commit()
+
+
+def rss_candidats_ids(connexion: sqlite3.Connection) -> set[tuple[str, str]]:
+    return {(n, i) for n, i in connexion.execute("SELECT nom, id FROM rss_candidats")}
+
+
+def noter_rss_candidats(connexion: sqlite3.Connection, candidats: list[dict], maintenant: datetime) -> None:
+    connexion.executemany("INSERT OR IGNORE INTO rss_candidats VALUES (:nom, :id, :flux, :titre, :lien, :vu_le)",
+                          candidats)
+    connexion.execute("DELETE FROM rss_candidats WHERE vu_le < ?",
+                      ((maintenant - timedelta(days=14)).isoformat(timespec="seconds"),))
+    connexion.commit()
+
+
+def rss_candidats_depuis(connexion: sqlite3.Connection, depuis: datetime) -> dict[str, list[dict]]:
+    """Nom → articles qui le présentent comme candidat, vus depuis `depuis`."""
+    par_nom: dict[str, list[dict]] = {}
+    for nom, flux, titre, lien, vu_le in connexion.execute(
+            "SELECT nom, flux, titre, lien, vu_le FROM rss_candidats WHERE vu_le >= ? ORDER BY vu_le",
+            (depuis.isoformat(timespec="seconds"),)):
+        par_nom.setdefault(nom, []).append({"flux": flux, "titre": titre, "lien": lien, "vu_le": vu_le})
+    return par_nom
 
 
 def rss_depuis(connexion: sqlite3.Connection, depuis: datetime) -> list[dict]:
