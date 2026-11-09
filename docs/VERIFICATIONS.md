@@ -408,3 +408,11 @@ mots ordinaires, « PS » et « RN » faisaient entrer « PS : abonnez-vous » (
 YouTube), « PS Plus » (jeux vidéo) et « la RN 7 » (route nationale), et « R! » devenait la lettre
 « r » seule. Un sigle de deux lettres au plus compte désormais seulement dans le titre, écrit tel
 quel (majuscules comprises), sans chiffre ni « Plus » juste après (`grille/filtre.py`).
+
+## Radio France dans la collecte rapide (9 novembre 2026)
+
+Le 8 novembre, Radio France a renommé la diffusion de Franc-jeu en « Le député Laurent
+Wauquiez, invité de Franc-Jeu » au début de l'émission ; la collecte de l'heure suivante l'a
+vue. La collecte rapide (:00, :15, :30) relit désormais la journée en cours, de 6 h à 23 h :
+3 stations × 17 heures × 3 = 153 requêtes par jour (306 si des créneaux sont encore vides),
+plus 216 à 432 pour les collectes complètes : au plus 738 requêtes, sous la limite de 1 000.

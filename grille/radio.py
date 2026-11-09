@@ -5,7 +5,9 @@ jour : l'API refuse plus de 24 heures par requête. Chaque collecte lit aujourd'
 et un des jours suivants à tour de rôle (chaque jour relu au moins toutes les 6 heures) :
 3 stations × 3 jours × 24 collectes = 216 requêtes par jour (limite : 1 000). Un jour dont
 des créneaux sont encore vides coûte une requête de plus (la même journée, une semaine plus
-tôt) : au plus 432 requêtes par jour. La clé passe dans l'adresse (`?x-token=…`) : ne
+tôt) : au plus 432 requêtes par jour. La collecte rapide (:00, :15, :30, de 6 h à 23 h) relit
+la journée en cours : 3 stations × 51 collectes = 153 requêtes, au plus 306 ; en tout, au plus
+738 requêtes par jour. La clé passe dans l'adresse (`?x-token=…`) : ne
 jamais afficher l'adresse complète, les journaux de GitHub sont publics.
 
 Forme de la requête reprise d'une intégration publique (voir docs/VERIFICATIONS.md) ;
@@ -135,7 +137,10 @@ def emissions_par_heure(etapes: list[dict]) -> dict[str, str]:
 
 
 def collecter(config: Configuration, session: requests.Session, connexion, maintenant: datetime,
-              cle: str | None = None) -> Rapport:
+              cle: str | None = None, aujourdhui_seul: bool = False) -> Rapport:
+    """`aujourdhui_seul` : collecte rapide (toutes les 15 minutes), la journée en cours seulement ;
+    Radio France relie souvent l'invité à la diffusion au début de l'émission (« Le député Laurent
+    Wauquiez, invité de Franc-Jeu », 8 novembre 2026)."""
     rapport = Rapport()
     cle = cle or os.environ.get("RADIOFRANCE_API_KEY")
     stations = [c for c in config.chaines if c.plateforme == "radio" and "station" in c.cle]
@@ -149,7 +154,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     filtre = FiltrePolitique(config)
     couvertes: set[str] = set()
     avec_emission = True
-    jours = set(jours_a_lire(maintenant))
+    jours = {maintenant.date()} if aujourdhui_seul else set(jours_a_lire(maintenant))
 
     def lire_jour(station: str, jour: date) -> list[dict]:
         nonlocal avec_emission

@@ -165,7 +165,9 @@ france.tv des chaînes télévision dont le direct y est (France 2, 3, 5) : si l
 jour de l'émission en cours est politique, elle entre dans la grille pendant sa diffusion.
 France Télévisions ne publie ce sujet qu'au début de l'émission.
 Pour le voir sans attendre l'heure suivante, une collecte rapide (`collecter-rapide` :
-pages du direct de france.tv et Twitch) tourne à :00, :15 et :30, la collecte complète à :45.
+pages du direct de france.tv, grille du jour de Radio France de 6 h à 23 h, Twitch) tourne à
+:00, :15 et :30, la collecte complète à :45. Radio France y révèle souvent l'invité au début
+de l'émission (« Le député Laurent Wauquiez, invité de Franc-Jeu »).
 Toutes deux sont déclenchées par cron-job.org (la rapide avec `"inputs":{"rapide":"true"}`).
 
 ## Nouveaux épisodes (podcasts vidéo)

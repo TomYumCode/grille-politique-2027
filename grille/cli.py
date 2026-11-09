@@ -196,6 +196,31 @@ def _etape_radio(conf, connexion, maintenant, args) -> bool:
         _motifs(retenues)
     return not erreurs
 
+def _etape_radio_jour(conf, connexion, maintenant, args) -> bool:
+    """Collecte rapide : Radio France, journée en cours seulement, de 6 h à 23 h (quota de 1 000
+    requêtes par jour, voir grille/radio.py). Les radios privées restent à l'heure."""
+    if not any(c.plateforme == "radio" and "station" in c.cle for c in conf.chaines):
+        return True
+    if not HEURES_RADIO_RAPIDE[0] <= maintenant.astimezone(tv.PARIS).hour < HEURES_RADIO_RAPIDE[1]:
+        print("Radio France (journée en cours) : la nuit, seulement à la collecte complète")
+        return True
+    print("Radio France (journée en cours) :")
+    rapport = radio.collecter(conf, requests.Session(), connexion, maintenant, aujourdhui_seul=True)
+    if rapport.interrompu == radio.SANS_CLE:
+        print(f"  en attente : {rapport.interrompu}")
+        return True
+    if rapport.interrompu:
+        print(f"  ERREUR {rapport.interrompu}")
+    else:
+        print(f"  {rapport.stations_lues} stations lues ; {_resume(rapport.retenues)}, "
+              f"{rapport.annulees} passées en « annulé »")
+    for anomalie in rapport.anomalies:
+        print(f"  ATTENTION {anomalie}")
+    db.noter_collecte(connexion, "radio", maintenant, not rapport.interrompu, len(rapport.retenues),
+                      rapport.anomalies, rapport.interrompu or "")
+    return not rapport.interrompu
+
+
 def _etape_annonces(conf, connexion, maintenant, args) -> bool:
     print("Invités annoncés (communiqués de France Télévisions) :")
     rapport = annonces.collecter(conf, requests.Session(), connexion, maintenant)
@@ -286,12 +311,14 @@ def _etape_twitch(conf, connexion, maintenant, args) -> bool:
     return not rapport.interrompu
 
 
+HEURES_RADIO_RAPIDE = (6, 23)  # heures de Paris où la collecte rapide relit Radio France
+
 ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch,
           "annonces": _etape_annonces, "web": _etape_agendas, "evenements": _etape_evenements,
-          "directs": _etape_directs}
+          "directs": _etape_directs, "radio-jour": _etape_radio_jour}
 NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch",
         "annonces": "avec invités annoncés", "web": "dans les agendas", "evenements": "ajoutées à la main",
-        "directs": "en cours (france.tv)"}
+        "directs": "en cours (france.tv)", "radio-jour": "à la radio (aujourd'hui)"}
 
 
 def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
@@ -345,9 +372,9 @@ def cmd_collecter_twitch(args: argparse.Namespace) -> int:
 
 def cmd_collecter_rapide(args: argparse.Namespace) -> int:
     """Entre deux collectes complètes (toutes les 15 minutes) : seulement les sources qui révèlent
-    au dernier moment un invité ou un direct, sans quota serré (pages du direct de france.tv,
-    Twitch). Radio France (1 000 requêtes par jour) et YouTube (10 000 unités) restent à l'heure."""
-    return _collecter(args, ["directs", "twitch"])
+    au dernier moment un invité ou un direct : pages du direct de france.tv, Radio France (journée
+    en cours, de 6 h à 23 h), Twitch. YouTube (10 000 unités par jour) reste à l'heure."""
+    return _collecter(args, ["directs", "radio-jour", "twitch"])
 
 
 def cmd_collecter(args: argparse.Namespace) -> int:
@@ -563,7 +590,7 @@ def main(argv: list[str] | None = None) -> int:
         ("collecter-radio", cmd_collecter_radio, "grille des stations Radio France (France Inter, franceinfo…)"),
         ("collecter-youtube", cmd_collecter_youtube, "directs YouTube programmés et en cours des chaînes suivies"),
         ("collecter-twitch", cmd_collecter_twitch, "chaînes Twitch en direct et plannings publiés"),
-        ("collecter-rapide", cmd_collecter_rapide, "entre deux collectes : directs de france.tv et Twitch"),
+        ("collecter-rapide", cmd_collecter_rapide, "entre deux collectes : directs de france.tv, Radio France (journée en cours) et Twitch"),
         ("collecter", cmd_collecter, "toutes les sources (télévision, radio, YouTube, Twitch, agendas, invités annoncés), chacune indépendamment"),
     ]:
         sp = sous.add_parser(nom, help=aide)
