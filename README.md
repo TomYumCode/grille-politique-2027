@@ -257,6 +257,13 @@ grille.** L'email du matin compte ces annonces, avec celles que la grille ignora
 pour décider ensuite de brancher les flux (par exemple pour lancer aussitôt la recherche
 par Claude).
 
+**Nouveaux candidats.** Un article qui annonce une candidature à la présidentielle et nomme
+une personne absente de `politique.yaml` est noté. Dès que deux articles en 7 jours
+présentent la même personne comme candidate, l'email du matin la propose dans « Candidats
+possibles à ajouter », avec les liens et la ligne toute prête à copier dans
+`config/politique.yaml` (parti, sigle et statut à compléter). Rien n'est ajouté tout seul :
+beaucoup d'articles parlent de candidatures envisagées ou citent des commentateurs.
+
 ## Invité cherché sur le web (Claude)
 
 BFMTV, LCI ou CNews n'annoncent leurs invités nulle part où la grille peut les lire. À chaque

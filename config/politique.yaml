@@ -43,6 +43,8 @@ candidats:
   - {nom: "Clara Egger", alias: [], parti: "Solution démocratique", sigle: "Solution démocratique", statut: "déclarée"}
   - {nom: "Francis Lalanne", alias: [], parti: "France libre", sigle: "France libre", statut: "déclaré (août 2026)"}
   - {nom: "Lydie Massard", alias: [], parti: "Union démocratique bretonne", sigle: "UDB", statut: "à vérifier"}
+  # Candidature annoncée le 9 novembre 2026 (Public Sénat, LCP, Le Parisien, 20 Minutes…).
+  - {nom: "Teddy Riner", alias: ["Riner"], parti: "Sans étiquette", sigle: "SE", statut: "déclaré (9 novembre 2026)"}
 
 # Personnalités non candidates mais à repérer comme invités.
 # « campagne: true » : membre d'une équipe de campagne annoncée ; sa présence suffit à

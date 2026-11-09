@@ -109,3 +109,35 @@ def test_email(conf, connexion):
     assert "NOUVEAU Présidentielle 2027 : Marine Tondelier invitée du 20H de TF1 ce lundi" in texte
     assert "publié 15:50, vu lundi 9 novembre 17:50" in texte
     assert "Marine Tondelier invitée du 20H" in courriel.page_html(c)
+
+
+CANDIDATURES = [("Public Sénat", "rss_publicsenat.xml"), ("20 Minutes, politique", "rss_20minutes.xml"),
+                ("Le Parisien, politique", "rss_leparisien.xml")]
+
+
+def test_nouveau_candidat_propose(conf, connexion):
+    """Teddy Riner (9 novembre 2026) avant son ajout à politique.yaml : sept articles dans trois
+    flux le présentent comme candidat ; l'email propose la ligne à copier."""
+    conf.candidats = [c for c in conf.candidats if c["nom"] != "Teddy Riner"]
+    conf.rss = [{"nom": nom, "adresse": f"https://exemple.fr/{fichier}"} for nom, fichier in CANDIDATURES]
+    contenus = [(REPONSES / fichier).read_bytes() for _, fichier in CANDIDATURES]
+    rapport = rss.collecter(conf, session(*contenus), connexion, MAINTENANT)
+    assert sum(c["nom"] == "Teddy Riner" for c in rapport.candidats) == 7
+    assert "Los Angeles" not in {c["nom"] for c in rapport.candidats}
+    proposes = courriel.candidats_possibles(connexion, conf, MAINTENANT)
+    # Un nom vu dans un seul article (Yannick Jadot, cité par Raphaël Glucksmann) n'est pas proposé.
+    assert [c["nom"] for c in proposes] == ["Teddy Riner"]
+    riner = proposes[0]
+    assert len(riner["articles"]) == 7 and riner["flux"] == [nom for nom, _ in sorted(CANDIDATURES, key=lambda x: x[0])]
+    assert riner["ligne"].strip() == ('- {nom: "Teddy Riner", alias: ["Riner"], parti: "", sigle: "", '
+                                      'statut: "à vérifier (vu le 9 novembre 2026)"}')
+    texte = courriel.texte(courriel.contenu(connexion, conf, MAINTENANT.replace(hour=23)))
+    assert "CANDIDATS POSSIBLES À AJOUTER" in texte and "Teddy Riner : 7 articles" in texte
+    # Une fois ajouté à politique.yaml, il n'est plus proposé ni noté.
+    assert courriel.candidats_possibles(connexion, charger(), MAINTENANT) == []
+
+
+def test_candidat_deja_connu_pas_note(conf, connexion):
+    conf.rss = [{"nom": "Le Parisien, politique", "adresse": "https://exemple.fr/p"}]
+    rapport = rss.collecter(conf, session((REPONSES / "rss_leparisien.xml").read_bytes()), connexion, MAINTENANT)
+    assert "Teddy Riner" not in {c["nom"] for c in rapport.candidats}

@@ -18,6 +18,7 @@ from email.message import EmailMessage
 from grille import affichage, db
 from grille.campagne import Campagne
 from grille.config import Configuration
+from grille.filtre import normaliser
 from grille.tv import PARIS
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -82,6 +83,28 @@ def mesure_rss(connexion, maintenant: datetime) -> dict:
             "par_flux": sorted(par_flux.items(), key=lambda x: -x[1]), "exemples": exemples}
 
 
+ARTICLES_MIN_CANDIDAT = 2  # un seul article ne suffit pas (rumeur, citation)
+
+
+def candidats_possibles(connexion, config: Configuration, maintenant: datetime) -> list[dict]:
+    """Personnes présentées comme candidates par au moins deux articles RSS ces 7 derniers jours,
+    toujours absentes de politique.yaml : nom, articles, ligne à copier dans la liste."""
+    from grille.rss import noms_connus  # évite une importation circulaire
+
+    connus = noms_connus(config)
+    resultat = []
+    for nom, articles in db.rss_candidats_depuis(connexion, maintenant - timedelta(days=7)).items():
+        if normaliser(nom) in connus or len(articles) < ARTICLES_MIN_CANDIDAT:
+            continue
+        famille = nom.split()[-1]
+        jour = datetime.fromisoformat(articles[0]["vu_le"])
+        ligne = (f'  - {{nom: "{nom}", alias: ["{famille}"], parti: "", sigle: "", '
+                 f'statut: "à vérifier (vu le {jour.day} {MOIS[jour.month - 1]} {jour.year})"}}')
+        resultat.append({"nom": nom, "articles": articles, "flux": sorted({a["flux"] for a in articles}),
+                         "ligne": ligne})
+    return sorted(resultat, key=lambda c: -len(c["articles"]))
+
+
 def _annonces(n: int) -> str:
     return f"{n} annonce" + ("s" if n > 1 else "")
 
@@ -122,6 +145,7 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
         "alertes": db.etat_des_sources(connexion, maintenant, SOURCES),
         "douteux": mesure_douteux(connexion, maintenant),
         "rss": mesure_rss(connexion, maintenant),
+        "candidats_possibles": candidats_possibles(connexion, config, maintenant),
         "adresse_page": os.environ.get("ADRESSE_PAGE", ""),
     }
 
@@ -159,6 +183,14 @@ def texte(c: dict) -> str:
                     "  par modèle était activé. Exemples :"]
         parties += [f"  {_jour(datetime.fromisoformat(x['debut']))} {x['debut'][11:16]}  {x['chaine']} — {x['titre']}"
                     f"  ({x['motif']})" for x in d["exemples"]]
+    candidats_possibles = c.get("candidats_possibles") or []
+    if candidats_possibles:
+        parties += ["", "CANDIDATS POSSIBLES À AJOUTER (articles de presse des 7 derniers jours)",
+                    "  Absents de config/politique.yaml. À vérifier avant d'ajouter la ligne proposée :"]
+    for cand in candidats_possibles:
+        parties += [f"  {cand['nom']} : {len(cand['articles'])} articles ({', '.join(cand['flux'])})"]
+        parties += [f"    {a['titre']}  {a['lien']}" for a in cand["articles"][:3]]
+        parties += [f"    Ligne à copier : {cand['ligne'].strip()}"]
     r = c.get("rss")
     if r and r["nombre"]:
         parties += ["", f"MESURE — FLUX RSS DES DERNIÈRES 24 H : {_annonces(r['nombre'])} de passages médias, "
@@ -233,6 +265,20 @@ def page_html(c: dict) -> str:
             + "".join(f"<li>{html.escape(_jour(datetime.fromisoformat(x['debut'])))} {x['debut'][11:16]} · "
                       f"{html.escape(x['chaine'])} — <b>{html.escape(x['titre'])}</b> "
                       f"<span style=\"color:#5b6470\">({html.escape(x['motif'])})</span></li>" for x in d["exemples"])
+            + "</ul>")
+    if c.get("candidats_possibles"):
+        morceaux.append(
+            '<h2 style="font-size:15px;text-transform:uppercase;color:#1f3a5f;margin:24px 0 4px">'
+            "Candidats possibles à ajouter</h2>"
+            '<p style="font-size:13px;color:#5b6470;margin:0 0 6px">Présentés comme candidats par plusieurs articles '
+            "ces 7 derniers jours, absents de config/politique.yaml. À vérifier avant d'ajouter la ligne proposée.</p>"
+            '<ul style="font-size:13px;padding-left:18px">'
+            + "".join(f"<li><b>{html.escape(cand['nom'])}</b> : {len(cand['articles'])} articles "
+                      f"({html.escape(', '.join(cand['flux']))})<ul>"
+                      + "".join(f"<li><a href=\"{html.escape(a['lien'])}\">{html.escape(a['titre'])}</a></li>"
+                                for a in cand["articles"][:3])
+                      + f"</ul><code style=\"font-size:12px\">{html.escape(cand['ligne'].strip())}</code></li>"
+                      for cand in c["candidats_possibles"])
             + "</ul>")
     r = c.get("rss")
     if r and r["nombre"]:
