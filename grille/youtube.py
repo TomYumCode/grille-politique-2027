@@ -59,12 +59,16 @@ class ClientYouTube:
 
     def appeler(self, ressource: str, **params) -> dict:
         self.unites += 1
-        r = self.session.get(f"{YOUTUBE_API}/{ressource}", params={**params, "key": self.cle_api}, timeout=DELAI)
-        if r.status_code == 403 and "quotaExceeded" in r.text:
-            raise QuotaEpuise("quota YouTube du jour épuisé, reprise après minuit (heure du Pacifique)")
-        if r.status_code == 404:
-            return {"items": []}
-        r.raise_for_status()
+        try:
+            r = self.session.get(f"{YOUTUBE_API}/{ressource}", params={**params, "key": self.cle_api}, timeout=DELAI)
+            if r.status_code == 403 and "quotaExceeded" in r.text:
+                raise QuotaEpuise("quota YouTube du jour épuisé, reprise après minuit (heure du Pacifique)")
+            if r.status_code == 404:
+                return {"items": []}
+            r.raise_for_status()
+        except requests.RequestException as e:
+            # Le message cite l'adresse de la requête, donc la clé : journaux et base sont publics.
+            raise type(e)(db.masquer_cles(str(e)).replace(self.cle_api, "***")) from None
         return r.json()
 
 
