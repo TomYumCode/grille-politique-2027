@@ -32,3 +32,9 @@ evenements:
     duree: 60
     chaines: ["BFMTV"]
     resume: "Raphaël Glucksmann, invité du Grand oral 2027."
+  - titre: "Le 20h — Marine Tondelier"
+    debut: "2026-11-09 20:00"
+    duree: 45
+    chaines: ["TF1"]
+    resume: "Marine Tondelier, invitée du journal de 20 heures (annonce sur sa page Facebook et TF1info, 15 h 50)."
+    categorie: "interview"
