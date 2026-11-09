@@ -1,0 +1,18 @@
+{
+  "appId": "io.github.tomyumcode.grillepolitique",
+  "appName": "Grille politique 2027",
+  "webDir": "www",
+  "appendUserAgent": "GrillePolitiqueApp",
+  "server": {
+    "url": "https://tomyumcode.github.io/grille-politique-2027/",
+    "errorPath": "hors-connexion.html"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false
+    }
+  }
+}

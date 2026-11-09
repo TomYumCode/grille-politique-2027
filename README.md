@@ -388,3 +388,28 @@ le déplacer dans `mots_cles_titre` (cherché dans le titre seulement), ou marqu
 parti `ambigu: true`. Si une émission politique manque, `chercher-tv "mot du titre"` montre son titre exact
 dans le guide : l'ajouter sous `liste_blanche: emissions:`, éventuellement limitée à
 une chaîne (`{titre: "Face à face", chaine: "BFMTV"}`).
+
+## Application iPhone et Android (en préparation)
+
+Le dossier `application/` contient l'application (Capacitor 8) : elle affiche la grille publiée
+(`https://tomyumcode.github.io/grille-politique-2027/`) ; les changements de la grille et de son
+design arrivent donc sans republier l'application. Sans connexion, elle montre
+`www/hors-connexion.html`. Identifiant : `io.github.tomyumcode.grillepolitique` (définitif une fois
+publiée) ; nom affiché : « Grille politique 2027 ».
+
+- **Android** : la tâche GitHub « Application Android » construit une version d'essai à chaque
+  changement du dossier ; le fichier `.apk` se télécharge en bas de la page de l'exécution
+  (« Artifacts ») et s'installe sur un téléphone Android (autoriser l'installation d'applications
+  de cette source).
+- **iPhone, sur un Mac** :
+  1. Installer Xcode (App Store, gratuit) et Node.js (nodejs.org, version LTS).
+  2. Dans le Terminal : `cd grille-politique-2027/application`, puis `npm ci`, `npx cap sync ios`,
+     `npx cap open ios`.
+  3. Dans Xcode : choisir un simulateur d'iPhone en haut, puis ▶. Pour l'iPhone lui-même : le
+     brancher, le choisir en haut, et dans « Signing & Capabilities » choisir son identifiant Apple
+     (« Team »).
+
+À revoir avant la publication : Capacitor déconseille l'affichage d'une page en ligne
+(`server.url`) pour une version publiée ; l'alternative est d'embarquer la page dans
+l'application et de télécharger ses mises à jour. Icône, écran de démarrage et notifications
+natives : étapes suivantes.
