@@ -14,7 +14,7 @@
 #                         heure_annonces, puis juste avant l'émission). Chaîne : nom exact de
 #                         chaines.yaml ; heure : début habituel ; duree : minutes (45 par défaut).
 actif: true
-modele: claude-opus-5-5
+modele: claude-haiku-5-5
 recherches_par_jour: 16
 avant_debut: 10
 apres_debut: 30
