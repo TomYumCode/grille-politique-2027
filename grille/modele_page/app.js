@@ -390,26 +390,37 @@ function afficherJours(aujourdhui) {
       el("span", { texte: nom }), el("b", { texte: numero }),
       el("span", { classe: "nombre", texte: nombre ? nombre + " émis." : "—" }));
     if (jour === etat.jour) bouton.setAttribute("aria-current", "date");
-    bouton.addEventListener("click", () => { etat.jour = jour; afficher(); });
+    bouton.addEventListener("click", () => { etat.jour = jour; afficher(true); });
     nav.append(bouton);
   }
   nav.querySelector('[aria-current="date"]')?.scrollIntoView({ inline: "center", block: "nearest" });
 }
 
+// Repère « Maintenant » : avant le premier direct commencé depuis moins de 3 heures, sinon
+// avant la première émission à venir (un direct de la matinée ne ramène pas la page en haut).
+const RECENT = 3 * 3600 * 1000;
+
+function estMaintenant(e, maintenant) {
+  if (e.nature === "episode" || e.statut === "annulé") return false;
+  const debut = Date.parse(e.debut);
+  return debut > maintenant || (enDirect(e, maintenant) && maintenant - debut < RECENT);
+}
+
+function heureParis(maintenant) {
+  return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" })
+    .format(maintenant);
+}
+
+// Renvoie l'élément sur lequel ouvrir la page (tranche horaire du repère « Maintenant »), ou null.
 function afficherGrille(aujourdhui) {
   const main = document.getElementById("grille");
   main.replaceChildren();
   const maintenant = Date.now();
   const duJour = DONNEES.emissions.filter((e) => e.debut.startsWith(etat.jour) && visible(e));
-
   if (etat.jour === aujourdhui) {
-    // Directs en tête : ceux du jour et ceux commencés la veille, toujours en cours.
-    const directs = DONNEES.emissions.filter((e) => visible(e) && e.nature !== "episode" && enDirect(e, maintenant));
-    if (directs.length) {
-      main.append(el("h2", { classe: "section-titre direct", texte: "En direct maintenant" }));
-      directs.forEach((e) => main.append(carte(e, maintenant)));
-      main.append(el("h2", { classe: "section-titre", texte: "Toute la journée" }));
-    }
+    // Directs commencés la veille, toujours en cours : en tête de la journée.
+    duJour.unshift(...DONNEES.emissions.filter((e) => e.debut.slice(0, 10) < aujourdhui && visible(e)
+      && e.nature !== "episode" && enDirect(e, maintenant)));
   }
   if (!duJour.length) {
     const filtre = etat.categories.size < CATEGORIES.length || etat.plateformes.size < Object.keys(PLATEFORMES).length || etat.candidat;
@@ -418,17 +429,42 @@ function afficherGrille(aujourdhui) {
     main.append(el("p", { classe: "vide", texte: quoi + (filtre ? " avec ces filtres." : ".")
       + (etat.perimetre === "campagne" ? " Voir « Toute la politique »." : "")
       + (etat.perimetre === "favoris" ? " Touchez ☆ sur une émission pour la suivre." : "") }));
-    return;
+    return null;
   }
   let heureCourante = null;
+  let tranche = null;
+  let cible = null;
+  const repere = () => el("p", { classe: "maintenant", texte: "Maintenant · " + heureParis(maintenant) });
   for (const e of duJour) {
-    const heure = e.debut.slice(11, 13);
+    const heure = e.debut.slice(0, 10) < etat.jour ? "veille" : e.debut.slice(11, 13);
     if (heure !== heureCourante) {
       heureCourante = heure;
-      main.append(el("h3", { classe: "heure", texte: libelleTranche(Number(heure)) }));
+      tranche = el("h3", { classe: "heure", texte: heure === "veille" ? "Commencé la veille"
+        : libelleTranche(Number(heure)) });
+      main.append(tranche);
+    }
+    if (etat.jour === aujourdhui && !cible && estMaintenant(e, maintenant)) {
+      const marque = repere();
+      main.append(marque);
+      // Ouvrir sur la tranche horaire, sauf si le repère arrive juste après des émissions finies.
+      cible = main.lastElementChild.previousElementSibling === tranche ? tranche : marque;
     }
     main.append(carte(e, maintenant));
   }
+  // Plus rien à venir aujourd'hui : le repère en fin de journée.
+  if (etat.jour === aujourdhui && !cible) {
+    cible = repere();
+    main.append(cible);
+  }
+  return cible;
+}
+
+// Place le repère « Maintenant » juste sous l'en-tête fixe.
+function positionner(cible) {
+  if (!cible) { window.scrollTo({ top: 0 }); return; }
+  const entete = document.querySelector(".entete");
+  const haut = cible.getBoundingClientRect().top + window.scrollY - (entete ? entete.offsetHeight : 0) - 8;
+  window.scrollTo({ top: Math.max(0, haut) });
 }
 
 function afficherFraicheur() {
@@ -492,7 +528,11 @@ function afficherFavoris() {
   }
 }
 
-function afficher() {
+// `placer` : ouvrir sur l'heure actuelle (aujourd'hui) ou en haut (autre jour). Sinon la page
+// garde sa position (rafraîchissement de chaque minute, filtres).
+let derniereMiseEnPlace = 0;
+
+function afficher(placer = false) {
   const aujourdhui = aujourdhuiParis();
   if (!DONNEES.jours.includes(etat.jour)) etat.jour = DONNEES.jours.includes(aujourdhui) ? aujourdhui : DONNEES.jours[0];
   afficherFraicheur();
@@ -500,7 +540,11 @@ function afficher() {
   afficherFavoris();
   afficherFiltreChaine();
   afficherJours(aujourdhui);
-  afficherGrille(aujourdhui);
+  const cible = afficherGrille(aujourdhui);
+  if (placer) {
+    positionner(cible);
+    derniereMiseEnPlace = Date.now();
+  }
 }
 
 function preparerFiltres() {
@@ -523,7 +567,7 @@ function preparerFiltres() {
     }
   }
   for (const b of document.querySelectorAll("[data-perimetre]")) {
-    b.addEventListener("click", () => { etat.perimetre = b.dataset.perimetre; ecrireStockage(); afficher(); });
+    b.addEventListener("click", () => { etat.perimetre = b.dataset.perimetre; ecrireStockage(); afficher(true); });
   }
   const choix = document.getElementById("filtre-candidat");
   // D'abord les candidats présents dans la grille (avec leur nombre d'émissions), puis les autres.
@@ -572,8 +616,7 @@ function preparerBalayage() {
     const i = DONNEES.jours.indexOf(etat.jour) + (dx < 0 ? 1 : -1);
     if (i >= 0 && i < DONNEES.jours.length) {
       etat.jour = DONNEES.jours[i];
-      afficher();
-      window.scrollTo({ top: 0 });
+      afficher(true);
     }
   }, { passive: true });
 }
@@ -583,10 +626,17 @@ lireFavoris();
 preparerFiltres();
 preparerNotifications();
 preparerBalayage();
-afficher();
-window.addEventListener("online", afficher);
-window.addEventListener("offline", afficher);
-setInterval(afficher, 60000); // les directs et la fraîcheur évoluent avec l'heure
+afficher(true);
+window.addEventListener("online", () => afficher());
+window.addEventListener("offline", () => afficher());
+setInterval(() => afficher(), 60000); // les directs et la fraîcheur évoluent avec l'heure
+// Application rouverte après une pause d'au moins 30 minutes : retour au jour et à l'heure actuels.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && Date.now() - derniereMiseEnPlace > 30 * 60000) {
+    etat.jour = aujourdhuiParis();
+    afficher(true);
+  }
+});
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => { /* hors HTTPS : pas de mode hors connexion */ });
