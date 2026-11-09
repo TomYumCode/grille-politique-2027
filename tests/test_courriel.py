@@ -77,6 +77,7 @@ def test_etat_des_sources(connexion):
     db.noter_collecte(connexion, "directs", MAINTENANT - timedelta(hours=1), True, 0, [])
     db.noter_collecte(connexion, "invites", MAINTENANT - timedelta(hours=1), True, 0,
                       ["clé ANTHROPIC_API_KEY pas encore en place"])
+    db.noter_collecte(connexion, "rss", MAINTENANT - timedelta(hours=1), True, 0, [])
     alertes = db.etat_des_sources(connexion, MAINTENANT, courriel.SOURCES)
     assert alertes == [
         "Télévision : chaîne absente du guide : M6",

@@ -245,6 +245,18 @@ Lescure — Dimanche 11 octobre à 13h20 ». L'invité s'ajoute alors à l'émis
 jour et de la même heure (à 30 minutes près). Les autres chaînes (TF1, M6, BFMTV…)
 n'ont pas de page équivalente repérée pour l'instant.
 
+## Flux RSS (mesure en cours)
+
+Les rubriques politiques de la presse et les sites de télévision publient des flux RSS
+(liste d'articles lisible automatiquement). Un article comme « Marine Tondelier invitée du
+20H de TF1 ce lundi » (TF1info, 15 h 50) y apparaît des heures avant l'émission. À chaque
+collecte, `grille/rss.py` relit les flux de `config/rss.yaml` et note les annonces probables
+de passages médias : une personne de `politique.yaml`, une chaîne de `chaines.yaml` et un mot
+comme « invité », « plateau » ou « au 20h ». **Phase de mesure : rien n'est ajouté à la
+grille.** L'email du matin compte ces annonces, avec celles que la grille ignorait encore,
+pour décider ensuite de brancher les flux (par exemple pour lancer aussitôt la recherche
+par Claude).
+
 ## Invité cherché sur le web (Claude)
 
 BFMTV, LCI ou CNews n'annoncent leurs invités nulle part où la grille peut les lire. À chaque

@@ -186,6 +186,11 @@ class FiltrePolitique:
             return "meeting"
         return trouvee
 
+    def personnes_nommees(self, texte: str) -> list[str]:
+        """Personnes de politique.yaml nommées dans un texte (homonymes écartés), dans l'ordre de la liste."""
+        texte_n = normaliser(self.sans_homonymes(texte))
+        return [nom for nom, formes in self._personnes if any(_contient(texte_n, f) for f in formes)]
+
     def presences(self, chaine: Chaine, titre: str, description: str, emission_blanche: bool = False
                   ) -> tuple[list[str], list[str]]:
         """Sépare les personnes nommées en (présentes, citées).

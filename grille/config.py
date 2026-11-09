@@ -71,6 +71,8 @@ class Configuration:
     notifications: str = ""
     # Invité cherché sur le web par Claude (config/recherche.yaml, grille/invites_web.py).
     recherche: dict = field(default_factory=dict)
+    # Flux RSS mesurés (config/rss.yaml, grille/rss.py) : [{"nom", "adresse"}].
+    rss: list[dict] = field(default_factory=list)
     anomalies: list[str] = field(default_factory=list)
 
     def candidats_officiels(self) -> set[str]:
@@ -260,6 +262,19 @@ def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
     return reglages
 
 
+def _lire_rss(chemin: Path, anomalies: list[str]) -> list[dict]:
+    if not chemin.exists():
+        return []
+    flux = []
+    for i, f in enumerate(_lire_yaml(chemin).get("flux") or [], 1):
+        adresse = str((f or {}).get("adresse") or "").strip() if isinstance(f, dict) else ""
+        if not (isinstance(f, dict) and f.get("nom") and re.fullmatch(r"https://\S+", adresse)):
+            anomalies.append(f"rss.yaml, flux n° {i} : « nom » et « adresse » (https://…) sont obligatoires")
+            continue
+        flux.append({"nom": str(f["nom"]), "adresse": adresse})
+    return flux
+
+
 def _verifier_surveillees(reglages: dict, chaines: list, anomalies: list[str]) -> dict:
     """Une émission à surveiller doit nommer une chaîne de chaines.yaml (pour son lien direct)."""
     noms = {c.nom for c in chaines if c.plateforme in ("tv", "radio")}
@@ -331,5 +346,6 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         evenements=_lire_evenements(dossier / "evenements.yaml", anomalies),
         notifications=_lire_notifications(dossier / "notifications.yaml", anomalies),
         recherche=_verifier_surveillees(_lire_recherche(dossier / "recherche.yaml", anomalies), chaines, anomalies),
+        rss=_lire_rss(dossier / "rss.yaml", anomalies),
         anomalies=anomalies,
     )
