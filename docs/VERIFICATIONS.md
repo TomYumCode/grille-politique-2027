@@ -431,3 +431,13 @@ ou titre « L'invité… ») en font 6 à 10 par jour. Coût estimé par questio
 effort bas, une à trois recherches) : de 0,05 à 0,15 $ ; soit 10 à 35 $ par mois. Avec
 `claude-haiku-5-5` : environ 0,02 à 0,04 $ par question (surtout le prix des recherches,
 10 $ les 1 000), soit 4 à 10 $ par mois. Plafond par défaut : 12 questions par jour.
+
+## Clé YouTube publiée par un message d'erreur (9 novembre 2026)
+
+GitHub (« secret scanning ») a signalé la clé YouTube dans `grille.sqlite` (branche
+`donnees`) : le 16 octobre 2026, une erreur 500 de YouTube sur une chaîne a été enregistrée
+dans le compte rendu de collecte avec l'adresse complète de la requête, où passe la clé
+(`…&key=…`), et affichée dans le journal public de la tâche. Corrigé : le client YouTube
+masque la clé dans toute erreur, `db.noter_collecte` masque toute clé reconnaissable
+(`key=`, `x-token=`, `AIza…`, `sk-ant-…`) et l'ouverture de la base efface celles déjà
+enregistrées. La clé exposée doit être remplacée dans Google Cloud.

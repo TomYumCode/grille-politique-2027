@@ -11,6 +11,7 @@ Conventions de stockage :
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -113,6 +114,28 @@ CREATE TABLE IF NOT EXISTS logos (
 """
 
 
+# Clés d'API qui passent dans une adresse (YouTube « key= », Radio France « x-token= ») ou
+# reconnaissables à leur forme : jamais dans un message enregistré (la base est publique,
+# branche « donnees »). Une erreur réseau cite l'adresse complète de la requête.
+_CLES = re.compile(r"((?:key|x-token|token|access_token|client_secret)=)[^&\s)\"',;]+"
+                   r"|AIza[0-9A-Za-z_-]{20,}|sk-ant-[0-9A-Za-z_-]{10,}")
+
+
+def masquer_cles(texte: str) -> str:
+    """Le texte sans clé d'API : « …&key=*** »."""
+    return _CLES.sub(lambda m: (m.group(1) or "") + "***", texte)
+
+
+def _masquer_comptes_rendus(connexion: sqlite3.Connection) -> None:
+    """Efface les clés déjà enregistrées dans les comptes rendus de collecte (fuite de la clé
+    YouTube relevée par GitHub le 9 novembre 2026, message d'erreur du 16 octobre)."""
+    lignes = connexion.execute("SELECT rowid, anomalies, erreur FROM collectes").fetchall()
+    for rowid, anomalies, erreur in lignes:
+        propres = (masquer_cles(anomalies), masquer_cles(erreur or ""))
+        if propres != (anomalies, erreur or ""):
+            connexion.execute("UPDATE collectes SET anomalies = ?, erreur = ? WHERE rowid = ?", (*propres, rowid))
+
+
 def ouvrir(chemin: Path = CHEMIN_BASE) -> sqlite3.Connection:
     """Ouvre la base et crée la table si besoin (sans effacer l'existant)."""
     chemin.parent.mkdir(parents=True, exist_ok=True)
@@ -120,6 +143,7 @@ def ouvrir(chemin: Path = CHEMIN_BASE) -> sqlite3.Connection:
     connexion.executescript(SCHEMA)
     _ajouter_colonnes(connexion)
     _accepter_la_radio(connexion)
+    _masquer_comptes_rendus(connexion)
     connexion.execute(f"PRAGMA user_version = {VERSION_SCHEMA}")
     connexion.commit()
     return connexion
@@ -292,7 +316,7 @@ def noter_collecte(connexion: sqlite3.Connection, source: str, maintenant: datet
     connexion.execute(
         "INSERT INTO collectes VALUES (?, ?, ?, ?, ?, ?)",
         (maintenant.isoformat(timespec="seconds"), source, int(reussie), retenues,
-         json.dumps(anomalies, ensure_ascii=False), erreur),
+         masquer_cles(json.dumps(anomalies, ensure_ascii=False)), masquer_cles(erreur)),
     )
     # On ne garde que 30 jours de comptes rendus.
     limite = (maintenant - timedelta(days=30)).isoformat(timespec="seconds")

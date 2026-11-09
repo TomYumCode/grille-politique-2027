@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+import requests
 
 from grille import config, db, youtube
 from grille.acces import YOUTUBE_API
@@ -122,6 +123,24 @@ def test_quota_epuise_n_annule_rien(conf, connexion):
     assert "quota" in rapport.interrompu
     statut = connexion.execute("SELECT statut FROM emissions WHERE id = 'youtube:annonce_heure_ete'").fetchone()[0]
     assert statut == "annoncé"
+
+
+def test_cle_jamais_dans_les_messages(conf, connexion):
+    """Une erreur YouTube cite l'adresse de la requête, donc la clé : elle est masquée avant
+    d'atteindre le compte rendu (base publique) et le journal de la tâche (fuite du 16 octobre 2026)."""
+    cle = "AIzaSyFausseCleDeTest_0123456789abcdef"
+
+    def panne(methode, url, params):
+        if "playlistItems" in url:
+            raise requests.HTTPError(f"500 Server Error: Internal Server Error for url: {url}?part=contentDetails"
+                                     f"&playlistId={params['playlistId']}&maxResults=15&key={params['key']}")
+        return routeur(methode, url, params)
+
+    rapport = youtube.collecter(conf, Session(panne), connexion, MAINTENANT, cle_api=cle)
+    assert rapport.anomalies and all(cle not in a and "key=***" in a for a in rapport.anomalies
+                                     if "illisible" in a)
+    db.noter_collecte(connexion, "youtube", MAINTENANT, True, 0, rapport.anomalies)
+    assert cle not in str(connexion.execute("SELECT * FROM collectes").fetchall())
 
 
 def test_sans_cle(conf, connexion, monkeypatch):

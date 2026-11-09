@@ -107,3 +107,20 @@ def test_oublier_les_donnees_non_relues(tmp_path):
     ids = {i for (i,) in connexion.execute("SELECT id FROM emissions")}
     assert ids == {"twitch:frais", "tv:vieux"}
     connexion.close()
+
+
+def test_cles_effacees_des_comptes_rendus(tmp_path):
+    """Une clé déjà enregistrée dans un compte rendu est masquée à l'ouverture de la base."""
+    chemin = tmp_path / "g.sqlite"
+    c = db.ouvrir(chemin)
+    c.execute("INSERT INTO collectes VALUES (?, ?, ?, ?, ?, ?)",
+              ("2026-10-16T23:16:00+02:00", "youtube", 1, 0,
+               '["chaîne YouTube illisible : X (500 for url: https://youtube.googleapis.com/youtube/v3/'
+               'playlistItems?part=contentDetails&key=AIzaSyFausseCleDeTest_0123456789abcdef)"]', ""))
+    c.commit()
+    c.close()
+    c = db.ouvrir(chemin)
+    (anomalies,) = c.execute("SELECT anomalies FROM collectes").fetchone()
+    assert "AIza" not in anomalies and "key=***" in anomalies
+    assert db.masquer_cles("x-token=abc&y=1 sk-ant-api03-abcdefghijkl") == "x-token=***&y=1 ***"
+    c.close()

@@ -61,7 +61,7 @@ def verifier_youtube(config: Configuration, session: requests.Session) -> Result
             timeout=DELAI,
         )
     except requests.RequestException as e:
-        return Resultat("YouTube", "erreur", f"réseau : {e}")
+        return Resultat("YouTube", "erreur", f"réseau : {str(e).replace(cle_api, '***')}")
     if r.status_code != 200:
         return Resultat("YouTube", "erreur", _erreur_http(r))
     items = r.json().get("items") or []
