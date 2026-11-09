@@ -89,11 +89,14 @@ ARTICLES_MIN_CANDIDAT = 2  # un seul article ne suffit pas (rumeur, citation)
 def candidats_possibles(connexion, config: Configuration, maintenant: datetime) -> list[dict]:
     """Personnes présentées comme candidates par au moins deux articles RSS ces 7 derniers jours,
     toujours absentes de politique.yaml : nom, articles, ligne à copier dans la liste."""
-    from grille.rss import noms_connus  # évite une importation circulaire
+    from grille.rss import noms_candidats, noms_connus  # évite une importation circulaire
 
-    connus = noms_connus(config)
+    connus, candidats = noms_connus(config), noms_candidats(config)
     resultat = []
     for nom, articles in db.rss_candidats_depuis(connexion, maintenant - timedelta(days=7)).items():
+        # Article qui nomme un candidat connu (ajouté depuis à la liste, par exemple) : il parle de
+        # sa candidature, la personne nommée en plus la commente.
+        articles = [a for a in articles if not any(f" {c} " in f" {normaliser(a['titre'])} " for c in candidats)]
         if normaliser(nom) in connus or len(articles) < ARTICLES_MIN_CANDIDAT:
             continue
         famille = nom.split()[-1]

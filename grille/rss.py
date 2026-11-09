@@ -53,8 +53,8 @@ _CANDIDATURE = re.compile(
 # « Prénom Nom » (deux ou trois mots en capitale, particule permise) dans le texte d'origine.
 _MAJ = "A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜ"
 _NOM_PROPRE = re.compile(
-    rf"\b([{_MAJ}][a-zà-ÿ]+(?:-[{_MAJ}][a-zà-ÿ]+)?)\s+((?:(?:de|du|des|d'|le|la)\s?)?[{_MAJ}][a-zà-ÿA-Z'-]+"
-    rf"(?:\s+[{_MAJ}][a-zà-ÿ'-]+)?)")
+    rf"\b([{_MAJ}][a-zà-ÿ]+(?:-[{_MAJ}][a-zà-ÿ]+)?)\s+((?:(?:de|du|des|d'|le|la)\s?)?[{_MAJ}][a-zà-ÿ']+"
+    rf"(?:-[{_MAJ}][a-zà-ÿ']+)*(?:\s+[{_MAJ}][a-zà-ÿ']+(?:-[{_MAJ}][a-zà-ÿ']+)*)?)")
 # Premiers mots qui ne sont pas des prénoms (débuts de phrase, lieux, institutions…).
 _PAS_PRENOM = {
     "presidentielle", "election", "elysee", "france", "paris", "assemblee", "senat", "gouvernement", "premier",
@@ -66,6 +66,7 @@ _PAS_PRENOM = {
     "maire", "depute", "deputee", "senateur", "senatrice", "president", "presidente", "chef", "leader", "patron",
     # Lieux en deux mots (« Los Angeles », « Saint-Denis » est déjà un seul mot).
     "los", "las", "san", "santa", "new", "saint", "sainte", "porto", "buenos", "hong", "rio", "tel",
+    "sports", "place", "jeux", "jo", "conseil", "cour", "banque", "commission", "ministere",
 }
 
 
@@ -151,10 +152,19 @@ def noms_connus(config: Configuration) -> set[str]:
     return {normaliser(f) for p in config.candidats + config.personnalites for f in [p["nom"]] + list(p.get("alias") or [])}
 
 
-def candidats_possibles(article: dict, connus: set[str]) -> list[str]:
-    """Personnes absentes de politique.yaml nommées dans un article qui annonce une candidature."""
+def noms_candidats(config: Configuration) -> set[str]:
+    """Noms complets et alias des candidats de politique.yaml, normalisés."""
+    return {normaliser(f) for p in config.candidats for f in [p["nom"]] + list(p.get("alias") or [])}
+
+
+def candidats_possibles(article: dict, connus: set[str], candidats: set[str] = frozenset()) -> list[str]:
+    """Personnes absentes de politique.yaml nommées dans un article qui annonce une candidature.
+    Un article qui nomme déjà un candidat connu parle de sa candidature : les autres noms sont
+    ceux de commentateurs (« réagit Amélie Oudéa-Castéra sur la candidature de Teddy Riner »)."""
     titre, resume = article["titre"], article["resume"]
     texte_n = normaliser(f"{titre}. {resume}")
+    if any(f" {c} " in f" {texte_n} " for c in candidats):
+        return []
     # Formule explicite, ou article sur la présidentielle qui parle d'une candidature
     # (« Teddy Riner candidat à l'élection », « les réactions à la candidature de… »).
     if not (_CANDIDATURE.search(texte_n)
@@ -196,6 +206,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
     grille = affichage.emissions(connexion, maintenant - timedelta(days=1), maintenant + timedelta(days=2))
     connues = db.rss_ids(connexion)
     connus = noms_connus(config)
+    candidats = noms_candidats(config)
     candidats_vus = db.rss_candidats_ids(connexion)
     for flux in config.rss:
         try:
@@ -210,7 +221,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
             if not a["id"] or a["id"] in connues or (a["publie"] and a["publie"] < maintenant - RECENT):
                 continue
             rapport.articles += 1
-            for nom in candidats_possibles(a, connus):
+            for nom in candidats_possibles(a, connus, candidats):
                 if (nom, a["id"]) not in candidats_vus:
                     candidats_vus.add((nom, a["id"]))
                     rapport.candidats.append({"nom": nom, "id": a["id"], "flux": flux["nom"], "titre": a["titre"],
