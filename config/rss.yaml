@@ -1,0 +1,26 @@
+# Flux RSS mesurés (grille/rss.py) : annoncent-ils des passages médias que la grille ne connaît
+# pas encore ? Phase de mesure : rien n'est ajouté à la grille ; l'email du matin compte les
+# annonces repérées. Adresses vérifiées le 9 novembre 2026 (docs/VERIFICATIONS.md).
+# Une ligne par flux : nom affiché, adresse.
+flux:
+  # Presse, rubriques politiques
+  - {nom: "franceinfo, politique", adresse: "https://www.franceinfo.fr/politique.rss"}
+  - {nom: "Le Monde, politique", adresse: "https://www.lemonde.fr/politique/rss_full.xml"}
+  - {nom: "Le Figaro, politique", adresse: "https://www.lefigaro.fr/rss/figaro_politique.xml"}
+  - {nom: "Libération, politique", adresse: "https://www.liberation.fr/arc/outboundfeeds/rss/category/politique/?outputType=xml"}
+  - {nom: "BFMTV, politique", adresse: "https://www.bfmtv.com/rss/politique/"}
+  - {nom: "RMC, politique", adresse: "https://rmc.bfmtv.com/rss/actualites/politique/"}
+  - {nom: "20 Minutes, politique", adresse: "https://www.20minutes.fr/feeds/rss-politique.xml"}
+  - {nom: "Le Parisien, politique", adresse: "https://feeds.leparisien.fr/leparisien/rss/politique"}
+  - {nom: "L'Express, politique", adresse: "https://www.lexpress.fr/arc/outboundfeeds/rss/politique.xml"}
+  - {nom: "HuffPost, politique", adresse: "https://www.huffingtonpost.fr/politique/rss_headline.xml"}
+  - {nom: "Le JDD, politique", adresse: "https://www.lejdd.fr/rss/politique.xml"}
+  - {nom: "L'Obs, politique", adresse: "https://www.nouvelobs.com/politique/rss.xml"}
+  # Chaînes
+  - {nom: "TF1info, à la une", adresse: "https://www.tf1info.fr/feeds/rss-une.xml"}
+  - {nom: "Public Sénat", adresse: "https://www.publicsenat.fr/feed"}
+  - {nom: "LCP", adresse: "https://lcp.fr/rss-actualites.xml"}
+  # Actualité de la télévision
+  - {nom: "stephanelarue.com", adresse: "https://stephanelarue.com/feed/"}
+  - {nom: "Programme TV", adresse: "https://www.programme-tv.net/rss/news.xml"}
+  - {nom: "Télé Star", adresse: "https://www.telestar.fr/feed"}

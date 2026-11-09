@@ -451,3 +451,15 @@ voir. Surveillance des 20 h de TF1 et France 2 : deux questions par émission et
 (17 h, puis 19 h 50), soit 4 de plus par jour ; plafond porté à 16. Haiku 5.5 : outil de
 recherche de base (`web_search_20250305`) et pas de modèle de repli (`fallbacks` réservé à
 Opus, Sonnet et Fable).
+
+## Flux RSS (9 novembre 2026)
+
+Relevé par une sonde GitHub (33 adresses essayées). Répondent avec un flux lisible : franceinfo
+politique (`https://www.franceinfo.fr/politique.rss`), Le Monde, Le Figaro, Libération, BFMTV
+et RMC politique, 20 Minutes, Le Parisien (pas de date de publication), L'Express, HuffPost, JDD,
+L'Obs, TF1info « à la une » (`/feeds/rss-une.xml` ; la rubrique politique renvoie une page
+HTML), Public Sénat (`/feed`), LCP (`/rss-actualites.xml`), stephanelarue.com, Programme TV,
+Télé Star. Ne répondent pas : Europe 1, RTL, CNews (404), LCI (renvoie vers TF1info),
+Le Point (403), Marianne (405), Ozap et Puremédias (410). Le flux TF1info contenait l'annonce
+« Présidentielle 2027 : Marine Tondelier invitée du 20H de TF1 ce lundi » (publiée à 15 h 50) :
+extrait enregistré dans `tests/reponses/rss_tf1info.xml`.

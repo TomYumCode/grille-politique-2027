@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 10
+VERSION_SCHEMA = 11
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -103,6 +103,20 @@ CREATE TABLE IF NOT EXISTS recherches_invites (
     invites     TEXT NOT NULL DEFAULT '[]',       -- noms retenus (dans politique.yaml)
     inconnus    TEXT NOT NULL DEFAULT '[]',       -- noms trouvés mais absents de politique.yaml
     source      TEXT NOT NULL DEFAULT ''          -- page qui confirme
+);
+
+-- Version 11 : mesure des flux RSS (grille/rss.py) : annonces probables de passages médias,
+-- notées une fois ; jamais ajoutées à la grille.
+CREATE TABLE IF NOT EXISTS rss_annonces (
+    id              TEXT PRIMARY KEY,             -- identifiant de l'article (guid ou adresse)
+    flux            TEXT NOT NULL,
+    titre           TEXT NOT NULL,
+    lien            TEXT NOT NULL,
+    publie          TEXT NOT NULL DEFAULT '',     -- date de publication du flux (vide si absente)
+    vu_le           TEXT NOT NULL,                -- première collecte qui l'a vu
+    personnes       TEXT NOT NULL DEFAULT '[]',
+    chaines         TEXT NOT NULL DEFAULT '[]',
+    deja_en_grille  INTEGER NOT NULL DEFAULT 0    -- la grille montrait déjà ce passage à ce moment
 );
 
 -- Version 4 : logo de chaque chaîne (adresse d'image fournie par la source).
@@ -438,6 +452,34 @@ def inconnus_recents(connexion: sqlite3.Connection, maintenant: datetime) -> lis
             "SELECT titre, inconnus FROM recherches_invites WHERE derniere >= ? ORDER BY derniere", (depuis,)):
         noms += [f"{n} (« {titre} »)" for n in json.loads(inconnus)]
     return list(dict.fromkeys(noms))
+
+
+def rss_ids(connexion: sqlite3.Connection) -> set[str]:
+    return {i for (i,) in connexion.execute("SELECT id FROM rss_annonces")}
+
+
+def noter_rss(connexion: sqlite3.Connection, annonces: list[dict], maintenant: datetime) -> None:
+    """Mémorise les annonces RSS vues pour la première fois ; oublie celles de plus de 14 jours."""
+    connexion.executemany(
+        "INSERT OR IGNORE INTO rss_annonces VALUES (:id, :flux, :titre, :lien, :publie, :vu_le, :personnes, "
+        ":chaines, :deja_en_grille)",
+        [{**a, "personnes": json.dumps(a["personnes"], ensure_ascii=False),
+          "chaines": json.dumps(a["chaines"], ensure_ascii=False), "deja_en_grille": int(a["deja_en_grille"])}
+         for a in annonces],
+    )
+    connexion.execute("DELETE FROM rss_annonces WHERE vu_le < ?",
+                      ((maintenant - timedelta(days=14)).isoformat(timespec="seconds"),))
+    connexion.commit()
+
+
+def rss_depuis(connexion: sqlite3.Connection, depuis: datetime) -> list[dict]:
+    connexion.row_factory = sqlite3.Row
+    lignes = [dict(r) for r in connexion.execute("SELECT * FROM rss_annonces WHERE vu_le >= ? ORDER BY vu_le",
+                                                  (depuis.isoformat(timespec="seconds"),))]
+    connexion.row_factory = None
+    for ligne in lignes:
+        ligne["personnes"], ligne["chaines"] = json.loads(ligne["personnes"]), json.loads(ligne["chaines"])
+    return lignes
 
 
 def noter_douteux(connexion: sqlite3.Connection, cas: list[dict], maintenant: datetime) -> int:

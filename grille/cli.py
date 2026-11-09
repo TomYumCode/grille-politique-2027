@@ -13,7 +13,7 @@ from pathlib import Path
 import requests
 
 from grille import (acces, affichage, agendas, annonces, config, courriel, db, directs, evenements, invites_web, page,
-                    radio, radios_privees, tv, twitch, youtube)
+                    radio, radios_privees, rss, tv, twitch, youtube)
 from grille.campagne import Campagne
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -255,6 +255,24 @@ def _etape_invites(conf, connexion, maintenant, args) -> bool:
     return not rapport.interrompu
 
 
+def _etape_rss(conf, connexion, maintenant, args) -> bool:
+    """Mesure des flux RSS : annonces probables de passages médias, jamais ajoutées à la grille."""
+    if not conf.rss:
+        return True
+    print("Flux RSS (mesure) :")
+    rapport = rss.collecter(conf, requests.Session(), connexion, maintenant)
+    nouvelles = "; ".join(f"{a['titre']} ({a['flux']}{', déjà en grille' if a['deja_en_grille'] else ''})"
+                          for a in rapport.nouvelles) or "aucune"
+    print(f"  {rapport.flux_lus}/{len(conf.rss)} flux lus, {rapport.articles} articles récents ; "
+          f"annonces nouvelles : {nouvelles}")
+    for anomalie in rapport.anomalies:
+        print(f"  ATTENTION {anomalie}")
+    reussie = rapport.flux_lus > 0
+    db.noter_collecte(connexion, "rss", maintenant, reussie, len(rapport.nouvelles), rapport.anomalies,
+                      "" if reussie else "aucun flux lisible")
+    return reussie
+
+
 def _etape_annonces(conf, connexion, maintenant, args) -> bool:
     print("Invités annoncés (communiqués de France Télévisions) :")
     rapport = annonces.collecter(conf, requests.Session(), connexion, maintenant)
@@ -349,11 +367,12 @@ HEURES_RADIO_RAPIDE = (6, 23)  # heures de Paris où la collecte rapide relit Ra
 
 ETAPES = {"tv": _etape_tv, "radio": _etape_radio, "youtube": _etape_youtube, "twitch": _etape_twitch,
           "annonces": _etape_annonces, "web": _etape_agendas, "evenements": _etape_evenements,
-          "directs": _etape_directs, "radio-jour": _etape_radio_jour, "invites": _etape_invites}
+          "directs": _etape_directs, "radio-jour": _etape_radio_jour, "invites": _etape_invites,
+          "rss": _etape_rss}
 NOMS = {"tv": "à la télévision", "radio": "à la radio", "youtube": "sur YouTube", "twitch": "sur Twitch",
         "annonces": "avec invités annoncés", "web": "dans les agendas", "evenements": "ajoutées à la main",
         "directs": "en cours (france.tv)", "radio-jour": "à la radio (aujourd'hui)",
-        "invites": "avec invités cherchés sur le web"}
+        "invites": "avec invités cherchés sur le web", "rss": "annoncées par les flux RSS (mesure)"}
 
 
 def _collecter(args: argparse.Namespace, plateformes: list[str]) -> int:
@@ -410,13 +429,13 @@ def cmd_collecter_rapide(args: argparse.Namespace) -> int:
     au dernier moment un invité ou un direct : pages du direct de france.tv, Radio France (journée
     en cours, de 6 h à 23 h), Twitch, puis l'invité encore inconnu d'une émission qui commence,
     cherché sur le web par Claude. YouTube (10 000 unités par jour) reste à l'heure."""
-    return _collecter(args, ["directs", "radio-jour", "twitch", "invites"])
+    return _collecter(args, ["directs", "radio-jour", "twitch", "invites", "rss"])
 
 
 def cmd_collecter(args: argparse.Namespace) -> int:
     # « directs » juste après la télévision : il évite les doublons avec les émissions du guide.
     return _collecter(args, ["tv", "directs", "radio", "youtube", "twitch", "web", "annonces", "evenements",
-                             "invites"])
+                             "invites", "rss"])
 
 
 def _generer_page(args: argparse.Namespace) -> Path | None:

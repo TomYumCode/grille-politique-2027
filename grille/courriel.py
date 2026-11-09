@@ -27,7 +27,7 @@ PLATEFORMES = {"tv": "TV", "radio": "Radio", "youtube": "YouTube", "twitch": "Tw
 SOURCES = {"tv": "Télévision", "radio": "Radios", "youtube": "YouTube", "twitch": "Twitch",
            "web": "Agendas des partis", "annonces": "Invités annoncés (France Télévisions)",
            "directs": "Sujet du jour des émissions en cours (france.tv)",
-           "invites": "Invités cherchés sur le web (Claude)"}
+           "invites": "Invités cherchés sur le web (Claude)", "rss": "Flux RSS (mesure)"}
 JOURS_TEMPS_FORTS = 3
 EXEMPLES_DOUTEUX = 10
 NOMS_SOURCES = {"tv": "télévision", "radio": "radio", "youtube": "YouTube", "twitch": "Twitch"}
@@ -66,6 +66,32 @@ def mesure_douteux(connexion, maintenant: datetime) -> dict:
             "exemples": sorted(exemples[:EXEMPLES_DOUTEUX], key=lambda c: c["debut"])}
 
 
+EXEMPLES_RSS = 10
+
+
+def mesure_rss(connexion, maintenant: datetime) -> dict:
+    """Annonces de passages médias repérées dans les flux RSS ces dernières 24 h : combien, combien
+    la grille ignorait encore, par quels flux, avec des exemples (d'abord celles qu'elle ignorait)."""
+    annonces = db.rss_depuis(connexion, maintenant - timedelta(hours=24))
+    par_flux: dict[str, int] = {}
+    for a in annonces:
+        par_flux[a["flux"]] = par_flux.get(a["flux"], 0) + 1
+    nouvelles = [a for a in annonces if not a["deja_en_grille"]]
+    exemples = (nouvelles + [a for a in annonces if a["deja_en_grille"]])[:EXEMPLES_RSS]
+    return {"nombre": len(annonces), "inconnues": len(nouvelles),
+            "par_flux": sorted(par_flux.items(), key=lambda x: -x[1]), "exemples": exemples}
+
+
+def _annonces(n: int) -> str:
+    return f"{n} annonce" + ("s" if n > 1 else "")
+
+
+def _heure_rss(a: dict) -> str:
+    vu = datetime.fromisoformat(a["vu_le"])
+    publie = f"publié {datetime.fromisoformat(a['publie']):%H:%M}, " if a["publie"] else ""
+    return f"{publie}vu {_jour(vu)} {vu:%H:%M}"
+
+
 def _repartition(d: dict) -> str:
     return ", ".join(f"{n} {NOMS_SOURCES.get(s, s)}" for s, n in sorted(d["par_source"].items(), key=lambda x: -x[1]))
 
@@ -95,6 +121,7 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
         "temps_forts": [nommer(e) for e in a_venir],
         "alertes": db.etat_des_sources(connexion, maintenant, SOURCES),
         "douteux": mesure_douteux(connexion, maintenant),
+        "rss": mesure_rss(connexion, maintenant),
         "adresse_page": os.environ.get("ADRESSE_PAGE", ""),
     }
 
@@ -132,6 +159,14 @@ def texte(c: dict) -> str:
                     "  par modèle était activé. Exemples :"]
         parties += [f"  {_jour(datetime.fromisoformat(x['debut']))} {x['debut'][11:16]}  {x['chaine']} — {x['titre']}"
                     f"  ({x['motif']})" for x in d["exemples"]]
+    r = c.get("rss")
+    if r and r["nombre"]:
+        parties += ["", f"MESURE — FLUX RSS DES DERNIÈRES 24 H : {_annonces(r['nombre'])} de passages médias, "
+                        f"dont {r['inconnues']} que la grille ignorait",
+                    "  " + ", ".join(f"{n} {f}" for f, n in r["par_flux"]) + ". Exemples :"]
+        parties += [f"  {'NOUVEAU ' if not a['deja_en_grille'] else ''}{a['titre']} ({a['flux']} ; "
+                    f"{', '.join(a['personnes'])} ; {', '.join(a['chaines'])} ; {_heure_rss(a)})  {a['lien']}"
+                    for a in r["exemples"]]
     if c["alertes"]:
         parties += ["", "ÉTAT DES SOURCES"] + [f"  ! {a}" for a in c["alertes"]]
     if c["adresse_page"]:
@@ -198,6 +233,21 @@ def page_html(c: dict) -> str:
             + "".join(f"<li>{html.escape(_jour(datetime.fromisoformat(x['debut'])))} {x['debut'][11:16]} · "
                       f"{html.escape(x['chaine'])} — <b>{html.escape(x['titre'])}</b> "
                       f"<span style=\"color:#5b6470\">({html.escape(x['motif'])})</span></li>" for x in d["exemples"])
+            + "</ul>")
+    r = c.get("rss")
+    if r and r["nombre"]:
+        morceaux.append(
+            '<h2 style="font-size:15px;text-transform:uppercase;color:#5b6470;margin:24px 0 4px">'
+            f'Mesure — flux RSS des dernières 24 h : {_annonces(r["nombre"])}, dont {r["inconnues"]} que la grille '
+            "ignorait</h2>"
+            f'<p style="font-size:13px;color:#5b6470;margin:0 0 6px">'
+            f'{html.escape(", ".join(f"{n} {f}" for f, n in r["par_flux"]))}. Rien n\'est ajouté à la grille '
+            "pendant la mesure. Exemples :</p><ul style=\"font-size:13px;padding-left:18px\">"
+            + "".join(f"<li>{'<b>Nouveau</b> · ' if not a['deja_en_grille'] else ''}"
+                      f"<a href=\"{html.escape(a['lien'])}\">{html.escape(a['titre'])}</a> "
+                      f"<span style=\"color:#5b6470\">({html.escape(a['flux'])} ; "
+                      f"{html.escape(', '.join(a['personnes']))} ; {html.escape(', '.join(a['chaines']))} ; "
+                      f"{html.escape(_heure_rss(a))})</span></li>" for a in r["exemples"])
             + "</ul>")
     if c["alertes"]:
         morceaux.append('<h2 style="font-size:15px;text-transform:uppercase;color:#b3261e;margin:24px 0 4px">État des sources</h2><ul>'
