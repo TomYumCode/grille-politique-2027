@@ -262,6 +262,18 @@ pendant l'émission) et répond par un nom et la page qui le confirme (`grille/i
   choisit le modèle, `recherches_par_jour` borne le coût. Chaque collecte affiche les jetons
   consommés et le nombre de recherches web (journal de la tâche GitHub).
 
+**Grandes émissions à surveiller.** Les journaux de 20 h de TF1 et France 2 ne sont pas dans
+la grille, mais reçoivent parfois un responsable politique (Marine Tondelier au 20 h de TF1,
+le 9 novembre 2026). Pour chaque émission de la liste `a_surveiller:` de
+`config/recherche.yaml`, Claude vérifie deux fois par jour s'il y a un invité politique : à
+`heure_annonces` (17 h) puis juste avant l'émission. Elle n'entre dans la grille, avec son
+invité, que s'il est trouvé et confirmé ; sinon rien ne change.
+
+**Comparer les modèles.** `docs/essais_recherche.yaml` liste des émissions dont l'invité est
+connu. Onglet Actions → « Essai des modèles Claude » → « Run workflow » pose ces questions à
+Claude Opus 5.5 et Claude Haiku 5.5 (ou aux modèles indiqués) et affiche, pour chacun, les
+réponses justes et le coût par question. Chaque lancement est facturé.
+
 ## Présidentielle 2027 ou toute la politique
 
 En haut de la page, deux boutons : « Présidentielle 2027 » (choix par défaut, mémorisé)

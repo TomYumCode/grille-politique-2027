@@ -14,6 +14,14 @@ l'API) et répond par un objet JSON. Garde-fous :
 
 Le résultat va dans la table `annonces` (identifiant « web:… »), appliquée à l'affichage
 comme les communiqués de France Télévisions : la base des émissions n'est jamais modifiée.
+
+Grandes émissions à surveiller (`a_surveiller:` de config/recherche.yaml, par exemple les
+journaux de 20 h de TF1 et France 2) : absentes de la grille, elles reçoivent parfois un
+responsable politique (Marine Tondelier au 20 h de TF1, 9 novembre 2026, annoncée à 15 h 50).
+Claude vérifie deux fois par jour s'il y a un invité politique : à l'heure des annonces
+(`heure_annonces`, 17 h) puis juste avant l'émission. L'émission n'entre dans la grille
+(identifiant « recherche:… », jamais annulé par les autres sources) que si un invité de
+politique.yaml est confirmé par une page des résultats.
 """
 
 from __future__ import annotations
@@ -27,7 +35,7 @@ from datetime import datetime, timedelta
 from grille import affichage, db
 from grille.config import Configuration
 from grille.filtre import CRENEAU_INVITE, LISTE_BLANCHE, normaliser
-from grille.tv import PARIS
+from grille.tv import PARIS, statut
 
 SANS_CLE = "clé ANTHROPIC_API_KEY absente"
 ESSAIS_MAX = 2
@@ -51,6 +59,13 @@ Les journalistes, animateurs et chroniqueurs de l'émission ne sont pas des invi
 Termine ta réponse par un seul objet JSON, sans rien après :
 {"invites": ["Prénom Nom"], "source": "adresse de la page qui le dit", "extrait": "phrase de la page qui le dit"}
 Sans invité trouvé : {"invites": [], "source": "", "extrait": ""}"""
+
+
+SURVEILLANCE = """\
+Cette émission n'est pas une émission politique : la plupart des jours, elle ne reçoit aucun \
+responsable politique. On cherche seulement si un responsable politique (candidat, élu, \
+ministre, dirigeant de parti) y est invité en plateau ou en interview pour cette diffusion. Les \
+personnes qui apparaissent seulement dans un reportage ne comptent pas."""
 
 
 @dataclass
@@ -91,7 +106,7 @@ def a_chercher(e: dict, config: Configuration, connexion, maintenant: datetime) 
             and maintenant - deja["derniere"] >= ECART_ESSAIS)
 
 
-def question(e: dict) -> str:
+def question(e: dict, surveillee: bool = False) -> str:
     debut = datetime.fromisoformat(e["debut"]).astimezone(PARIS)
     fin = datetime.fromisoformat(e["fin"]).astimezone(PARIS) if e.get("fin") else None
     support = "télévision" if e["plateforme"] == "tv" else "radio"
@@ -105,6 +120,8 @@ def question(e: dict) -> str:
     ]
     if (e.get("resume") or "").strip():
         lignes.append(f"Présentation de la chaîne : {' '.join(e['resume'].split())[:600]}")
+    if surveillee:
+        lignes.append(SURVEILLANCE)
     return "\n".join(lignes)
 
 
@@ -158,16 +175,18 @@ def _meme_page(a: str, b: str) -> bool:
     return a.rstrip("/").split("#")[0] == b.rstrip("/").split("#")[0]
 
 
-def demander(client, modele: str, e: dict, rapport: Rapport) -> list[dict]:
+def demander(client, modele: str, e: dict, rapport: Rapport, surveillee: bool = False) -> list[dict]:
     """Pose la question ; renvoie les blocs de la réponse finale (dictionnaires)."""
-    messages = [{"role": "user", "content": question(e)}]
+    messages = [{"role": "user", "content": question(e, surveillee)}]
     for _ in range(REPRISES + 1):
+        # Refus d'un filtre de sécurité : la même question passe à un autre modèle (Opus, Sonnet ;
+        # Haiku n'a pas de modèle de repli).
+        repli = ({"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
+                 if re.match(r"claude-(opus|sonnet|fable)-", modele) else {})
         reponse = client.beta.messages.create(
             model=modele,
             max_tokens=8000,
-            # Refus d'un filtre de sécurité : la même question passe à un autre modèle.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
+            **repli,
             output_config={"effort": "low"},
             system=SYSTEME,
             tools=[outil_recherche(modele)],
@@ -192,6 +211,52 @@ def _client(cle: str):
     return anthropic.Anthropic(api_key=cle, timeout=180, max_retries=2)
 
 
+def emissions_surveillees(config: Configuration, maintenant: datetime) -> list[dict]:
+    """Diffusions du jour des grandes émissions à surveiller, au format d'une émission de la grille."""
+    jour = maintenant.astimezone(PARIS).date()
+    resultat = []
+    chaines = {c.nom: c for c in config.chaines}
+    for s in config.recherche.get("a_surveiller") or []:
+        chaine = chaines.get(s["chaine"])
+        h, m = map(int, s["heure"].split(":"))
+        debut = datetime(jour.year, jour.month, jour.day, h, m, tzinfo=PARIS)
+        fin = debut + timedelta(minutes=int(s.get("duree") or 45))
+        resultat.append({
+            "id": f"recherche:{normaliser(s['chaine']).replace(' ', '-')}:{debut:%Y%m%d%H%M}",
+            "titre": s["titre"], "debut": debut.isoformat(timespec="seconds"),
+            "fin": fin.isoformat(timespec="seconds"), "plateforme": chaine.plateforme if chaine else "tv",
+            "chaine": s["chaine"], "categorie": "interview", "invites": [], "cites": [], "resume": "",
+            "lien": list(chaine.direct) if chaine else [], "statut": statut(debut, fin, maintenant),
+            "filtre": LISTE_BLANCHE, "nature": "",
+        })
+    return resultat
+
+
+def surveillance_due(e: dict, config: Configuration, connexion, maintenant: datetime) -> bool:
+    """Premier essai à l'heure des annonces ; second juste avant l'émission, si rien trouvé."""
+    debut = datetime.fromisoformat(e["debut"])
+    reglages = config.recherche
+    h, m = map(int, reglages.get("heure_annonces", "17:00").split(":"))
+    annonces = min(debut.replace(hour=h, minute=m), debut - timedelta(minutes=reglages["avant_debut"]))
+    juste_avant = debut - timedelta(minutes=reglages["avant_debut"])
+    if not annonces <= maintenant <= debut + timedelta(minutes=reglages["apres_debut"]):
+        return False
+    deja = db.recherche_invites(connexion, e["id"])
+    if deja is None:
+        return True
+    return (deja["essais"] < ESSAIS_MAX and not deja["invites"] and maintenant >= juste_avant
+            and deja["derniere"] < juste_avant)
+
+
+def _verifier(contenu: list[dict], connus: dict[str, str]) -> tuple[list[str], list[str], str, bool]:
+    """(noms retenus, noms inconnus, source, source confirmée par les résultats)."""
+    noms, source, adresses = lire_reponse(contenu)
+    retenus = list(dict.fromkeys(connus[normaliser(n)] for n in noms if normaliser(n) in connus))
+    inconnus = [n for n in noms if normaliser(n) not in connus]
+    confirmee = bool(source) and any(_meme_page(source, a) for a in adresses)
+    return retenus, inconnus, source, confirmee
+
+
 def collecter(config: Configuration, connexion, maintenant: datetime, client=None) -> Rapport:
     rapport = Rapport()
     reglages = config.recherche
@@ -199,9 +264,11 @@ def collecter(config: Configuration, connexion, maintenant: datetime, client=Non
         rapport.interrompu = "recherche arrêtée (config/recherche.yaml)"
         return rapport
     maintenant = maintenant.astimezone(PARIS)
-    candidates = [e for e in affichage.emissions(connexion, maintenant - timedelta(hours=2),
-                                                  maintenant + timedelta(hours=1))
+    candidates = [(e, False) for e in affichage.emissions(connexion, maintenant - timedelta(hours=2),
+                                                           maintenant + timedelta(hours=1))
                   if a_chercher(e, config, connexion, maintenant)]
+    candidates += [(e, True) for e in emissions_surveillees(config, maintenant)
+                   if surveillance_due(e, config, connexion, maintenant)]
     if not candidates:
         return rapport
     if client is None:
@@ -213,29 +280,70 @@ def collecter(config: Configuration, connexion, maintenant: datetime, client=Non
     import anthropic
 
     connus = _noms_connus(config)
-    for e in candidates:
+    for e, surveillee in candidates:
         if db.recherches_du_jour(connexion, maintenant) >= reglages["recherches_par_jour"]:
             rapport.plafond_atteint = True
             break
         try:
-            contenu = demander(client, reglages["modele"], e, rapport)
+            contenu = demander(client, reglages["modele"], e, rapport, surveillee)
         except anthropic.APIError as erreur:
             rapport.anomalies.append(f"« {e['titre']} » : recherche impossible ({type(erreur).__name__})")
             continue
         rapport.cherchees += 1
-        noms, source, adresses = lire_reponse(contenu)
-        retenus = list(dict.fromkeys(connus[normaliser(n)] for n in noms if normaliser(n) in connus))
-        inconnus = [n for n in noms if normaliser(n) not in connus]
-        if retenus and not (source and any(_meme_page(source, a) for a in adresses)):
+        retenus, inconnus, source, confirmee = _verifier(contenu, connus)
+        if retenus and not confirmee:
             rapport.anomalies.append(f"« {e['titre']} » : {', '.join(retenus)} sans page de résultat qui le confirme, "
                                      "pas retenu")
             retenus, inconnus = [], []
         db.noter_recherche(connexion, e, maintenant, retenus, inconnus, source if retenus else "")
         rapport.inconnus += [f"{n} (« {e['titre']} », {e['chaine']})" for n in inconnus]
-        if retenus:
+        if retenus and surveillee:
+            # Grande émission : elle entre dans la grille avec son invité.
+            rapport.trouvees.append((f"{e['titre']} ({e['chaine']})", retenus))
+            ligne = dict(e, titre=f"{e['titre']} — {', '.join(retenus)}", invites=retenus,
+                         resume=f"Invité trouvé sur le web : {source}")
+            db.enregistrer_collecte(connexion, [ligne], ligne["plateforme"], set(), maintenant)
+        elif retenus:
             rapport.trouvees.append((e["titre"], retenus))
             debut = datetime.fromisoformat(e["debut"]).astimezone(PARIS)
             db.noter_annonces(connexion, [{"id": f"web:{e['id']}", "titre": e["titre"],
                                            "jour": debut.date().isoformat(), "heure": f"{debut:%H:%M}",
                                            "invites": retenus, "url": source}], maintenant)
     return rapport
+
+
+# Prix publics (dollars par million de jetons) et recherche web (10 $ les 1 000), pour estimer
+# le coût d'un essai ; à vérifier sur la page des prix d'Anthropic avant de décider.
+PRIX = {"claude-opus-5-5": (4.0, 20.0), "claude-sonnet-5-5": (2.0, 10.0), "claude-haiku-5-5": (0.10, 0.50)}
+PRIX_RECHERCHE = 0.01
+
+
+def cout(modele: str, jetons: dict) -> float | None:
+    if modele not in PRIX:
+        return None
+    entree, sortie = PRIX[modele]
+    return (jetons["entree"] * entree + jetons["sortie"] * sortie) / 1e6 + jetons["recherches"] * PRIX_RECHERCHE
+
+
+def comparer(config: Configuration, client, modeles: list[str], essais: list[dict]) -> list[dict]:
+    """Pose chaque question d'essai à chaque modèle ; rien n'est écrit en base."""
+    connus = _noms_connus(config)
+    resultats = []
+    for essai in essais:
+        e = {"id": "essai", "titre": essai["titre"], "chaine": essai["chaine"], "plateforme": essai["plateforme"],
+             "debut": essai["debut"], "fin": essai.get("fin"), "resume": essai.get("resume", "")}
+        for modele in modeles:
+            rapport = Rapport()
+            erreur = ""
+            try:
+                contenu = demander(client, modele, e, rapport, bool(essai.get("surveillee")))
+            except Exception as ex:  # un modèle en panne n'arrête pas la comparaison
+                contenu, erreur = [], type(ex).__name__
+            retenus, inconnus, source, confirmee = _verifier(contenu, connus)
+            attendu = essai.get("attendu")
+            juste = None if attendu is None else sorted(retenus if confirmee else []) == sorted(attendu)
+            resultats.append({"essai": f"{essai['titre']} ({essai['chaine']}, {essai['debut'][:10]})",
+                              "modele": modele, "trouves": retenus, "inconnus": inconnus, "source": source,
+                              "confirmee": confirmee, "juste": juste, "erreur": erreur,
+                              "jetons": rapport.jetons, "cout": cout(modele, rapport.jetons)})
+    return resultats

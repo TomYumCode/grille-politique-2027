@@ -441,3 +441,13 @@ dans le compte rendu de collecte avec l'adresse complète de la requête, où pa
 masque la clé dans toute erreur, `db.noter_collecte` masque toute clé reconnaissable
 (`key=`, `x-token=`, `AIza…`, `sk-ant-…`) et l'ouverture de la base efface celles déjà
 enregistrées. La clé exposée doit être remplacée dans Google Cloud.
+
+## Grandes émissions à surveiller (9 novembre 2026)
+
+Marine Tondelier, invitée du 20 h de TF1 le 9 novembre 2026, annoncée sur sa page Facebook et
+par TF1info (article de 15 h 50) : ni le guide (journal écarté par le filtre, invité jamais
+nommé) ni la recherche par Claude (limitée aux émissions déjà dans la grille) ne pouvaient le
+voir. Surveillance des 20 h de TF1 et France 2 : deux questions par émission et par jour
+(17 h, puis 19 h 50), soit 4 de plus par jour ; plafond porté à 16. Haiku 5.5 : outil de
+recherche de base (`web_search_20250305`) et pas de modèle de repli (`fallbacks` réservé à
+Opus, Sonnet et Fable).

@@ -50,7 +50,7 @@ class Client:
 @pytest.fixture
 def conf():
     c = charger()
-    c.recherche = dict(c.recherche, actif=True, recherches_par_jour=12)
+    c.recherche = dict(c.recherche, actif=True, recherches_par_jour=12, a_surveiller=[])
     return c
 
 
@@ -127,3 +127,77 @@ def test_modele_moins_cher():
 def test_recherche_arretee(conf, connexion):
     conf.recherche["actif"] = False
     assert invites_web.collecter(conf, connexion, MAINTENANT, client=Client()).interrompu
+
+
+VINGT_HEURES = [{"titre": "Le 20h", "chaine": "TF1", "heure": "20:00", "duree": 45}]
+
+
+def reponse_tondelier():
+    """Même forme de réponse, pour le 20 h de TF1 du 9 novembre 2026."""
+    contenu = [dict(b) for b in REPONSES["trouve"]["content"]]
+    page = "https://www.tf1info.fr/politique/marine-tondelier-invitee-du-20h-de-tf1-ce-lundi-2401234.html"
+    contenu[1] = dict(contenu[1], content=[dict(contenu[1]["content"][0], url=page)])
+    contenu[-1] = dict(contenu[-1], text='{"invites": ["Marine Tondelier"], "source": "' + page + '", "extrait": ""}')
+    return reponse("trouve", content=contenu)
+
+
+def test_grande_emission_ajoutee_si_invite_politique(conf, tmp_path):
+    conf.recherche["a_surveiller"] = VINGT_HEURES
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    a_17h = datetime(2026, 11, 9, 17, 0, tzinfo=PARIS)
+    client = Client(reponse_tondelier())
+    rapport = invites_web.collecter(conf, connexion, a_17h, client=client)
+    assert rapport.trouvees == [("Le 20h (TF1)", ["Marine Tondelier"])]
+    assert "n'est pas une émission politique" in client.appels[0]["messages"][0]["content"]
+    (e,) = affichage.emissions(connexion, a_17h, a_17h.replace(hour=23))
+    assert (e["titre"], e["chaine"], e["debut"], e["invites"]) == (
+        "Le 20h — Marine Tondelier", "TF1", "2026-11-09T20:00:00+01:00", ["Marine Tondelier"])
+    assert e["lien"] == ["https://www.tf1.fr/tf1/direct"]
+    # Trouvé : plus de question, et aucune autre source ne l'annule (collecte télévision).
+    assert invites_web.collecter(conf, connexion, a_17h.replace(hour=19, minute=52), client=Client()).cherchees == 0
+    db.enregistrer_collecte(connexion, [], "tv", {"TF1"}, a_17h.replace(hour=18))
+    assert affichage.emissions(connexion, a_17h, a_17h.replace(hour=23))[0]["statut"] != "annulé"
+    connexion.close()
+
+
+def test_grande_emission_sans_invite_politique(conf, tmp_path):
+    conf.recherche["a_surveiller"] = VINGT_HEURES
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    a_17h = datetime(2026, 11, 9, 17, 0, tzinfo=PARIS)
+    client = Client(reponse("rien"), reponse("rien"))
+    assert invites_web.collecter(conf, connexion, a_17h, client=client).cherchees == 1
+    assert affichage.emissions(connexion, a_17h, a_17h.replace(hour=23)) == []
+    # Pas d'autre essai avant 19 h 50, puis un seul juste avant l'émission.
+    assert invites_web.collecter(conf, connexion, a_17h.replace(hour=19, minute=30), client=client).cherchees == 0
+    assert invites_web.collecter(conf, connexion, a_17h.replace(hour=19, minute=52), client=client).cherchees == 1
+    assert invites_web.collecter(conf, connexion, a_17h.replace(hour=20, minute=10), client=Client()).cherchees == 0
+    assert invites_web.collecter(conf, connexion, a_17h.replace(hour=16, minute=59), client=Client()).cherchees == 0
+    connexion.close()
+
+
+def test_reglages_a_surveiller(tmp_path):
+    from grille import config as module_config
+    import shutil
+    for nom in ("chaines.yaml", "politique.yaml"):
+        shutil.copy(module_config.DOSSIER_CONFIG / nom, tmp_path / nom)
+    (tmp_path / "recherche.yaml").write_text(
+        'actif: true\nheure_annonces: "17h"\na_surveiller:\n'
+        '  - {titre: "Le 20h", chaine: "TF1", heure: "20:00"}\n'
+        '  - {titre: "Le 20h", chaine: "Chaîne inconnue", heure: "20:00"}\n'
+        '  - {titre: "Sans heure", chaine: "TF1"}\n', encoding="utf-8")
+    c = module_config.charger(tmp_path)
+    assert c.recherche["a_surveiller"] == [{"titre": "Le 20h", "chaine": "TF1", "heure": "20:00", "duree": 45}]
+    assert c.recherche["heure_annonces"] == "17:00"
+    assert len([a for a in c.anomalies if "recherche.yaml" in a]) == 3
+
+
+def test_comparer_les_modeles(conf):
+    essais = [{"titre": "Le grand oral 2027", "chaine": "BFMTV", "plateforme": "tv",
+               "debut": "2026-11-08T18:00:00+01:00", "fin": "2026-11-08T19:00:00+01:00",
+               "attendu": ["Raphaël Glucksmann"]}]
+    client = Client(reponse("trouve"), reponse("rien"))
+    opus, haiku = invites_web.comparer(conf, client, ["claude-opus-5-5", "claude-haiku-5-5"], essais)
+    assert opus["juste"] is True and haiku["juste"] is False
+    assert opus["cout"] == pytest.approx(9120 * 4 / 1e6 + 412 * 20 / 1e6 + 0.01)
+    # Haiku : outil de recherche de base, pas de modèle de repli.
+    assert client.appels[1]["tools"][0]["type"] == "web_search_20250305" and "fallbacks" not in client.appels[1]

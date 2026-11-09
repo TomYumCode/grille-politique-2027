@@ -538,6 +538,39 @@ def cmd_courriel(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_comparer_modeles(args: argparse.Namespace) -> int:
+    """Essais de la recherche d'invité (docs/essais_recherche.yaml) avec plusieurs modèles."""
+    import yaml
+
+    conf = _charger_config(args.config)
+    if conf is None:
+        return 1
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("Secret ANTHROPIC_API_KEY absent : rien à comparer.")
+        return 1
+    essais = yaml.safe_load(args.essais.read_text(encoding="utf-8"))["essais"]
+    resultats = invites_web.comparer(conf, invites_web._client(os.environ["ANTHROPIC_API_KEY"]), args.modeles, essais)
+    print(f"{len(essais)} essais × {len(args.modeles)} modèles\n")
+    for r in resultats:
+        verdict = {True: "JUSTE", False: "FAUX", None: "non vérifié"}[r["juste"]]
+        j = r["jetons"]
+        prix = f"{r['cout']:.3f} $" if r["cout"] is not None else "prix inconnu"
+        print(f"{r['essai']} — {r['modele']} : {verdict}")
+        print(f"  trouvé : {', '.join(r['trouves']) or 'personne'}"
+              + (f" ; hors liste : {', '.join(r['inconnus'])}" if r["inconnus"] else "")
+              + f" ; source {'confirmée' if r['confirmee'] else 'non confirmée'} {r['source']}"
+              + (f" ; ERREUR {r['erreur']}" if r["erreur"] else ""))
+        print(f"  {j['entree']} jetons lus, {j['sortie']} écrits, {j['recherches']} recherches web : {prix}")
+    print("\nBilan par modèle :")
+    for modele in args.modeles:
+        lignes = [r for r in resultats if r["modele"] == modele]
+        verifies = [r for r in lignes if r["juste"] is not None]
+        couts = [r["cout"] for r in lignes if r["cout"] is not None]
+        print(f"  {modele} : {sum(r['juste'] for r in verifies)}/{len(verifies)} justes ; "
+              f"coût moyen {sum(couts) / len(couts):.3f} $ par question" if couts else f"  {modele} : coût inconnu")
+    return 0
+
+
 def cmd_collecte_recente(args: argparse.Namespace) -> int:
     """Affiche « oui » si une collecte complète a eu lieu il y a moins de --minutes, « non » sinon
     (pour la tâche GitHub : un second déclenchement par heure ne refait pas la collecte). La
@@ -644,6 +677,10 @@ def main(argv: list[str] | None = None) -> int:
     p_courriel.set_defaults(func=cmd_courriel)
     sous.add_parser("attente-7h", help="secondes à attendre avant 7 h, heure de Paris (pour la tâche GitHub)"
                     ).set_defaults(func=cmd_attente_7h)
+    p_comparer = sous.add_parser("comparer-modeles", help="essais de la recherche d'invité avec plusieurs modèles Claude")
+    p_comparer.add_argument("--modeles", nargs="+", default=["claude-opus-5-5", "claude-haiku-5-5"])
+    p_comparer.add_argument("--essais", type=Path, default=Path("docs/essais_recherche.yaml"))
+    p_comparer.set_defaults(func=cmd_comparer_modeles)
     p_recente = sous.add_parser("collecte-recente", help="« oui » si une collecte a eu lieu il y a moins de N minutes")
     p_recente.add_argument("--minutes", type=int, default=40)
     p_recente.set_defaults(func=cmd_collecte_recente)

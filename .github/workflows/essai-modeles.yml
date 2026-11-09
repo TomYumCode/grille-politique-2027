@@ -1,0 +1,27 @@
+# Essais de la recherche d'invité par Claude avec plusieurs modèles (docs/essais_recherche.yaml).
+# Lancement à la main seulement : onglet Actions → « Essai des modèles Claude » → Run workflow.
+# Chaque lancement est facturé (quelques questions par modèle).
+name: Essai des modèles Claude
+on:
+  workflow_dispatch:
+    inputs:
+      modeles:
+        description: "Modèles à comparer, séparés par des espaces"
+        default: "claude-opus-5-5 claude-haiku-5-5"
+permissions:
+  contents: read
+jobs:
+  comparer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+      - name: Comparer
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MODELES: ${{ inputs.modeles }}
+        run: python -m grille comparer-modeles --modeles $MODELES
