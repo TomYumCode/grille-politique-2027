@@ -1,0 +1,14 @@
+# Essais de la recherche d'invité par Claude (python -m grille comparer-modeles) : émissions
+# dont l'invité est connu, pour comparer les modèles. « attendu » : invités (noms de
+# politique.yaml) ; [] : aucun invité politique ; absent : réponse non vérifiée.
+# « surveillee: true » : grande émission non politique (question de la surveillance).
+# Les essais portent sur des diffusions passées : plus faciles qu'en direct (articles parus).
+essais:
+  - {titre: "Le grand oral 2027", chaine: "BFMTV", plateforme: tv, debut: "2026-11-08T18:00:00+01:00",
+     fin: "2026-11-08T19:00:00+01:00", attendu: ["Raphaël Glucksmann"]}
+  - {titre: "Franc-jeu du dimanche 08 novembre 2026", chaine: "France Inter", plateforme: radio,
+     debut: "2026-11-08T13:20:00+01:00", fin: "2026-11-08T14:00:00+01:00", attendu: ["Laurent Wauquiez"]}
+  - {titre: "Le 20h", chaine: "TF1", plateforme: tv, debut: "2026-11-09T20:00:00+01:00",
+     fin: "2026-11-09T20:45:00+01:00", surveillee: true, attendu: ["Marine Tondelier"]}
+  - {titre: "Le 20h", chaine: "France 2", plateforme: tv, debut: "2026-11-09T20:00:00+01:00",
+     fin: "2026-11-09T20:45:00+01:00", surveillee: true}

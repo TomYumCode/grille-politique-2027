@@ -7,8 +7,18 @@
 #   recherches_par_jour : plafond de questions par jour (le coût en dépend)
 #   avant_debut         : minutes avant le début où la recherche peut commencer
 #   apres_debut         : minutes après le début où elle s'arrête
+#   heure_annonces      : heure du premier essai pour les émissions à surveiller
+#   a_surveiller        : grandes émissions absentes de la grille qui reçoivent parfois un
+#                         responsable politique ; elles n'entrent dans la grille que si Claude
+#                         trouve un invité de politique.yaml (deux essais par jour : à
+#                         heure_annonces, puis juste avant l'émission). Chaîne : nom exact de
+#                         chaines.yaml ; heure : début habituel ; duree : minutes (45 par défaut).
 actif: true
 modele: claude-opus-5-5
-recherches_par_jour: 12
+recherches_par_jour: 16
 avant_debut: 10
 apres_debut: 30
+heure_annonces: "17:00"
+a_surveiller:
+  - {titre: "Le 20h", chaine: "TF1", heure: "20:00", duree: 45}
+  - {titre: "Le 20h", chaine: "France 2", heure: "20:00", duree: 45}

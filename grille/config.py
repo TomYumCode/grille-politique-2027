@@ -222,7 +222,8 @@ def _lire_notifications(chemin: Path, anomalies: list[str]) -> str:
 
 
 RECHERCHE_DEFAUT = {"actif": False, "modele": "claude-opus-5-5", "recherches_par_jour": 12, "avant_debut": 10,
-                    "apres_debut": 30}
+                    "apres_debut": 30, "heure_annonces": "17:00", "a_surveiller": []}
+_HEURE = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
 
 
 def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
@@ -242,7 +243,33 @@ def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
                 reglages[cle] = max(0, int(brut[cle]))
             except (TypeError, ValueError):
                 anomalies.append(f"recherche.yaml : « {cle} » doit être un nombre, {RECHERCHE_DEFAUT[cle]} gardé")
+    heure = str(brut.get("heure_annonces") or RECHERCHE_DEFAUT["heure_annonces"]).strip()
+    if _HEURE.fullmatch(heure):
+        reglages["heure_annonces"] = heure
+    else:
+        anomalies.append(f"recherche.yaml : « heure_annonces » illisible « {heure} » (écrire 17:00), 17:00 gardé")
+    surveillees = []
+    for i, s in enumerate(brut.get("a_surveiller") or [], 1):
+        if not (isinstance(s, dict) and s.get("titre") and s.get("chaine") and _HEURE.fullmatch(str(s.get("heure")))):
+            anomalies.append(f"recherche.yaml, émission à surveiller n° {i} : « titre », « chaine » et « heure » "
+                             "(20:00) sont obligatoires")
+            continue
+        surveillees.append({"titre": str(s["titre"]), "chaine": str(s["chaine"]), "heure": str(s["heure"]),
+                            "duree": int(s.get("duree") or 45)})
+    reglages["a_surveiller"] = surveillees
     return reglages
+
+
+def _verifier_surveillees(reglages: dict, chaines: list, anomalies: list[str]) -> dict:
+    """Une émission à surveiller doit nommer une chaîne de chaines.yaml (pour son lien direct)."""
+    noms = {c.nom for c in chaines if c.plateforme in ("tv", "radio")}
+    gardees = []
+    for s in reglages["a_surveiller"]:
+        if s["chaine"] in noms:
+            gardees.append(s)
+        else:
+            anomalies.append(f"recherche.yaml : chaîne inconnue « {s['chaine']} » (nom de chaines.yaml)")
+    return dict(reglages, a_surveiller=gardees)
 
 
 def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
@@ -303,6 +330,6 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
         mots_presidentielle=mots_presidentielle,
         evenements=_lire_evenements(dossier / "evenements.yaml", anomalies),
         notifications=_lire_notifications(dossier / "notifications.yaml", anomalies),
-        recherche=_lire_recherche(dossier / "recherche.yaml", anomalies),
+        recherche=_verifier_surveillees(_lire_recherche(dossier / "recherche.yaml", anomalies), chaines, anomalies),
         anomalies=anomalies,
     )
