@@ -396,14 +396,12 @@ function afficherJours(aujourdhui) {
   nav.querySelector('[aria-current="date"]')?.scrollIntoView({ inline: "center", block: "nearest" });
 }
 
-// Repère « Maintenant » : avant le premier direct commencé depuis moins de 3 heures, sinon
-// avant la première émission à venir (un direct de la matinée ne ramène pas la page en haut).
-const RECENT = 3 * 3600 * 1000;
-
-function estMaintenant(e, maintenant) {
-  if (e.nature === "episode" || e.statut === "annulé") return false;
-  const debut = Date.parse(e.debut);
-  return debut > maintenant || (enDirect(e, maintenant) && maintenant - debut < RECENT);
+// Aujourd'hui, la liste se lit en deux temps : ce qui est passé (terminé, ou épisode déjà mis
+// en ligne), puis le repère « Maintenant », puis les directs en cours et ce qui est à venir.
+// Une émission courte commencée après le direct en cours et déjà finie passe donc avant lui.
+function enCoursOuAVenir(e, maintenant) {
+  if (Date.parse(e.debut) > maintenant) return true;
+  return e.nature !== "episode" && e.statut !== "annulé" && enDirect(e, maintenant);
 }
 
 function heureParis(maintenant) {
@@ -411,14 +409,28 @@ function heureParis(maintenant) {
     .format(maintenant);
 }
 
-// Renvoie l'élément sur lequel ouvrir la page (tranche horaire du repère « Maintenant »), ou null.
+// Cartes d'une suite d'émissions, regroupées par tranche d'une heure.
+function ajouterCartes(main, emissions, maintenant) {
+  let heureCourante = null;
+  for (const e of emissions) {
+    const heure = e.debut.slice(0, 10) < etat.jour ? "veille" : e.debut.slice(11, 13);
+    if (heure !== heureCourante) {
+      heureCourante = heure;
+      main.append(el("h3", { classe: "heure", texte: heure === "veille" ? "Commencé la veille"
+        : libelleTranche(Number(heure)) }));
+    }
+    main.append(carte(e, maintenant));
+  }
+}
+
+// Renvoie l'élément sur lequel ouvrir la page (repère « Maintenant » du jour), ou null.
 function afficherGrille(aujourdhui) {
   const main = document.getElementById("grille");
   main.replaceChildren();
   const maintenant = Date.now();
   const duJour = DONNEES.emissions.filter((e) => e.debut.startsWith(etat.jour) && visible(e));
   if (etat.jour === aujourdhui) {
-    // Directs commencés la veille, toujours en cours : en tête de la journée.
+    // Directs commencés la veille, toujours en cours : avec les directs du jour.
     duJour.unshift(...DONNEES.emissions.filter((e) => e.debut.slice(0, 10) < aujourdhui && visible(e)
       && e.nature !== "episode" && enDirect(e, maintenant)));
   }
@@ -431,32 +443,17 @@ function afficherGrille(aujourdhui) {
       + (etat.perimetre === "favoris" ? " Touchez ☆ sur une émission pour la suivre." : "") }));
     return null;
   }
-  let heureCourante = null;
-  let tranche = null;
-  let cible = null;
-  const repere = () => el("p", { classe: "maintenant", texte: "Maintenant · " + heureParis(maintenant) });
-  for (const e of duJour) {
-    const heure = e.debut.slice(0, 10) < etat.jour ? "veille" : e.debut.slice(11, 13);
-    if (heure !== heureCourante) {
-      heureCourante = heure;
-      tranche = el("h3", { classe: "heure", texte: heure === "veille" ? "Commencé la veille"
-        : libelleTranche(Number(heure)) });
-      main.append(tranche);
-    }
-    if (etat.jour === aujourdhui && !cible && estMaintenant(e, maintenant)) {
-      const marque = repere();
-      main.append(marque);
-      // Ouvrir sur la tranche horaire, sauf si le repère arrive juste après des émissions finies.
-      cible = main.lastElementChild.previousElementSibling === tranche ? tranche : marque;
-    }
-    main.append(carte(e, maintenant));
+  if (etat.jour !== aujourdhui) {
+    ajouterCartes(main, duJour, maintenant);
+    return null;
   }
-  // Plus rien à venir aujourd'hui : le repère en fin de journée.
-  if (etat.jour === aujourdhui && !cible) {
-    cible = repere();
-    main.append(cible);
-  }
-  return cible;
+  ajouterCartes(main, duJour.filter((e) => !enCoursOuAVenir(e, maintenant)), maintenant);
+  const repere = el("p", { classe: "maintenant", texte: "Maintenant · " + heureParis(maintenant) });
+  main.append(repere);
+  const suite = duJour.filter((e) => enCoursOuAVenir(e, maintenant));
+  if (suite.length) ajouterCartes(main, suite, maintenant);
+  else main.append(el("p", { classe: "vide", texte: "Plus rien d'annoncé aujourd'hui." }));
+  return repere;
 }
 
 // Place le repère « Maintenant » juste sous l'en-tête fixe.
