@@ -14,8 +14,18 @@
 <link rel="icon" href="icone-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icone-180.png">
 <link rel="stylesheet" href="style.css">
+<script>
+// Écran d'ouverture (ouverture.svg) : seulement au lancement, pas quand on arrive par une
+// notification (#emission=…) ni avec le réglage « Réduire les animations ».
+if (/#emission=/.test(location.hash) || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  document.documentElement.classList.add("sans-ouverture");
+}
+</script>
 </head>
 <body>
+<div id="ouverture" class="ouverture" aria-hidden="true" style="background:#1f3a5f">
+  <img src="ouverture.svg" alt="">
+</div>
 <header class="entete">
   <div class="titre-ligne">
     <h1>Grille politique 2027</h1>

@@ -689,6 +689,19 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// Écran d'ouverture : 1,3 s (le temps de l'animation), puis fondu de 0,3 s et retrait.
+const ecranOuverture = document.getElementById("ouverture");
+if (ecranOuverture) {
+  if (document.documentElement.classList.contains("sans-ouverture")) {
+    ecranOuverture.remove();
+  } else {
+    setTimeout(() => {
+      ecranOuverture.classList.add("fin");
+      setTimeout(() => ecranOuverture.remove(), 350);
+    }, 1300);
+  }
+}
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => { /* hors HTTPS : pas de mode hors connexion */ });
 }
