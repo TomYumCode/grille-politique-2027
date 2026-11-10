@@ -38,3 +38,8 @@ evenements:
     chaines: ["TF1"]
     resume: "Marine Tondelier, invitée du journal de 20 heures (annonce sur sa page Facebook et TF1info, 15 h 50)."
     categorie: "interview"
+  - titre: "L'heure des pros — Florian Philippot"
+    debut: "2026-11-10 09:00"
+    duree: 90
+    chaines: ["CNews", "Europe 1"]
+    resume: "Florian Philippot sur le plateau de Pascal Praud (signalé pendant l'émission)."

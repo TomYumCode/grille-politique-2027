@@ -109,8 +109,10 @@ def a_chercher(e: dict, config: Configuration, connexion, maintenant: datetime) 
 def question(e: dict, surveillee: bool = False) -> str:
     debut = datetime.fromisoformat(e["debut"]).astimezone(PARIS)
     fin = datetime.fromisoformat(e["fin"]).astimezone(PARIS) if e.get("fin") else None
-    support = "télévision" if e["plateforme"] == "tv" else "radio"
-    chaines = [s["chaine"] for s in e.get("sources") or []] or [e["chaine"]]
+    sources = e.get("sources") or [{"chaine": e["chaine"], "plateforme": e["plateforme"]}]
+    plateformes = {s.get("plateforme", e["plateforme"]) for s in sources} & {"tv", "radio"} or {e["plateforme"]}
+    support = " et ".join(n for p, n in (("tv", "télévision"), ("radio", "radio")) if p in plateformes)
+    chaines = [s["chaine"] for s in sources]
     horaire = f"de {debut:%H:%M} à {fin:%H:%M}" if fin else f"à {debut:%H:%M}"
     lignes = [
         f"Émission : {e['titre']}",
@@ -215,30 +217,40 @@ def emissions_surveillees(config: Configuration, maintenant: datetime) -> list[d
     """Diffusions du jour des grandes émissions à surveiller, au format d'une émission de la grille."""
     jour = maintenant.astimezone(PARIS).date()
     resultat = []
-    chaines = {c.nom: c for c in config.chaines}
+    # Télévision et radio seulement : « CNews » est aussi le nom d'une chaîne YouTube.
+    chaines = {c.nom: c for c in config.chaines if c.plateforme in ("tv", "radio")}
     for s in config.recherche.get("a_surveiller") or []:
-        chaine = chaines.get(s["chaine"])
         h, m = map(int, s["heure"].split(":"))
         debut = datetime(jour.year, jour.month, jour.day, h, m, tzinfo=PARIS)
         fin = debut + timedelta(minutes=int(s.get("duree") or 45))
-        resultat.append({
-            "id": f"recherche:{normaliser(s['chaine']).replace(' ', '-')}:{debut:%Y%m%d%H%M}",
-            "titre": s["titre"], "debut": debut.isoformat(timespec="seconds"),
-            "fin": fin.isoformat(timespec="seconds"), "plateforme": chaine.plateforme if chaine else "tv",
-            "chaine": s["chaine"], "categorie": "interview", "invites": [], "cites": [], "resume": "",
-            "lien": list(chaine.direct) if chaine else [], "statut": statut(debut, fin, maintenant),
-            "filtre": LISTE_BLANCHE, "nature": "",
-        })
+        lignes = []
+        for nom in s.get("chaines") or [s["chaine"]]:
+            chaine = chaines.get(nom)
+            lignes.append({
+                "id": f"recherche:{normaliser(nom).replace(' ', '-')}:{debut:%Y%m%d%H%M}",
+                "titre": s["titre"], "debut": debut.isoformat(timespec="seconds"),
+                "fin": fin.isoformat(timespec="seconds"), "plateforme": chaine.plateforme if chaine else "tv",
+                "chaine": nom, "categorie": "interview", "invites": [], "cites": [], "resume": "",
+                "lien": list(chaine.direct) if chaine else [], "statut": statut(debut, fin, maintenant),
+                "filtre": LISTE_BLANCHE, "nature": "",
+            })
+        # Une seule question pour toutes les chaînes ; la question les nomme toutes.
+        resultat.append(dict(lignes[0], sources=[{"chaine": x["chaine"], "plateforme": x["plateforme"]} for x in lignes],
+                             lignes=lignes))
     return resultat
 
 
 def surveillance_due(e: dict, config: Configuration, connexion, maintenant: datetime) -> bool:
-    """Premier essai à l'heure des annonces ; second juste avant l'émission, si rien trouvé."""
+    """Premier essai à l'heure des annonces ; second juste avant l'émission, si rien trouvé. Une
+    émission du matin (avant l'heure des annonces) : premier essai juste avant, second 10 minutes
+    après le début, quand la chaîne a pu montrer ou publier son invité."""
     debut = datetime.fromisoformat(e["debut"])
     reglages = config.recherche
     h, m = map(int, reglages.get("heure_annonces", "17:00").split(":"))
     annonces = min(debut.replace(hour=h, minute=m), debut - timedelta(minutes=reglages["avant_debut"]))
     juste_avant = debut - timedelta(minutes=reglages["avant_debut"])
+    if annonces >= juste_avant:
+        juste_avant = debut + timedelta(minutes=10)
     if not annonces <= maintenant <= debut + timedelta(minutes=reglages["apres_debut"]):
         return False
     deja = db.recherche_invites(connexion, e["id"])
@@ -300,9 +312,10 @@ def collecter(config: Configuration, connexion, maintenant: datetime, client=Non
         if retenus and surveillee:
             # Grande émission : elle entre dans la grille avec son invité.
             rapport.trouvees.append((f"{e['titre']} ({e['chaine']})", retenus))
-            ligne = dict(e, titre=f"{e['titre']} — {', '.join(retenus)}", invites=retenus,
-                         resume=f"Invité trouvé sur le web : {source}")
-            db.enregistrer_collecte(connexion, [ligne], ligne["plateforme"], set(), maintenant)
+            for l in e.get("lignes") or [e]:
+                ligne = dict(l, titre=f"{l['titre']} — {', '.join(retenus)}", invites=retenus,
+                             resume=f"Invité trouvé sur le web : {source}")
+                db.enregistrer_collecte(connexion, [ligne], ligne["plateforme"], set(), maintenant)
         elif retenus:
             rapport.trouvees.append((e["titre"], retenus))
             debut = datetime.fromisoformat(e["debut"]).astimezone(PARIS)
