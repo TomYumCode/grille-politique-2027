@@ -11,21 +11,24 @@
 </head>
 <body>
 <main class="texte-page">
-  <p><a href="./">← Retour à la grille</a></p>
+  <p><a class="retour" href="./">← Retour à la grille</a></p>
   <h1>Sources et confidentialité</h1>
 
   <h2>Comment la grille est faite</h2>
-  <p>Une fois par heure, un programme lit les sources ci-dessous, garde les émissions politiques et
-    publie cette page. Les visiteurs lisent la page publiée : ils n'interrogent aucune source. Chaque
-    émission renvoie vers la chaîne ou la plateforme qui la diffuse ; les titres, horaires et
-    descriptions appartiennent à leurs éditeurs.</p>
+  <p>Toutes les heures, et toutes les 15 minutes pour les directs et les invités de dernière minute,
+    un programme lit les sources ci-dessous, garde les émissions politiques et publie la grille. Les
+    visiteurs lisent la grille publiée : ils n'interrogent aucune source. Chaque émission renvoie vers la
+    chaîne ou la plateforme qui la diffuse ; les titres, horaires et descriptions appartiennent à leurs
+    éditeurs.</p>
 
   <h2>Sources</h2>
   <ul>
     <li><b>Télévision</b> : guide des programmes XMLTV de <a href="https://xmltvfr.fr/">xmltvfr.fr</a>
       (projet communautaire).</li>
-    <li><b>France Inter, franceinfo, France Culture</b> : Open API de Radio France.</li>
-    <li><b>YouTube</b> : directs et premières des chaînes suivies, obtenus par les services de l'API YouTube
+    <li><b>Sujet du jour</b> de certaines émissions de France Télévisions : pages du direct de france.tv,
+      au début de l'émission.</li>
+    <li><b>France Inter, franceinfo, France Culture</b> : Open API de Radio France, avec son accord.</li>
+    <li><b>YouTube</b> : directs, premières et nouveaux épisodes des séries politiques des chaînes suivies, obtenus par les services de l'API YouTube
       (YouTube API Services). Leur utilisation est soumise aux
       <a href="https://www.youtube.com/t/terms">conditions d'utilisation de YouTube</a> et aux
       <a href="https://policies.google.com/privacy">règles de confidentialité de Google</a>.
@@ -36,6 +39,11 @@
     <li><b>Radios privées</b> : grilles publiées sur les sites de RTL, Europe 1, Sud Radio, RMC et Radio Classique.</li>
     <li><b>Invités annoncés</b> : communiqués de presse de France Télévisions (francetvpro.fr).</li>
     <li><b>Meetings et passages médias</b> : agendas publiés par le Rassemblement national et l'UPR.</li>
+    <li><b>Invités de dernière minute</b> : quand l'invité d'une émission politique n'est annoncé nulle part
+      ailleurs, il est cherché sur le web (sites des chaînes, presse) par un assistant d'intelligence
+      artificielle, Claude, d'Anthropic. Seul un nom de la liste des personnalités suivies, confirmé par une
+      page publiée, est affiché.</li>
+    <li><b>Annonces de dernière minute</b> ajoutées à la main par l'éditeur de la grille.</li>
   </ul>
   <p>Un éditeur qui souhaite que ses programmes n'apparaissent plus ici peut le demander sur
     <a href="https://github.com/TomYumCode/grille-politique-2027/issues">la page du projet</a> :
@@ -43,7 +51,8 @@
 
   <h2>Confidentialité</h2>
   <ul>
-    <li>Aucun compte, aucune publicité, aucune mesure d'audience, aucun cookie.</li>
+    <li>Aucun compte, aucune mesure d'audience, aucun cookie. Pas de publicité aujourd'hui : si une
+      publicité apparaît un jour, cette page dira laquelle et comment elle fonctionne.</li>
     <li>Vos filtres (catégories, plateformes, candidat, « Présidentielle 2027 ») et vos favoris sont
       enregistrés sur votre appareil, dans le stockage local du navigateur.</li>
     <li><b>Notifications</b> (seulement si vous les activez) : vos favoris et l'abonnement de votre appareil
@@ -56,7 +65,7 @@
     <li>Les logos des chaînes sont chargés depuis YouTube, Twitch ou le guide des programmes, qui reçoivent
       alors la demande de votre navigateur.</li>
   </ul>
-  <p class="discret">Service gratuit, sans but commercial, sans revente de données.</p>
+  <p class="discret">Service gratuit. Aucune donnée personnelle n'est vendue ni transmise à des annonceurs.</p>
 </main>
 </body>
 </html>

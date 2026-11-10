@@ -161,3 +161,23 @@ def test_invite_ajoute_a_la_main_titre_renomme():
     assert len(resultat) == 1
     assert [s["chaine"] for s in resultat[0]["sources"]] == ["France 2", "France Inter"]
     assert resultat[0]["invites"] == ["Laurent Wauquiez"]
+
+
+
+def test_invite_du_direct_youtube_rattache_a_l_emission():
+    """10 novembre 2026, 8 h 30 : le direct YouTube de RMC nomme l'invité du « Face à Face »,
+    que ni la radio ni la télévision ne donnaient : une seule carte, avec l'invité."""
+    rmc = emission("radio:www.rmc.fr:202611100829:face a face", "Face à Face", "2026-11-10T08:29:00+01:00", "radio",
+                   "RMC", ["https://rmc.bfmtv.com/"], fin="2026-11-10T08:51:00+01:00")
+    bfm = emission("tv:BFMTV.fr:202611100830", "Face à face", "2026-11-10T08:30:00+01:00", "tv", "BFMTV",
+                   ["https://www.bfmtv.com/en-direct/"], fin="2026-11-10T09:00:00+01:00")
+    youtube = emission("youtube:cATFBOt079k", "EN DIRECT - Dominique de Villepin est l'invité du Face à Face "
+                       "d'Apolline de Malherbe", "2026-11-10T08:30:12+01:00", "youtube", "RMC",
+                       ["https://www.youtube.com/watch?v=cATFBOt079k"], invites=["Dominique de Villepin"])
+    (carte,) = fusion.fusionner([rmc, bfm, youtube])
+    assert carte["chaine"] == "BFMTV" and carte["invites"] == ["Dominique de Villepin"]
+    assert {s["chaine"] for s in carte["sources"]} == {"BFMTV", "RMC"} and len(carte["sources"]) == 3
+    # Un titre d'un seul mot ne suffit pas (« Politique » dans n'importe quel titre).
+    a = emission("youtube:1", "Politique", "2026-11-10T08:30:00+01:00", "youtube", "RMC", [])
+    b = emission("radio:1", "Le débat politique du matin", "2026-11-10T08:31:00+01:00", "radio", "RMC", [])
+    assert len(fusion.fusionner([a, b])) == 2

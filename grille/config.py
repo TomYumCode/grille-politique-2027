@@ -224,7 +224,7 @@ def _lire_notifications(chemin: Path, anomalies: list[str]) -> str:
 
 
 RECHERCHE_DEFAUT = {"actif": False, "modele": "claude-opus-5-5", "recherches_par_jour": 12, "avant_debut": 10,
-                    "apres_debut": 30, "heure_annonces": "17:00", "a_surveiller": []}
+                    "apres_debut": 35, "heure_annonces": "17:00", "a_surveiller": []}
 _HEURE = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
 
 

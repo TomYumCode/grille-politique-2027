@@ -55,9 +55,17 @@ def _meme_diffusion(a: dict, b: dict) -> bool:
     if meme_titre(a["titre"], b["titre"]):
         return True
     meme_emetteur = normaliser(a["chaine"]) == normaliser(b["chaine"])
+    if not meme_emetteur or ecart > ECART_EMETTEUR:
+        return False
+    # Titre court de l'émission repris tel quel dans le titre de l'autre plateforme : « Face à
+    # Face » (RMC, radio) et « EN DIRECT - Dominique de Villepin est l'invité du Face à Face
+    # d'Apolline de Malherbe » (RMC, YouTube), 10 novembre 2026.
+    court, long_ = sorted((normaliser(a["titre"]), normaliser(b["titre"])), key=len)
+    if len(court.split()) >= 2 and f" {court} " in f" {long_} ":
+        return True
     # Le nom de l'émetteur ne compte pas (« … sur Sud Radio » / « L'invité politique Sud Radio »).
     communs = _mots(a["titre"]) & _mots(b["titre"]) - _mots(a["chaine"])
-    return meme_emetteur and ecart <= ECART_EMETTEUR and len(communs) >= 2
+    return len(communs) >= 2
 
 
 def precision(titre: str, titre_de_tete: str) -> str:

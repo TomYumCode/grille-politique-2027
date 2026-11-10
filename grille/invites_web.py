@@ -39,7 +39,7 @@ from grille.tv import PARIS, statut
 
 SANS_CLE = "clé ANTHROPIC_API_KEY absente"
 ESSAIS_MAX = 2
-ECART_ESSAIS = timedelta(minutes=15)
+ECART_ESSAIS = timedelta(minutes=12)  # collectes toutes les 15 minutes, à quelques secondes près
 RECHERCHES_WEB = 3  # recherches web au plus par question
 REPRISES = 2  # « pause_turn » : la recherche côté serveur reprend au plus deux fois
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
