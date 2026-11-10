@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Grille politique 2027 — icône d'application</title>
+  <rect width="1024" height="1024" fill="#1f3a5f"/>
+  <rect x="212.0" y="212.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="430.0" y="212.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="648.0" y="212.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="212.0" y="430.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="430.0" y="430.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="648.0" y="430.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="212.0" y="648.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="430.0" y="648.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <rect x="648.0" y="648.0" width="164.0" height="164.0" rx="26.2" fill="#ffffff"/>
+    <circle class="point" cx="512.0" cy="512.0" r="45.9" fill="#d32f2f"/>
+</svg>

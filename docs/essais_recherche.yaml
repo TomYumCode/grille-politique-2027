@@ -12,3 +12,14 @@ essais:
      fin: "2026-11-09T20:45:00+01:00", surveillee: true, attendu: ["Marine Tondelier"]}
   - {titre: "Le 20h", chaine: "France 2", plateforme: tv, debut: "2026-11-09T20:00:00+01:00",
      fin: "2026-11-09T20:45:00+01:00", surveillee: true}
+  # Matinales du 10 novembre 2026 : invités confirmés par le propriétaire de la grille.
+  - {titre: "L'invité politique", chaine: "franceinfo", plateforme: tv, debut: "2026-11-10T07:40:00+01:00",
+     fin: "2026-11-10T07:55:00+01:00", attendu: ["Jean-Noël Barrot"]}
+  - {titre: "L'invité RTL de 7h40", chaine: "RTL", plateforme: radio, debut: "2026-11-10T07:43:00+01:00",
+     fin: "2026-11-10T07:55:00+01:00", attendu: ["Charles Alloncle"]}
+  - {titre: "La Grande interview Europe 1 - CNews", chaine: "Europe 1", plateforme: radio,
+     debut: "2026-11-10T08:10:00+01:00", fin: "2026-11-10T08:30:00+01:00", attendu: ["Jean-Philippe Tanguy"]}
+  - {titre: "Face à face", chaine: "BFMTV", plateforme: tv, debut: "2026-11-10T08:30:00+01:00",
+     fin: "2026-11-10T09:00:00+01:00", attendu: ["Dominique de Villepin"]}
+  - {titre: "L'invité politique Sud Radio", chaine: "Sud Radio", plateforme: radio,
+     debut: "2026-11-10T08:30:00+01:00", fin: "2026-11-10T08:50:00+01:00", attendu: ["Marie-Hélène Thoraval"]}

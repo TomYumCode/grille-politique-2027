@@ -115,6 +115,11 @@ personnalites:
   - {nom: "Arnaud Montebourg", alias: ["Montebourg"], sigle: "ancien ministre"}
   # Ajouté le 8 novembre 2026 : annoncé en direct dans Franc-jeu (France Inter).
   - {nom: "Laurent Wauquiez", alias: ["Wauquiez"], sigle: "LR"}
+  # Ajoutés le 10 novembre 2026 : invités des matinales que la recherche par Claude ne pouvait pas
+  # retenir (absents de la liste). « Barrot » seul : homonymes écartés (Jacques Barrot…).
+  - {nom: "Charles Alloncle", alias: ["Alloncle"], sigle: "UDR"}
+  - {nom: "Jean-Noël Barrot", alias: ["Barrot"], sigle: "MoDem"}
+  - {nom: "Marie-Hélène Thoraval", alias: ["Thoraval"], sigle: "maire de Romans-sur-Isère"}
   - {nom: "Jean Messiha", alias: ["Messiha"], sigle: "Reconquête"}
 
 # « ambigu: true » : nom trop courant pour servir seul de mot-clé
