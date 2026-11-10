@@ -1,0 +1,19 @@
+{
+  "name": "grille-politique-application",
+  "private": true,
+  "description": "Application iPhone et Android de la Grille politique 2027 (Capacitor) : affiche la grille publiée.",
+  "scripts": {
+    "sync": "cap sync",
+    "android": "cap open android",
+    "ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "@capacitor/splash-screen": "8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

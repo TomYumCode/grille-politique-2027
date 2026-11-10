@@ -22,13 +22,16 @@ self.addEventListener("push", (ev) => {
   }));
 });
 
-// Toucher la notification ouvre la grille (ou la ramène au premier plan).
+// Toucher la notification ouvre la grille sur l'émission concernée (adresse « …#emission=… »).
+// Grille déjà ouverte : elle reçoit l'adresse par message et s'y place, puis revient au premier plan.
 self.addEventListener("notificationclick", (ev) => {
   ev.notification.close();
   const cible = (ev.notification.data && ev.notification.data.url) || self.registration.scope;
   ev.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((fenetres) => {
     const ouverte = fenetres.find((f) => f.url.startsWith(self.registration.scope));
-    return ouverte ? ouverte.focus() : self.clients.openWindow(cible);
+    if (!ouverte) return self.clients.openWindow(cible);
+    ouverte.postMessage({ type: "ouvrir", url: cible });
+    return ouverte.focus();
   }));
 });
 

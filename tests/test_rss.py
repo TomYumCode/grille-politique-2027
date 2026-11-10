@@ -141,3 +141,40 @@ def test_candidat_deja_connu_pas_note(conf, connexion):
     conf.rss = [{"nom": "Le Parisien, politique", "adresse": "https://exemple.fr/p"}]
     rapport = rss.collecter(conf, session((REPONSES / "rss_leparisien.xml").read_bytes()), connexion, MAINTENANT)
     assert "Teddy Riner" not in {c["nom"] for c in rapport.candidats}
+
+
+
+# Titres réels des flux du 9 novembre 2026 (BFMTV, RMC, TF1info, franceinfo, Le Parisien), lus
+# par la collecte de 18 h 15 après l'annonce de Teddy Riner.
+REACTIONS = [
+    ("BFMTV, politique", "Présidentielle 2027: \"Je ne voudrais pas qu'il se détourne de son objectif des JO de "
+     "Los Angeles\", réagit Amélie Oudéa-Castéra sur la candidature de Teddy Riner"),
+    ("BFMTV, politique", "Teddy Riner candidat à l'élection présidentielle: \"Il porte un message de rassemblement\", "
+     "pointe Amélie Oudéa-Castera, ancienne ministre des Sports"),
+    ("RMC, politique", "Teddy Riner candidat à la présidentielle 2027: \"Il faudrait qu'il règle ses histoires de "
+     "voitures de luxe déjà...\", tacle Daniel Riolo"),
+    ("RMC, politique", "Teddy Riner candidat à la présidentielle : \"J'annonce également ma candidature\", "
+     "en profite Daniel Riolo"),
+    ("TF1info, à la une", "\"Il y a le panache du sportif qui s'exprime\" : l'ex-ministre des Sports Amélie "
+     "Oudéa-Castéra réagit sur LCI à la candidature de Teddy Riner"),
+    ("franceinfo, politique", "Thierry Breton \"ne ferme pas la porte\" à une candidature pour l'élection "
+     "présidentielle en 2027"),
+    ("Le Parisien, politique", "Présidentielle 2027 : « On verra », Thierry Breton « ne ferme pas la porte » à "
+     "une éventuelle candidature"),
+]
+
+
+def test_commentateurs_d_une_candidature_pas_proposes(conf, connexion):
+    """Les personnes qui réagissent à la candidature d'un candidat connu ne sont pas proposées ;
+    Thierry Breton, qui « ne ferme pas la porte », l'est."""
+    connus, candidats = rss.noms_connus(conf), rss.noms_candidats(conf)
+    trouves = {nom for _, titre in REACTIONS
+               for nom in rss.candidats_possibles({"titre": titre, "resume": ""}, connus, candidats)}
+    assert trouves == {"Thierry Breton"}
+    # Notés avant cette règle (base du 9 novembre au soir) : l'email les écarte aussi.
+    db.noter_rss_candidats(connexion, [
+        {"nom": nom, "id": f"article-{i}", "flux": flux, "titre": titre, "lien": "https://exemple.fr",
+         "vu_le": MAINTENANT.isoformat()}
+        for i, (flux, titre) in enumerate(REACTIONS)
+        for nom in ("Amélie Oudéa-Castéra", "Daniel Riolo", "Thierry Breton") if nom.split()[-1][:5] in titre], MAINTENANT)
+    assert [c["nom"] for c in courriel.candidats_possibles(connexion, conf, MAINTENANT)] == ["Thierry Breton"]

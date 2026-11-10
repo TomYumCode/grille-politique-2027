@@ -81,3 +81,13 @@ test("nouvel épisode d'une série : une notification à la mise en ligne, pas d
   const vieux = { ...episode, id: "yt:vieux", debut: "2026-10-20T13:40:00+02:00" };
   assert.equal(aEnvoyer([vieux], fav, {}, MAINTENANT).messages.length, 0);
 });
+
+
+test("chaque notification d'une émission précise porte son identifiant", () => {
+  const maintenant = Date.parse("2027-03-15T08:10:00+01:00");
+  const e = { id: "radio:1", titre: "L'invité de 8h20", chaine: "France Inter", plateforme: "radio",
+    invites: ["Jordan Bardella"], statut: "annoncé", debut: "2027-03-15T08:20:00+01:00", fin: null };
+  const { messages } = aEnvoyer([e], { presidentielle: false, diffusions: [], emissions: [], personnes: ["Jordan Bardella"] },
+    {}, maintenant);
+  assert.deepEqual(messages.map((m) => m.id), ["radio:1"]);
+});
