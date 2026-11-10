@@ -11,6 +11,6 @@ est converti en tracés : les fichiers s'affichent à l'identique sans police in
 | `logo-grille.svg` | Logo seul, cases blanches sur fond transparent |
 | `trait-tricolore.svg` | Trait bleu-blanc-rouge cerné de blanc |
 
-Couleurs : bleu du fond `#1f3a5f`, bleu du drapeau `#2f63d6`, rouge `#d32f2f`, blanc `#ffffff`,
+Point rouge : 45 % de la case centrale (réduit par le propriétaire le 10 novembre 2026). Couleurs : bleu du fond `#1f3a5f`, bleu du drapeau `#2f63d6`, rouge `#d32f2f`, blanc `#ffffff`,
 gris clair du trait `#e6ebf3`. Polices : Archivo ExtraBold (nom) et Inter SemiBold (sous-titre),
 licence SIL Open Font License, depuis Fontsource.

@@ -9,5 +9,5 @@
     <rect x="0.0" y="726.7" width="273.3" height="273.3" rx="43.7" fill="#ffffff"/>
     <rect x="363.3" y="726.7" width="273.3" height="273.3" rx="43.7" fill="#ffffff"/>
     <rect x="726.7" y="726.7" width="273.3" height="273.3" rx="43.7" fill="#ffffff"/>
-    <circle class="point" cx="500.0" cy="500.0" r="76.5" fill="#d32f2f"/>
+    <circle class="point" cx="500.0" cy="500.0" r="61.3" fill="#d32f2f"/>
 </svg>
