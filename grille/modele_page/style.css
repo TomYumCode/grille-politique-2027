@@ -101,12 +101,15 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 }
 .carte.en-direct { border-color: var(--direct); border-left-color: var(--direct); }
 /* Émission ouverte depuis une notification : mise en évidence un instant. */
-.carte.signalee { animation: signalee 2.4s ease-out; }
+/* Encadré et fond teinté bien visibles pendant 1,5 s, puis fondu jusqu'à 3,2 s (DUREE_SIGNALEE d'app.js). */
+.carte.signalee { animation: signalee 3.2s ease-in-out both; }
 @keyframes signalee {
-  0%, 30% { box-shadow: 0 0 0 3px var(--accent); }
-  100% { box-shadow: var(--ombre); }
+  0%, 45% { box-shadow: 0 0 0 4px var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--carte)); }
+  100% { box-shadow: var(--ombre); background: var(--carte); }
 }
-@media (prefers-reduced-motion: reduce) { .carte.signalee { animation: none; box-shadow: 0 0 0 3px var(--accent); } }
+@media (prefers-reduced-motion: reduce) {
+  .carte.signalee { animation: none; box-shadow: 0 0 0 4px var(--accent); }
+}
 .carte.termine { opacity: .55; }
 .ligne-haut { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; font-size: .85rem; color: var(--discret); }
 .horaire { font-weight: 700; color: var(--texte); font-variant-numeric: tabular-nums; }
@@ -147,7 +150,13 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 /* Pied de page et page « Sources et confidentialité ». */
 .pied { text-align: center; font-size: .8rem; padding: 24px 16px 32px; }
 .pied a, .texte-page a { color: var(--accent); }
-.texte-page { max-width: 680px; margin: 0 auto; padding: 16px; line-height: 1.5; }
+/* Page « Sources » : sous l'heure et l'encoche de l'iPhone (application ajoutée à l'écran d'accueil). */
+.texte-page {
+  max-width: 680px; margin: 0 auto; line-height: 1.5;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + 24px) max(16px, env(safe-area-inset-left, 0px));
+}
+.texte-page .retour { display: inline-block; padding: 10px 0; font-weight: 600; }
 .texte-page h1 { font-size: 1.4rem; }
 .texte-page h2 { font-size: 1.05rem; margin-top: 1.6em; }
 .texte-page li { margin: .4em 0; }

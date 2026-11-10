@@ -20,7 +20,9 @@ const etat = {
   perimetre: "campagne", // « campagne » : Présidentielle 2027 ; « tout » : toute la politique ; « favoris »
   chaine: "", // touché sur un logo : n'afficher que cette chaîne (non mémorisé)
   menu: "", // carte dont le menu des favoris est ouvert
+  signalee: null, // { id, depuis } : carte ouverte depuis une notification, mise en évidence quelques secondes
 };
+const DUREE_SIGNALEE = 3200; // millisecondes, comme l'animation « signalee » de style.css
 const PERIMETRES = ["campagne", "tout", "favoris"];
 
 // Favoris (favoris.js), gardés sur le téléphone. Sur iPhone, la page ajoutée à l'écran
@@ -323,11 +325,18 @@ function carte(e, maintenant) {
         texte: episode ? "Voir l'épisode" : libelleLien(url, x, s.length > 1, fini) }));
     }
   }
-  return el("article", {
-    classe: ["carte", CLASSE_CATEGORIE[e.categorie] || "", direct ? "en-direct" : "", fini ? "termine" : ""].join(" "),
+  // Carte ouverte depuis une notification : l'animation reprend où elle en était si la grille est
+  // redessinée entre-temps (retour au premier plan, mise à jour de chaque minute).
+  const ecoule = etat.signalee && etat.signalee.id === e.id ? Date.now() - etat.signalee.depuis : null;
+  const signalee = ecoule !== null && ecoule < DUREE_SIGNALEE;
+  const attributs = {
+    classe: ["carte", CLASSE_CATEGORIE[e.categorie] || "", direct ? "en-direct" : "", fini ? "termine" : "",
+      signalee ? "signalee" : ""].join(" "),
     title: "Retenue par : " + e.filtre,
     "data-id": e.id,
-  },
+  };
+  if (signalee) attributs.style = `animation-delay: -${ecoule}ms`;
+  return el("article", attributs,
     haut,
     el("p", { classe: "titre-emission", texte: e.titre }),
     e.invites.length ? el("p", { classe: "invites", texte: "Avec " + nommer(e.invites) }) : null,
@@ -643,13 +652,12 @@ function ouvrirEmission(id) {
     etat.categories = new Set(CATEGORIES);
     etat.plateformes = new Set(Object.keys(PLATEFORMES));
   }
+  etat.signalee = { id, depuis: Date.now() };
   afficher();
   derniereMiseEnPlace = Date.now();
   const carteEmission = [...document.querySelectorAll(".carte")].find((c) => c.dataset.id === id);
   if (!carteEmission) { positionner(document.querySelector(".maintenant")); return false; }
   positionner(carteEmission);
-  carteEmission.classList.add("signalee");
-  setTimeout(() => carteEmission.classList.remove("signalee"), 2600);
   return true;
 }
 
