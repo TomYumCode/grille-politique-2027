@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import { test } from "node:test";
-import service, { tournee } from "../src/index.js";
+import service, { adresseNotification, tournee } from "../src/index.js";
 import { versB64 } from "../src/webpush.js";
 
 const PAGE = "https://tomyumcode.github.io/grille-politique-2027/";
@@ -85,4 +85,12 @@ test("requêtes refusées : autre origine, adresse étrangère, désabonnement",
   assert.deepEqual(JSON.parse(env.kv.get("abonnements")), {});
   const cle = await (await service.fetch(new Request("https://service.example/cle"), env)).json();
   assert.equal(cle.cle.length, 87, "clé publique VAPID (65 octets en base64url)");
+});
+
+
+test("toucher la notification ouvre la grille sur l'émission concernée", () => {
+  assert.equal(adresseNotification(PAGE, { titre: "Dans 10 min · France Inter", id: "radio:FRANCEINTER:202611100820" }),
+    PAGE + "#emission=radio%3AFRANCEINTER%3A202611100820");
+  // Plusieurs annonces regroupées : pas d'émission précise, la grille s'ouvre sur l'heure actuelle.
+  assert.equal(adresseNotification(PAGE, { titre: "3 favoris annoncés", tag: "annonces" }), PAGE);
 });

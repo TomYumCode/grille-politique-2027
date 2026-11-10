@@ -57,8 +57,15 @@ async function lireEtat(env) {
   return (await env.ETAT.get(CLE_ETAT, "json")) || {};
 }
 
+/** Adresse ouverte en touchant la notification : la grille, placée sur l'émission concernée. */
+export function adresseNotification(page, message) {
+  return message.id ? page + "#emission=" + encodeURIComponent(message.id) : page;
+}
+
 async function notifier(env, cles, abonne, message) {
-  const statut = await envoyer(abonne.abonnement, { ...message, url: env.PAGE }, cles, env.PAGE);
+  const { id, ...reste } = message;
+  const statut = await envoyer(abonne.abonnement, { ...reste, url: adresseNotification(env.PAGE, message) }, cles,
+    env.PAGE);
   // 404 / 410 : abonnement retiré par le téléphone (application supprimée, autorisation coupée).
   return statut === 404 || statut === 410 ? "perime" : statut < 300 ? "ok" : "erreur " + statut;
 }

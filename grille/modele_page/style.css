@@ -100,6 +100,13 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
   border-left: 4px solid var(--couleur, var(--bord));
 }
 .carte.en-direct { border-color: var(--direct); border-left-color: var(--direct); }
+/* Émission ouverte depuis une notification : mise en évidence un instant. */
+.carte.signalee { animation: signalee 2.4s ease-out; }
+@keyframes signalee {
+  0%, 30% { box-shadow: 0 0 0 3px var(--accent); }
+  100% { box-shadow: var(--ombre); }
+}
+@media (prefers-reduced-motion: reduce) { .carte.signalee { animation: none; box-shadow: 0 0 0 3px var(--accent); } }
 .carte.termine { opacity: .55; }
 .ligne-haut { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; font-size: .85rem; color: var(--discret); }
 .horaire { font-weight: 700; color: var(--texte); font-variant-numeric: tabular-nums; }

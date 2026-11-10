@@ -75,17 +75,17 @@ export function aEnvoyer(emissions, favoris, envoyes, maintenant) {
     const raison = F.raisons(e, favoris).join(", ");
     if (e.nature === "episode") {
       if (!deja.a && maintenant - debut <= EPISODE_RECENT && !nuit(maintenant)) {
-        messages.push({ titre: `Nouvel épisode · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id });
+        messages.push({ titre: `Nouvel épisode · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id, id: e.id });
         trace[e.id] = { ...deja, a: 1, t: debut };
       }
       continue;
     }
     if (!deja.r && !deja.d && debut > maintenant && debut - maintenant <= RAPPEL) {
       const minutes = Math.max(1, Math.round((debut - maintenant) / MINUTE));
-      messages.push({ titre: `Dans ${minutes} min · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id });
+      messages.push({ titre: `Dans ${minutes} min · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id, id: e.id });
       trace[e.id] = { ...deja, a: 1, r: 1, t: debut };
     } else if (!deja.r && !deja.d && enDirect(e, maintenant)) {
-      messages.push({ titre: `En direct · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id });
+      messages.push({ titre: `En direct · ${e.chaine}`, corps: ligne(e) + "\n★ " + raison, tag: e.id, id: e.id });
       trace[e.id] = { ...deja, a: 1, d: 1, t: debut };
     } else if (!deja.a && debut > maintenant && !nuit(maintenant)) {
       annonces.push(e);
@@ -95,7 +95,7 @@ export function aEnvoyer(emissions, favoris, envoyes, maintenant) {
   if (annonces.length === 1) {
     const e = annonces[0];
     messages.push({ titre: "Nouveau favori · " + quand(e), corps: ligne(e) + "\n★ " + F.raisons(e, favoris).join(", "),
-      tag: "annonce:" + e.id });
+      tag: "annonce:" + e.id, id: e.id });
   } else if (annonces.length > 1) {
     annonces.sort((x, y) => x.debut.localeCompare(y.debut));
     const lignes = annonces.slice(0, ANNONCES_MAX).map((e) => quand(e) + " · " + e.titre + " (" + e.chaine + ")");

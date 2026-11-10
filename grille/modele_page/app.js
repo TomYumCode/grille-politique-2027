@@ -326,6 +326,7 @@ function carte(e, maintenant) {
   return el("article", {
     classe: ["carte", CLASSE_CATEGORIE[e.categorie] || "", direct ? "en-direct" : "", fini ? "termine" : ""].join(" "),
     title: "Retenue par : " + e.filtre,
+    "data-id": e.id,
   },
     haut,
     el("p", { classe: "titre-emission", texte: e.titre }),
@@ -623,7 +624,52 @@ lireFavoris();
 preparerFiltres();
 preparerNotifications();
 preparerBalayage();
-afficher(true);
+// Notification touchée : adresse « …#emission=<identifiant> ». La grille s'ouvre sur le jour de
+// l'émission, la montre même si les filtres la cachaient, et la fait clignoter un instant.
+function emissionDansAdresse(adresse) {
+  const m = /#emission=([^&]+)/.exec(adresse || "");
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+function ouvrirEmission(id) {
+  const e = DONNEES.emissions.find((x) => x.id === id);
+  if (!e) { afficher(true); return false; }
+  etat.jour = DONNEES.jours.includes(e.debut.slice(0, 10)) ? e.debut.slice(0, 10) : aujourdhuiParis();
+  etat.chaine = "";
+  if (!visible(e)) {
+    // Filtres du moment trop étroits : tout montrer, sans changer les réglages gardés.
+    etat.perimetre = "tout";
+    etat.candidat = "";
+    etat.categories = new Set(CATEGORIES);
+    etat.plateformes = new Set(Object.keys(PLATEFORMES));
+  }
+  afficher();
+  derniereMiseEnPlace = Date.now();
+  const carteEmission = [...document.querySelectorAll(".carte")].find((c) => c.dataset.id === id);
+  if (!carteEmission) { positionner(document.querySelector(".maintenant")); return false; }
+  positionner(carteEmission);
+  carteEmission.classList.add("signalee");
+  setTimeout(() => carteEmission.classList.remove("signalee"), 2600);
+  return true;
+}
+
+const idDemande = emissionDansAdresse(location.hash);
+if (idDemande) {
+  history.replaceState(null, "", location.pathname + location.search); // un rechargement rouvre sur l'heure actuelle
+  ouvrirEmission(idDemande);
+} else {
+  afficher(true);
+}
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", (ev) => {
+    const id = ev.data && ev.data.type === "ouvrir" && emissionDansAdresse(ev.data.url);
+    if (id) ouvrirEmission(id);
+  });
+}
+window.addEventListener("hashchange", () => {
+  const id = emissionDansAdresse(location.hash);
+  if (id) { history.replaceState(null, "", location.pathname + location.search); ouvrirEmission(id); }
+});
 window.addEventListener("online", () => afficher());
 window.addEventListener("offline", () => afficher());
 setInterval(() => afficher(), 60000); // les directs et la fraîcheur évoluent avec l'heure
