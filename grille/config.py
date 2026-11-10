@@ -256,7 +256,10 @@ def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
             anomalies.append(f"recherche.yaml, émission à surveiller n° {i} : « titre », « chaine » et « heure » "
                              "(20:00) sont obligatoires")
             continue
-        surveillees.append({"titre": str(s["titre"]), "chaine": str(s["chaine"]), "heure": str(s["heure"]),
+        # « chaine » : un nom, ou une liste pour une émission diffusée en même temps sur plusieurs
+        # chaînes (« L'heure des pros » sur CNews et Europe 1) : une seule question, une ligne par chaîne.
+        noms = [str(c) for c in s["chaine"]] if isinstance(s["chaine"], list) else [str(s["chaine"])]
+        surveillees.append({"titre": str(s["titre"]), "chaine": noms[0], "chaines": noms, "heure": str(s["heure"]),
                             "duree": int(s.get("duree") or 45)})
     reglages["a_surveiller"] = surveillees
     return reglages
@@ -280,10 +283,12 @@ def _verifier_surveillees(reglages: dict, chaines: list, anomalies: list[str]) -
     noms = {c.nom for c in chaines if c.plateforme in ("tv", "radio")}
     gardees = []
     for s in reglages["a_surveiller"]:
-        if s["chaine"] in noms:
-            gardees.append(s)
-        else:
-            anomalies.append(f"recherche.yaml : chaîne inconnue « {s['chaine']} » (nom de chaines.yaml)")
+        for nom in s["chaines"]:
+            if nom not in noms:
+                anomalies.append(f"recherche.yaml : chaîne inconnue « {nom} » (nom de chaines.yaml)")
+        connues = [nom for nom in s["chaines"] if nom in noms]
+        if connues:
+            gardees.append(dict(s, chaine=connues[0], chaines=connues))
     return dict(reglages, a_surveiller=gardees)
 
 

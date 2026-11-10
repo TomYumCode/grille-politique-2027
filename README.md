@@ -281,8 +281,9 @@ pendant l'émission) et répond par un nom et la page qui le confirme (`grille/i
   choisit le modèle, `recherches_par_jour` borne le coût. Chaque collecte affiche les jetons
   consommés et le nombre de recherches web (journal de la tâche GitHub).
 
-**Grandes émissions à surveiller.** Les journaux de 20 h de TF1 et France 2 ne sont pas dans
-la grille, mais reçoivent parfois un responsable politique (Marine Tondelier au 20 h de TF1,
+**Grandes émissions à surveiller.** Les journaux de 20 h de TF1 et France 2, et « L'heure des
+pros » (CNews et Europe 1, le matin ; CNews le soir) ne sont pas dans la grille, mais reçoivent
+souvent un responsable politique (Marine Tondelier au 20 h de TF1,
 le 9 novembre 2026). Pour chaque émission de la liste `a_surveiller:` de
 `config/recherche.yaml`, Claude vérifie deux fois par jour s'il y a un invité politique : à
 `heure_annonces` (17 h) puis juste avant l'émission. Elle n'entre dans la grille, avec son

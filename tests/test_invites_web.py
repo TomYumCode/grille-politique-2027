@@ -187,7 +187,8 @@ def test_reglages_a_surveiller(tmp_path):
         '  - {titre: "Le 20h", chaine: "Chaîne inconnue", heure: "20:00"}\n'
         '  - {titre: "Sans heure", chaine: "TF1"}\n', encoding="utf-8")
     c = module_config.charger(tmp_path)
-    assert c.recherche["a_surveiller"] == [{"titre": "Le 20h", "chaine": "TF1", "heure": "20:00", "duree": 45}]
+    assert c.recherche["a_surveiller"] == [{"titre": "Le 20h", "chaine": "TF1", "chaines": ["TF1"], "heure": "20:00",
+                                            "duree": 45}]
     assert c.recherche["heure_annonces"] == "17:00"
     assert len([a for a in c.anomalies if "recherche.yaml" in a]) == 3
 
@@ -202,3 +203,27 @@ def test_comparer_les_modeles(conf):
     assert opus["cout"] == pytest.approx(9120 * 4 / 1e6 + 412 * 20 / 1e6 + 0.01)
     # Haiku : outil de recherche de base, pas de modèle de repli.
     assert client.appels[1]["tools"][0]["type"] == "web_search_20250305" and "fallbacks" not in client.appels[1]
+
+
+
+def test_emission_du_matin_sur_deux_chaines(conf, tmp_path):
+    """« L'heure des pros » (CNews et Europe 1, 9 h) : une question juste avant, une seconde
+    10 minutes après le début ; l'invité trouvé entre dans la grille sur les deux chaînes."""
+    conf.recherche["a_surveiller"] = [{"titre": "L'heure des pros", "chaine": "CNews", "chaines": ["CNews", "Europe 1"],
+                                       "heure": "09:00", "duree": 90}]
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    jour = datetime(2026, 11, 10, 8, 51, tzinfo=PARIS)
+    client = Client(reponse("rien"))
+    assert invites_web.collecter(conf, connexion, jour, client=client).cherchees == 1
+    assert "CNews, Europe 1 (télévision et radio)" in client.appels[0]["messages"][0]["content"]
+    # Pas de second essai avant 9 h 10.
+    assert invites_web.collecter(conf, connexion, jour.replace(hour=9, minute=6), client=Client()).cherchees == 0
+    contenu = [dict(b) for b in REPONSES["trouve"]["content"]]
+    contenu[-1]["text"] = contenu[-1]["text"].replace("Raphaël Glucksmann", "Florian Philippot")
+    rapport = invites_web.collecter(conf, connexion, jour.replace(hour=9, minute=15),
+                                    client=Client(reponse("trouve", content=contenu)))
+    assert rapport.trouvees == [("L'heure des pros (CNews)", ["Florian Philippot"])]
+    (carte,) = affichage.emissions(connexion, jour, jour.replace(hour=11))
+    assert carte["titre"] == "L'heure des pros — Florian Philippot"
+    assert {s["chaine"] for s in carte["sources"]} == {"CNews", "Europe 1"}
+    connexion.close()
