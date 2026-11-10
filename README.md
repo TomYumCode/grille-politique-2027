@@ -413,3 +413,8 @@ publiée) ; nom affiché : « Grille politique 2027 ».
 (`server.url`) pour une version publiée ; l'alternative est d'embarquer la page dans
 l'application et de télécharger ses mises à jour. Icône, écran de démarrage et notifications
 natives : étapes suivantes.
+
+## Licence
+
+Tous droits réservés (voir `LICENSE`) : le dépôt est public pour que GitHub publie la grille,
+mais son contenu ne peut pas être réutilisé sans autorisation écrite.
