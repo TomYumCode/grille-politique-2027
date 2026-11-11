@@ -82,12 +82,18 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .grille { padding: 8px 16px 32px; max-width: 760px; margin: 0 auto; touch-action: pan-y; }
 .section-titre { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--discret); margin: 16px 0 6px; }
 .section-titre.direct { color: var(--direct); }
-/* Écran d'ouverture « C bleue » : par-dessus la grille au lancement, puis fondu (app.js). */
+/* Écran d'ouverture « C bleue » : par-dessus la grille au lancement, puis fondu (app.js).
+   Fond : bleu éclairci en haut, assombri en bas (maquette du 11 novembre 2026). */
 .ouverture {
-  position: fixed; inset: 0; z-index: 100; background: #1f3a5f;
-  display: grid; place-items: center; transition: opacity .3s ease-out;
+  position: fixed; inset: 0; z-index: 100; transition: opacity .3s ease-out;
+  background:
+    radial-gradient(160% 24% at 50% 0%, #436487 0%, rgba(66, 99, 134, .35) 45%, rgba(31, 59, 95, 0) 100%),
+    radial-gradient(100% 28% at 50% 100%, #0a1732 0%, rgba(11, 24, 51, .4) 55%, rgba(31, 59, 95, 0) 100%),
+    #1f3b5f;
 }
-.ouverture img { width: 100%; height: 100%; object-fit: contain; }
+.ouverture img, .ouverture-anim { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ouverture img { object-fit: contain; }
+.ouverture.anime img { visibility: hidden; }
 .ouverture.fin { opacity: 0; pointer-events: none; }
 .sans-ouverture .ouverture { display: none; }
 /* Repère de l'heure actuelle dans la liste du jour : la page s'ouvre dessus. */
