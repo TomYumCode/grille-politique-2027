@@ -689,17 +689,44 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-// Écran d'ouverture : 1,3 s (le temps de l'animation), puis fondu de 0,3 s et retrait.
+// Écran d'ouverture : l'animation (2 s) puis un fondu de 0,3 s. Animation pas prête au bout de
+// 1,2 s (premier lancement sur un réseau lent, fichier absent) : l'image fixe reste 1,3 s,
+// comme avant. Retrait de toute façon au bout de 4 s.
 const ecranOuverture = document.getElementById("ouverture");
 if (ecranOuverture) {
   if (document.documentElement.classList.contains("sans-ouverture")) {
     ecranOuverture.remove();
   } else {
-    setTimeout(() => {
-      ecranOuverture.classList.add("fin");
-      setTimeout(() => ecranOuverture.remove(), 350);
-    }, 1300);
+    lancerOuverture(ecranOuverture);
   }
+}
+
+function lancerOuverture(ecran) {
+  const depart = performance.now();
+  let fini = false;
+  const finir = () => {
+    if (fini) return;
+    fini = true;
+    ecran.classList.add("fin");
+    setTimeout(() => ecran.remove(), 350);
+  };
+  const secours = setTimeout(finir, 1300);
+  setTimeout(finir, 4000);
+  const lecteurPret = new Promise((ok) => {
+    const attendre = () => (window.lottie ? ok() : performance.now() - depart > 1200 ? ok() : setTimeout(attendre, 30));
+    attendre();
+  });
+  Promise.all([window.animationOuverture, lecteurPret]).then(([donnees]) => {
+    if (fini || !donnees || !window.lottie || performance.now() - depart > 1200) return;
+    clearTimeout(secours);
+    const anim = window.lottie.loadAnimation({
+      container: ecran.querySelector(".ouverture-anim"), renderer: "svg", loop: false, autoplay: true,
+      animationData: donnees, rendererSettings: { preserveAspectRatio: "xMidYMid meet" },
+    });
+    anim.addEventListener("DOMLoaded", () => ecran.classList.add("anime"));
+    anim.addEventListener("complete", finir);
+    anim.addEventListener("data_failed", finir);
+  });
 }
 
 if ("serviceWorker" in navigator) {

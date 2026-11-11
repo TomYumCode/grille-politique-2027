@@ -15,16 +15,25 @@
 <link rel="apple-touch-icon" href="icone-180.png">
 <link rel="stylesheet" href="style.css">
 <script>
-// Écran d'ouverture (ouverture.svg) : seulement au lancement, pas quand on arrive par une
-// notification (#emission=…) ni avec le réglage « Réduire les animations ».
+// Écran d'ouverture : seulement au lancement, pas quand on arrive par une notification
+// (#emission=…) ni avec le réglage « Réduire les animations ». L'animation (ouverture.json,
+// lue par lottie_light.min.js) se charge tout de suite ; en attendant, son image fixe
+// (ouverture.svg) est déjà affichée.
 if (/#emission=/.test(location.hash) || matchMedia("(prefers-reduced-motion: reduce)").matches) {
   document.documentElement.classList.add("sans-ouverture");
+} else {
+  window.animationOuverture = fetch("ouverture.json").then((r) => r.json()).catch(() => null);
+  const lecteur = document.createElement("script");
+  lecteur.src = "lottie_light.min.js";
+  lecteur.async = true;
+  document.head.append(lecteur);
 }
 </script>
 </head>
 <body>
-<div id="ouverture" class="ouverture" aria-hidden="true" style="background:#1f3a5f">
+<div id="ouverture" class="ouverture" aria-hidden="true" style="background-color:#1f3b5f">
   <img src="ouverture.svg" alt="">
+  <div class="ouverture-anim"></div>
 </div>
 <header class="entete">
   <div class="titre-ligne">
