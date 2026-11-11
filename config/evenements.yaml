@@ -43,3 +43,9 @@ evenements:
     duree: 90
     chaines: ["CNews", "Europe 1"]
     resume: "Florian Philippot sur le plateau de Pascal Praud (signalé pendant l'émission)."
+  - titre: "Face à face — Édouard Geffray"
+    debut: "2026-11-11 08:30"
+    duree: 30
+    chaines: ["BFMTV", "RMC"]
+    resume: "Édouard Geffray, ministre de l'Éducation nationale (signalé pendant l'émission, annonce sur le web)."
+    categorie: "interview"

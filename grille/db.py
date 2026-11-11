@@ -456,13 +456,15 @@ def noter_recherche(connexion: sqlite3.Connection, emission: dict, maintenant: d
     connexion.commit()
 
 
-def inconnus_recents(connexion: sqlite3.Connection, maintenant: datetime) -> list[str]:
-    """Noms trouvés par la recherche web dans les dernières 24 heures, absents de politique.yaml."""
+def inconnus_recents(connexion: sqlite3.Connection, maintenant: datetime,
+                     connu=lambda nom: False) -> list[str]:
+    """Noms trouvés par la recherche web dans les dernières 24 heures, absents de politique.yaml.
+    `connu(nom)` écarte ceux qui y ont été ajoutés depuis (Charles Alloncle, 10 novembre 2026)."""
     depuis = (maintenant - timedelta(hours=24)).isoformat(timespec="seconds")
     noms = []
     for titre, inconnus in connexion.execute(
             "SELECT titre, inconnus FROM recherches_invites WHERE derniere >= ? ORDER BY derniere", (depuis,)):
-        noms += [f"{n} (« {titre} »)" for n in json.loads(inconnus)]
+        noms += [f"{n} (« {titre} »)" for n in json.loads(inconnus) if not connu(n)]
     return list(dict.fromkeys(noms))
 
 

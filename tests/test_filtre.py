@@ -123,6 +123,21 @@ def test_invite_avec_fonction_politique(politique, emission, sous_titre, retenue
     assert (f.decider(chaines["France Inter"], emission, "", sous_titre=sous_titre) is not None) is retenue
 
 
+@pytest.mark.parametrize("resume, retenue", [
+    # Invités hors politique des 10 et 11 novembre 2026 : écartés.
+    ("Ginette Kolinka est face à Marc-Olivier Fogiel", False),
+    ("Maxime Gleizes, frère de Christophe Gleizes, est face à Marc-Olivier Fogiel", False),
+    ("", False),
+    # Personnalité de la liste, ou fonction politique : retenus.
+    ("Gabriel Attal est face à Marc-Olivier Fogiel", True),
+    ("Paul Dupont, député de la Somme, est face à Marc-Olivier Fogiel", True),
+])
+def test_face_a_fogiel_seulement_avec_invite_politique(politique, resume, retenue):
+    f, chaines = politique
+    assert (f.decider(chaines["RTL"], "Face à Fogiel", resume) is not None) is retenue
+    assert f.motif_douteux("Face à Fogiel", resume) is not None
+
+
 @pytest.mark.parametrize("chaine, titre", [
     ("BFMTV", "BFM Politique"), ("BFMTV", "Le grand oral 2027"), ("CNews", "100% Politique Week-End"),
     ("franceinfo", "L'invité politique"), ("France 5", "C politique, la suite"), ("LCP / Public Sénat", "Parlement hebdo"),

@@ -15,6 +15,7 @@ import requests
 from grille import (acces, affichage, agendas, annonces, config, courriel, db, directs, evenements, invites_web, page,
                     radio, radios_privees, rss, tv, twitch, youtube)
 from grille.campagne import Campagne
+from grille.filtre import normaliser
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre",
@@ -245,7 +246,8 @@ def _etape_invites(conf, connexion, maintenant, args) -> bool:
     if rapport.plafond_atteint:
         anomalies.append(f"plafond de {conf.recherche['recherches_par_jour']} questions par jour atteint "
                          "(config/recherche.yaml)")
-    inconnus = db.inconnus_recents(connexion, maintenant)
+    connus = rss.noms_connus(conf)
+    inconnus = db.inconnus_recents(connexion, maintenant, lambda nom: normaliser(nom) in connus)
     if inconnus:
         anomalies.append("invités trouvés mais absents de politique.yaml : " + ", ".join(inconnus))
     for anomalie in anomalies:

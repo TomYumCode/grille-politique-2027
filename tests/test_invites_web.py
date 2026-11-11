@@ -93,6 +93,8 @@ def test_nom_inconnu_signale_pas_ajoute(conf, connexion):
     rapport = invites_web.collecter(conf, connexion, MAINTENANT, client=Client(reponse("trouve", content=contenu)))
     assert rapport.trouvees == [] and rapport.inconnus == ["Jeanne Inconnue (« Le grand oral 2027 », BFMTV)"]
     assert db.inconnus_recents(connexion, MAINTENANT) == ["Jeanne Inconnue (« Le grand oral 2027 »)"]
+    # Ajoutée à politique.yaml depuis : plus signalée.
+    assert db.inconnus_recents(connexion, MAINTENANT, lambda nom: nom == "Jeanne Inconnue") == []
 
 
 def test_deux_essais_au_plus_et_fenetre(conf, connexion):
