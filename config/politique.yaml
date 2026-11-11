@@ -121,6 +121,9 @@ personnalites:
   - {nom: "Jean-Noël Barrot", alias: ["Barrot"], sigle: "MoDem"}
   - {nom: "Marie-Hélène Thoraval", alias: ["Thoraval"], sigle: "maire de Romans-sur-Isère"}
   - {nom: "Jean Messiha", alias: ["Messiha"], sigle: "Reconquête"}
+  # Ajouté le 11 novembre 2026 : invité de Face à face (BFMTV et RMC), non repéré faute d'être
+  # dans la liste.
+  - {nom: "Édouard Geffray", alias: ["Geffray"], sigle: "ministre de l'Éducation nationale"}
 
 # « ambigu: true » : nom trop courant pour servir seul de mot-clé
 # (« Renaissance » attrape les documentaires sur la Renaissance italienne).
@@ -244,7 +247,6 @@ liste_blanche:
     - {titre: "La semaine politique", chaine: "Europe 1"}
     - {titre: "L'interview politique", chaine: "Europe 1"}
     - {titre: "L'invité RTL", chaine: "RTL"}
-    - {titre: "Face à Fogiel", chaine: "RTL"}
     - {titre: "L'invité politique", chaine: "Sud Radio"}
     # Interview de 8 h 30, diffusée aussi sur BFMTV (les deux se fusionnent à l'affichage).
     - {titre: "Face à face", chaine: "RMC"}
@@ -334,3 +336,7 @@ cas_douteux:
     - "Le Grand Matin"
     - "Parlons vrai chez Bourdin"
     - "L'invité"
+    # Retirée des émissions toujours retenues le 11 novembre 2026 : invités souvent hors
+    # politique (Ginette Kolinka, Maxime Gleizes). Retenue quand le résumé de RTL nomme une
+    # personnalité de la liste ou lui donne une fonction politique.
+    - "Face à Fogiel"
