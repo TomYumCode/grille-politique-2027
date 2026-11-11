@@ -470,7 +470,15 @@ Opus, Sonnet et Fable).
 - Face à face du 11 novembre : Édouard Geffray trouvé par Sonnet seul (message de
   @BFMTV_Inside), pendant l'émission.
 - Sud Radio du 11 novembre : Haiku répond Marion Maréchal (message de sa part, publié la veille
-  à 12 h 14), non vérifié ; la recherche en direct de 8 h 45 n'a rien trouvé.
+  à 12 h 14), juste (confirmé ensuite sur le site de Sud Radio) ; la recherche en direct de
+  8 h 45 n'avait rien trouvé.
+
+Invités absents de la liste (11 novembre 2026) : retenus désormais quand Claude leur donne une
+fonction politique (`accepter_fonctions: true` de config/recherche.yaml). Claude répond pour
+chaque invité un nom et sa fonction ; une fonction qui contient un mot de `fonctions_politiques`
+(politique.yaml) ou le nom d'un parti (trois lettres au moins) fait retenir le nom, qui est
+signalé dans l'email pour l'ajouter à la liste. La fonction s'affiche à côté du nom, comme un
+sigle. Dominique Sopo (« président de SOS Racisme ») reste écarté.
 - Recherche web directe le matin même (moteur de recherche) : aucune des matinales du jour
   n'est encore indexée ; les sites de franceinfo, Europe 1, Sud Radio, RTL et RMC ne sont pas
   joignables depuis l'environnement de développement.

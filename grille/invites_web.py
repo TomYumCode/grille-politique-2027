@@ -6,8 +6,11 @@ est encore inconnu : BFMTV, LCI ou CNews ne l'annoncent nulle part où la grille
 la radio qui commence dans les `avant_debut` minutes ou a commencé depuis moins de
 `apres_debut` minutes, sans invité connu, Claude cherche sur le web (outil de recherche de
 l'API) et répond par un objet JSON. Garde-fous :
-- un nom n'est retenu que s'il est dans politique.yaml (candidats, personnalités) ; un nom
-  inconnu est seulement signalé dans le compte rendu de la collecte ;
+- un nom est retenu s'il est dans politique.yaml (candidats, personnalités), ou si Claude lui
+  donne une fonction politique (« ministre », « député »… : `fonctions_politiques` de
+  politique.yaml, ou le nom d'un parti) quand `accepter_fonctions` est vrai
+  (config/recherche.yaml) ; ces noms sont signalés dans le compte rendu, pour les ajouter à la
+  liste ; un nom sans fonction politique est seulement signalé ;
 - la page citée comme source doit faire partie des résultats de la recherche ;
 - deux essais au plus par émission (le second après le début, au moins 15 minutes plus tard),
   et un plafond de questions par jour (config/recherche.yaml) : le coût reste borné.
@@ -20,8 +23,8 @@ journaux de 20 h de TF1 et France 2) : absentes de la grille, elles reçoivent p
 responsable politique (Marine Tondelier au 20 h de TF1, 9 novembre 2026, annoncée à 15 h 50).
 Claude vérifie deux fois par jour s'il y a un invité politique : à l'heure des annonces
 (`heure_annonces`, 17 h) puis juste avant l'émission. L'émission n'entre dans la grille
-(identifiant « recherche:… », jamais annulé par les autres sources) que si un invité de
-politique.yaml est confirmé par une page des résultats.
+(identifiant « recherche:… », jamais annulé par les autres sources) que si un invité politique
+(de politique.yaml, ou retenu par sa fonction) est confirmé par une page des résultats.
 """
 
 from __future__ import annotations
@@ -56,8 +59,13 @@ Ne devine jamais. Une page qui parle d'une autre diffusion (un autre jour, une a
 compte pas. Si aucune page trouvée ne nomme l'invité de cette diffusion, réponds sans invité. \
 Les journalistes, animateurs et chroniqueurs de l'émission ne sont pas des invités.
 
+Pour chaque invité, donne sa fonction telle que les pages la décrivent (« ministre de \
+l'Éducation nationale », « députée LFI de Seine-Saint-Denis », « président de SOS Racisme », \
+« comédien »), ou "" si aucune page ne la donne.
+
 Termine ta réponse par un seul objet JSON, sans rien après :
-{"invites": ["Prénom Nom"], "source": "adresse de la page qui le dit", "extrait": "phrase de la page qui le dit"}
+{"invites": [{"nom": "Prénom Nom", "fonction": "fonction"}], "source": "adresse de la page qui le dit", \
+"extrait": "phrase de la page qui le dit"}
 Sans invité trouvé : {"invites": [], "source": "", "extrait": ""}"""
 
 
@@ -73,6 +81,7 @@ class Rapport:
     cherchees: int = 0
     trouvees: list[tuple[str, list[str]]] = field(default_factory=list)  # (titre, invités retenus)
     inconnus: list[str] = field(default_factory=list)  # noms trouvés absents de politique.yaml
+    par_fonction: list[str] = field(default_factory=list)  # retenus par leur fonction politique
     plafond_atteint: bool = False
     anomalies: list[str] = field(default_factory=list)
     interrompu: str = ""
@@ -149,19 +158,51 @@ def _adresses(objet) -> set[str]:
     return trouvees
 
 
-def lire_reponse(contenu: list[dict]) -> tuple[list[str], str, set[str]]:
-    """(noms, source, adresses des résultats) d'après les blocs de la réponse. Le dernier
-    objet JSON du texte final est la réponse ; illisible : aucun invité."""
-    adresses = _adresses(contenu)
-    texte = "".join(b.get("text", "") for b in contenu if b.get("type") == "text")
-    for m in reversed(list(re.finditer(r"\{[^{}]*\"invites\"[^{}]*\}", texte, re.DOTALL))):
+def _objets_json(texte: str):
+    """Objets JSON du texte, du dernier au premier (accolades équilibrées, chaînes comprises)."""
+    debuts = [i for i, c in enumerate(texte) if c == "{"]
+    decodeur = json.JSONDecoder()
+    for i in reversed(debuts):
         try:
-            donnees = json.loads(m.group(0))
+            objet, _ = decodeur.raw_decode(texte, i)
         except json.JSONDecodeError:
             continue
-        noms = [str(n).strip() for n in donnees.get("invites") or [] if str(n).strip()]
-        return noms, str(donnees.get("source") or "").strip(), adresses
+        if isinstance(objet, dict):
+            yield objet
+
+
+def lire_reponse(contenu: list[dict]) -> tuple[list[tuple[str, str]], str, set[str]]:
+    """([(nom, fonction)], source, adresses des résultats) d'après les blocs de la réponse. Le
+    dernier objet JSON du texte final qui a « invites » est la réponse ; illisible : aucun
+    invité. Un invité peut être un simple nom (sans fonction) ou {"nom": …, "fonction": …}."""
+    adresses = _adresses(contenu)
+    texte = "".join(b.get("text", "") for b in contenu if b.get("type") == "text")
+    for donnees in _objets_json(texte):
+        if "invites" not in donnees:
+            continue
+        invites = []
+        for x in donnees.get("invites") or []:
+            nom, fonction = ((x.get("nom"), x.get("fonction")) if isinstance(x, dict) else (x, ""))
+            nom, fonction = str(nom or "").strip(), str(fonction or "").strip()
+            if nom:
+                invites.append((nom, fonction))
+        return invites, str(donnees.get("source") or "").strip(), adresses
     return [], "", adresses
+
+
+def mots_politiques(config: Configuration) -> list[str]:
+    """Fonctions politiques et noms de partis (formes normalisées) qui font retenir un invité
+    absent de politique.yaml : « ministre de l'Éducation nationale », « vice-présidente de
+    Reconquête ». Sigles de deux lettres exclus (« PS » dans « PSG »)."""
+    mots = list(config.fonctions_politiques)
+    for p in config.partis:
+        mots += [p["nom"]] + list(p.get("alias") or [])
+    return sorted({normaliser(m) for m in mots if len(normaliser(m)) > 2})
+
+
+def fonction_politique(fonction: str, mots: list[str]) -> bool:
+    texte = f" {normaliser(fonction)} "
+    return any(f" {m} " in texte for m in mots)
 
 
 def _noms_connus(config: Configuration) -> dict[str, str]:
@@ -260,13 +301,33 @@ def surveillance_due(e: dict, config: Configuration, connexion, maintenant: date
             and deja["derniere"] < juste_avant)
 
 
-def _verifier(contenu: list[dict], connus: dict[str, str]) -> tuple[list[str], list[str], str, bool]:
-    """(noms retenus, noms inconnus, source, source confirmée par les résultats)."""
-    noms, source, adresses = lire_reponse(contenu)
-    retenus = list(dict.fromkeys(connus[normaliser(n)] for n in noms if normaliser(n) in connus))
-    inconnus = [n for n in noms if normaliser(n) not in connus]
+@dataclass
+class Verification:
+    retenus: list[str]  # noms de politique.yaml
+    par_fonction: dict[str, str]  # absents de la liste, retenus par leur fonction : nom → fonction
+    inconnus: dict[str, str]  # absents de la liste, sans fonction politique : nom → fonction
+    source: str
+    confirmee: bool  # la page citée fait partie des résultats de la recherche
+
+    @property
+    def tous(self) -> list[str]:
+        return self.retenus + list(self.par_fonction)
+
+
+def _verifier(contenu: list[dict], connus: dict[str, str], mots: list[str] | None = None) -> Verification:
+    """`mots` : fonctions politiques qui font retenir un nom absent de la liste (None : aucun)."""
+    invites, source, adresses = lire_reponse(contenu)
+    retenus = list(dict.fromkeys(connus[normaliser(n)] for n, _ in invites if normaliser(n) in connus))
+    par_fonction, inconnus = {}, {}
+    for nom, fonction in invites:
+        if normaliser(nom) in connus:
+            continue
+        if mots and fonction_politique(fonction, mots):
+            par_fonction[nom] = fonction
+        else:
+            inconnus[nom] = fonction
     confirmee = bool(source) and any(_meme_page(source, a) for a in adresses)
-    return retenus, inconnus, source, confirmee
+    return Verification(retenus, par_fonction, inconnus, source, confirmee)
 
 
 def collecter(config: Configuration, connexion, maintenant: datetime, client=None) -> Rapport:
@@ -292,6 +353,7 @@ def collecter(config: Configuration, connexion, maintenant: datetime, client=Non
     import anthropic
 
     connus = _noms_connus(config)
+    mots = mots_politiques(config) if reglages.get("accepter_fonctions") else None
     for e, surveillee in candidates:
         if db.recherches_du_jour(connexion, maintenant) >= reglages["recherches_par_jour"]:
             rapport.plafond_atteint = True
@@ -302,13 +364,17 @@ def collecter(config: Configuration, connexion, maintenant: datetime, client=Non
             rapport.anomalies.append(f"« {e['titre']} » : recherche impossible ({type(erreur).__name__})")
             continue
         rapport.cherchees += 1
-        retenus, inconnus, source, confirmee = _verifier(contenu, connus)
-        if retenus and not confirmee:
+        v = _verifier(contenu, connus, mots)
+        retenus, inconnus, source = v.tous, v.inconnus, v.source
+        fonctions = v.par_fonction
+        if retenus and not v.confirmee:
             rapport.anomalies.append(f"« {e['titre']} » : {', '.join(retenus)} sans page de résultat qui le confirme, "
                                      "pas retenu")
-            retenus, inconnus = [], []
-        db.noter_recherche(connexion, e, maintenant, retenus, inconnus, source if retenus else "")
-        rapport.inconnus += [f"{n} (« {e['titre']} », {e['chaine']})" for n in inconnus]
+            retenus, inconnus, fonctions = [], {}, {}
+        db.noter_recherche(connexion, e, maintenant, retenus, list(inconnus), source if retenus else "", fonctions)
+        rapport.inconnus += [f"{n}{f', {f}' if f else ''} (« {e['titre']} », {e['chaine']})"
+                             for n, f in inconnus.items()]
+        rapport.par_fonction += [f"{n}, {f} (« {e['titre']} », {e['chaine']})" for n, f in fonctions.items()]
         if retenus and surveillee:
             # Grande émission : elle entre dans la grille avec son invité.
             rapport.trouvees.append((f"{e['titre']} ({e['chaine']})", retenus))
@@ -341,6 +407,7 @@ def cout(modele: str, jetons: dict) -> float | None:
 def comparer(config: Configuration, client, modeles: list[str], essais: list[dict]) -> list[dict]:
     """Pose chaque question d'essai à chaque modèle ; rien n'est écrit en base."""
     connus = _noms_connus(config)
+    mots = mots_politiques(config) if config.recherche.get("accepter_fonctions") else None
     resultats = []
     for essai in essais:
         e = {"id": "essai", "titre": essai["titre"], "chaine": essai["chaine"], "plateforme": essai["plateforme"],
@@ -352,11 +419,14 @@ def comparer(config: Configuration, client, modeles: list[str], essais: list[dic
                 contenu = demander(client, modele, e, rapport, bool(essai.get("surveillee")))
             except Exception as ex:  # un modèle en panne n'arrête pas la comparaison
                 contenu, erreur = [], type(ex).__name__
-            retenus, inconnus, source, confirmee = _verifier(contenu, connus)
+            v = _verifier(contenu, connus, mots)
             attendu = essai.get("attendu")
-            juste = None if attendu is None else sorted(retenus if confirmee else []) == sorted(attendu)
+            juste = None if attendu is None else sorted(v.tous if v.confirmee else []) == sorted(attendu)
             resultats.append({"essai": f"{essai['titre']} ({essai['chaine']}, {essai['debut'][:10]})",
-                              "modele": modele, "trouves": retenus, "inconnus": inconnus, "source": source,
-                              "confirmee": confirmee, "juste": juste, "erreur": erreur,
+                              "modele": modele, "trouves": v.retenus,
+                              "par_fonction": [f"{n}, {f}" for n, f in v.par_fonction.items()],
+                              "inconnus": [f"{n}, {f}" if f else n for n, f in v.inconnus.items()],
+                              "source": v.source,
+                              "confirmee": v.confirmee, "juste": juste, "erreur": erreur,
                               "jetons": rapport.jetons, "cout": cout(modele, rapport.jetons)})
     return resultats

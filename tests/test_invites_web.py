@@ -229,3 +229,71 @@ def test_emission_du_matin_sur_deux_chaines(conf, tmp_path):
     assert carte["titre"] == "L'heure des pros — Florian Philippot"
     assert {s["chaine"] for s in carte["sources"]} == {"CNews", "Europe 1"}
     connexion.close()
+
+
+def _avec_invites(invites: list) -> list[dict]:
+    """Réponse « trouve » dont l'objet JSON final nomme ces invités (nouveau format)."""
+    contenu = [dict(b) for b in REPONSES["trouve"]["content"]]
+    source = "https://www.bfmtv.com/politique/raphael-glucksmann-invite-du-grand-oral-2027_AV-202611080412.html"
+    contenu[-1]["text"] = "\n\n" + json.dumps({"invites": invites, "source": source, "extrait": "…"},
+                                               ensure_ascii=False)
+    return contenu
+
+
+def test_lire_reponse_noms_et_fonctions():
+    contenu = _avec_invites([{"nom": "Édouard Geffray", "fonction": "ministre de l'Éducation nationale"},
+                             "Jeanne Inconnue", {"nom": " ", "fonction": "x"}])
+    invites, source, _ = invites_web.lire_reponse(contenu)
+    assert invites == [("Édouard Geffray", "ministre de l'Éducation nationale"), ("Jeanne Inconnue", "")]
+    assert source.startswith("https://www.bfmtv.com/")
+
+
+@pytest.mark.parametrize("fonction, politique", [
+    ("ministre de l'Éducation nationale", True),
+    ("députée LFI de Seine-Saint-Denis", True),
+    ("maire de Romans-sur-Isère", True),
+    ("vice-présidente de Reconquête", True),
+    ("ancien Premier ministre", True),
+    ("président de SOS Racisme", False),
+    ("comédien", False),
+    ("joueur du PSG", False),
+    ("", False),
+])
+def test_fonction_politique(conf, fonction, politique):
+    assert invites_web.fonction_politique(fonction, invites_web.mots_politiques(conf)) is politique
+
+
+def test_invite_hors_liste_retenu_par_sa_fonction(conf, connexion):
+    contenu = _avec_invites([{"nom": "Paul Nouveau", "fonction": "député Horizons du Calvados"},
+                             {"nom": "Dominique Sopo", "fonction": "président de SOS Racisme"}])
+    rapport = invites_web.collecter(conf, connexion, MAINTENANT, client=Client(reponse("trouve", content=contenu)))
+    assert rapport.trouvees == [("Le grand oral 2027", ["Paul Nouveau"])]
+    assert rapport.par_fonction == ["Paul Nouveau, député Horizons du Calvados (« Le grand oral 2027 », BFMTV)"]
+    assert rapport.inconnus == ["Dominique Sopo, président de SOS Racisme (« Le grand oral 2027 », BFMTV)"]
+    (e,) = affichage.emissions(connexion, MAINTENANT, MAINTENANT)
+    assert e["invites"] == ["Paul Nouveau"]
+    # Sa fonction s'affiche comme un sigle (page et email) ; politique.yaml l'emporte.
+    assert db.fonctions_trouvees(connexion) == {"Paul Nouveau": "député Horizons du Calvados"}
+    assert conf.nommer(["Paul Nouveau"], db.fonctions_trouvees(connexion)) == ["Paul Nouveau (député Horizons du Calvados)"]
+    assert db.inconnus_recents(connexion, MAINTENANT) == ["Dominique Sopo (« Le grand oral 2027 »)"]
+
+
+def test_fonction_sans_effet_si_reglage_arrete(conf, connexion):
+    conf.recherche = dict(conf.recherche, accepter_fonctions=False)
+    contenu = _avec_invites([{"nom": "Paul Nouveau", "fonction": "député Horizons du Calvados"}])
+    rapport = invites_web.collecter(conf, connexion, MAINTENANT, client=Client(reponse("trouve", content=contenu)))
+    assert rapport.trouvees == [] and rapport.par_fonction == []
+    assert rapport.inconnus == ["Paul Nouveau, député Horizons du Calvados (« Le grand oral 2027 », BFMTV)"]
+
+
+def test_grande_emission_ajoutee_avec_invite_retenu_par_sa_fonction(conf, tmp_path):
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    conf.recherche = dict(conf.recherche, a_surveiller=[{"titre": "Le 20h", "chaine": "TF1", "chaines": ["TF1"],
+                                                          "heure": "20:00", "duree": 45}])
+    contenu = _avec_invites([{"nom": "Paul Nouveau", "fonction": "ministre des Armées"}])
+    soir = datetime(2026, 11, 8, 17, 0, tzinfo=PARIS)
+    rapport = invites_web.collecter(conf, connexion, soir, client=Client(reponse("trouve", content=contenu)))
+    assert rapport.trouvees == [("Le 20h (TF1)", ["Paul Nouveau"])]
+    (e,) = [x for x in affichage.emissions(connexion, soir, soir.replace(hour=23)) if x["chaine"] == "TF1"]
+    assert e["titre"] == "Le 20h — Paul Nouveau" and e["invites"] == ["Paul Nouveau"]
+    connexion.close()
