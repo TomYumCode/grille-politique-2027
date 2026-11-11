@@ -455,7 +455,7 @@ Opus, Sonnet et Fable).
 ## Comparaison Haiku 5.5 et Sonnet 5.5 (11 novembre 2026, 8 h 42 – 8 h 48)
 
 `python -m grille comparer-modeles` (tâche « Essai des modèles Claude ») sur les 14 essais de
-`docs/essais_recherche.yaml`, une question par essai et par modèle, 2,2 $ au total :
+`docs/essais_recherche.yaml`, une question par essai et par modèle, 1,80 $ au total (Haiku 0,35 $, Sonnet 1,45 $) :
 
 | Modèle | Justes (invité connu) | Coût moyen par question |
 | --- | --- | --- |
