@@ -85,9 +85,11 @@ class Configuration:
         """Personnalités marquées « campagne: true » : porte-parole et équipes des candidats."""
         return {p["nom"] for p in self.personnalites if p.get("campagne")}
 
-    def nommer(self, noms: list[str]) -> list[str]:
-        """« Jean-Philippe Tanguy (RN) » : sigle de politique.yaml après le nom, s'il est connu."""
-        sigles = {p["nom"]: p["sigle"] for p in self.candidats + self.personnalites if p.get("sigle")}
+    def nommer(self, noms: list[str], fonctions: dict[str, str] | None = None) -> list[str]:
+        """« Jean-Philippe Tanguy (RN) » : sigle de politique.yaml après le nom, s'il est connu,
+        sinon la fonction trouvée par la recherche web (`fonctions`)."""
+        sigles = {**(fonctions or {}),
+                  **{p["nom"]: p["sigle"] for p in self.candidats + self.personnalites if p.get("sigle")}}
         return [f"{n} ({sigles[n]})" if n in sigles else n for n in noms]
 
     def noms_a_reperer(self) -> list[str]:
@@ -224,7 +226,7 @@ def _lire_notifications(chemin: Path, anomalies: list[str]) -> str:
 
 
 RECHERCHE_DEFAUT = {"actif": False, "modele": "claude-opus-5-5", "recherches_par_jour": 12, "avant_debut": 10,
-                    "apres_debut": 35, "heure_annonces": "17:00", "a_surveiller": []}
+                    "apres_debut": 35, "heure_annonces": "17:00", "accepter_fonctions": False, "a_surveiller": []}
 _HEURE = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
 
 
@@ -233,7 +235,8 @@ def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
     if not chemin.exists():
         return dict(RECHERCHE_DEFAUT)
     brut = _lire_yaml(chemin)
-    reglages = dict(RECHERCHE_DEFAUT, actif=brut.get("actif") is True)
+    reglages = dict(RECHERCHE_DEFAUT, actif=brut.get("actif") is True,
+                    accepter_fonctions=brut.get("accepter_fonctions") is True)
     modele = str(brut.get("modele") or RECHERCHE_DEFAUT["modele"]).strip()
     if not re.fullmatch(r"claude-[a-z0-9-]+", modele):
         anomalies.append(f"recherche.yaml : modèle illisible « {modele} », recherche arrêtée")

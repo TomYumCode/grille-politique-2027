@@ -124,3 +124,22 @@ def test_cles_effacees_des_comptes_rendus(tmp_path):
     assert "AIza" not in anomalies and "key=***" in anomalies
     assert db.masquer_cles("x-token=abc&y=1 sk-ant-api03-abcdefghijkl") == "x-token=***&y=1 ***"
     c.close()
+
+
+def test_version_13_fonctions_des_invites(tmp_path):
+    """Base de version 12 : la colonne « fonctions » s'ajoute, les recherches gardées."""
+    chemin = tmp_path / "g.sqlite"
+    connexion = db.ouvrir(chemin)
+    connexion.executescript("""
+        DROP TABLE recherches_invites;
+        CREATE TABLE recherches_invites (id TEXT PRIMARY KEY, titre TEXT NOT NULL, debut TEXT NOT NULL,
+            essais INTEGER NOT NULL DEFAULT 0, derniere TEXT NOT NULL, invites TEXT NOT NULL DEFAULT '[]',
+            inconnus TEXT NOT NULL DEFAULT '[]', source TEXT NOT NULL DEFAULT '');
+        INSERT INTO recherches_invites VALUES ('a', 'Face à face', '2026-11-11T08:30:00+01:00', 1,
+            '2026-11-11T08:30:58+01:00', '[]', '[]', '');
+    """)
+    connexion.close()
+    connexion = db.ouvrir(chemin)
+    assert connexion.execute("SELECT essais, fonctions FROM recherches_invites").fetchone() == (1, "{}")
+    assert db.fonctions_trouvees(connexion) == {}
+    connexion.close()

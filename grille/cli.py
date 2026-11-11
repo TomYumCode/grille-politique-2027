@@ -246,6 +246,9 @@ def _etape_invites(conf, connexion, maintenant, args) -> bool:
     if rapport.plafond_atteint:
         anomalies.append(f"plafond de {conf.recherche['recherches_par_jour']} questions par jour atteint "
                          "(config/recherche.yaml)")
+    if rapport.par_fonction:
+        anomalies.append("invités retenus par leur fonction, absents de politique.yaml (à y ajouter) : "
+                         + " ; ".join(rapport.par_fonction))
     connus = rss.noms_connus(conf)
     inconnus = db.inconnus_recents(connexion, maintenant, lambda nom: normaliser(nom) in connus)
     if inconnus:
@@ -578,7 +581,8 @@ def cmd_comparer_modeles(args: argparse.Namespace) -> int:
         prix = f"{r['cout']:.3f} $" if r["cout"] is not None else "prix inconnu"
         print(f"{r['essai']} — {r['modele']} : {verdict}")
         print(f"  trouvé : {', '.join(r['trouves']) or 'personne'}"
-              + (f" ; hors liste : {', '.join(r['inconnus'])}" if r["inconnus"] else "")
+              + (f" ; par sa fonction : {' ; '.join(r['par_fonction'])}" if r["par_fonction"] else "")
+              + (f" ; hors liste : {' ; '.join(r['inconnus'])}" if r["inconnus"] else "")
               + f" ; source {'confirmée' if r['confirmee'] else 'non confirmée'} {r['source']}"
               + (f" ; ERREUR {r['erreur']}" if r["erreur"] else ""))
         print(f"  {j['entree']} jetons lus, {j['sortie']} écrits, {j['recherches']} recherches web : {prix}")

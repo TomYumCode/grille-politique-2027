@@ -8,9 +8,13 @@
 #   avant_debut         : minutes avant le début où la recherche peut commencer
 #   apres_debut         : minutes après le début où elle s'arrête
 #   heure_annonces      : heure du premier essai pour les émissions à surveiller
+#   accepter_fonctions  : true pour retenir aussi un invité absent de politique.yaml quand
+#                         Claude lui donne une fonction politique (« ministre », « député »,
+#                         « maire »… de politique.yaml, ou un parti) ; signalé dans l'email
+#                         pour l'ajouter à la liste
 #   a_surveiller        : grandes émissions absentes de la grille qui reçoivent parfois un
 #                         responsable politique ; elles n'entrent dans la grille que si Claude
-#                         trouve un invité de politique.yaml (deux essais par jour : à
+#                         trouve un invité politique (de politique.yaml, ou par sa fonction) (deux essais par jour : à
 #                         heure_annonces, puis juste avant l'émission). Chaîne : nom exact de
 #                         chaines.yaml, ou une liste pour une émission diffusée sur plusieurs
 #                         chaînes ; heure : début habituel ; duree : minutes (45 par défaut).
@@ -20,6 +24,7 @@ recherches_par_jour: 20
 avant_debut: 10
 apres_debut: 35
 heure_annonces: "17:00"
+accepter_fonctions: true
 a_surveiller:
   - {titre: "Le 20h", chaine: "TF1", heure: "20:00", duree: 45}
   - {titre: "Le 20h", chaine: "France 2", heure: "20:00", duree: 45}

@@ -272,10 +272,13 @@ commence dans les 10 minutes ou a commencé depuis moins de 30 minutes, sans inv
 confiée à Claude, qui cherche sur le web (annonce de la chaîne, presse, extraits publiés
 pendant l'émission) et répond par un nom et la page qui le confirme (`grille/invites_web.py`).
 
-- Un nom n'est ajouté que s'il est dans `config/politique.yaml` et que la page citée fait
-  partie des résultats de la recherche. Un nom inconnu est signalé dans l'email du matin
-  (« invités trouvés mais absents de politique.yaml ») : l'ajouter à la liste, et il sera
-  repris la fois suivante.
+- Un nom est ajouté s'il est dans `config/politique.yaml`, ou si Claude lui donne une
+  fonction politique (« ministre de l'Éducation nationale », « députée LFI », « maire de… »,
+  ou le nom d'un parti ; réglage `accepter_fonctions` de `config/recherche.yaml`), et que la
+  page citée fait partie des résultats de la recherche. La fonction s'affiche à côté du nom.
+  L'email signale ces noms (« invités retenus par leur fonction… (à y ajouter) ») et ceux sans
+  fonction politique (« invités trouvés mais absents de politique.yaml ») : les ajouter à la
+  liste pour leur donner un sigle.
 - Deux essais au plus par émission, et un plafond de questions par jour.
 - Réglages sans code dans `config/recherche.yaml` : `actif: false` arrête tout, `modele`
   choisit le modèle, `recherches_par_jour` borne le coût. Chaque collecte affiche les jetons

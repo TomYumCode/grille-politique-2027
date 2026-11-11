@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 CHEMIN_BASE = Path(__file__).resolve().parent.parent / "data" / "grille.sqlite"
-VERSION_SCHEMA = 12
+VERSION_SCHEMA = 13
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS emissions (
@@ -102,7 +102,10 @@ CREATE TABLE IF NOT EXISTS recherches_invites (
     derniere    TEXT NOT NULL,                    -- heure du dernier essai
     invites     TEXT NOT NULL DEFAULT '[]',       -- noms retenus (dans politique.yaml)
     inconnus    TEXT NOT NULL DEFAULT '[]',       -- noms trouvés mais absents de politique.yaml
-    source      TEXT NOT NULL DEFAULT ''          -- page qui confirme
+    source      TEXT NOT NULL DEFAULT '',         -- page qui confirme
+    -- Version 13 : invités absents de politique.yaml retenus par leur fonction politique
+    -- (nom → fonction), affichée à côté du nom comme le sigle d'une personnalité de la liste.
+    fonctions   TEXT NOT NULL DEFAULT '{}'
 );
 
 -- Version 11 : mesure des flux RSS (grille/rss.py) : annonces probables de passages médias,
@@ -184,6 +187,9 @@ def _ajouter_colonnes(connexion: sqlite3.Connection) -> None:
                             ("nature", "TEXT NOT NULL DEFAULT ''")):
         if nom not in colonnes:
             connexion.execute(f"ALTER TABLE emissions ADD COLUMN {nom} {definition}")
+    # Version 13 : fonction des invités retenus par leur fonction politique.
+    if "fonctions" not in {r[1] for r in connexion.execute("PRAGMA table_info(recherches_invites)")}:
+        connexion.execute("ALTER TABLE recherches_invites ADD COLUMN fonctions TEXT NOT NULL DEFAULT '{}'")
 
 
 def _accepter_la_radio(connexion: sqlite3.Connection) -> None:
@@ -441,19 +447,29 @@ def recherches_du_jour(connexion: sqlite3.Connection, maintenant: datetime) -> i
 
 
 def noter_recherche(connexion: sqlite3.Connection, emission: dict, maintenant: datetime, invites: list[str],
-                    inconnus: list[str], source: str) -> None:
+                    inconnus: list[str], source: str, fonctions: dict[str, str] | None = None) -> None:
     """Un essai de plus pour cette émission ; oublie les recherches de plus de 8 jours."""
     connexion.execute(
-        "INSERT INTO recherches_invites (id, titre, debut, essais, derniere, invites, inconnus, source) "
-        "VALUES (?, ?, ?, 1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET essais = essais + 1, "
+        "INSERT INTO recherches_invites (id, titre, debut, essais, derniere, invites, inconnus, source, fonctions) "
+        "VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET essais = essais + 1, "
         "derniere = excluded.derniere, invites = excluded.invites, inconnus = excluded.inconnus, "
-        "source = excluded.source",
+        "source = excluded.source, fonctions = excluded.fonctions",
         (emission["id"], emission["titre"], emission["debut"], maintenant.isoformat(timespec="seconds"),
-         json.dumps(invites, ensure_ascii=False), json.dumps(inconnus, ensure_ascii=False), source),
+         json.dumps(invites, ensure_ascii=False), json.dumps(inconnus, ensure_ascii=False), source,
+         json.dumps(fonctions or {}, ensure_ascii=False)),
     )
     connexion.execute("DELETE FROM recherches_invites WHERE debut < ?",
                       ((maintenant - timedelta(days=8)).isoformat(timespec="seconds"),))
     connexion.commit()
+
+
+def fonctions_trouvees(connexion: sqlite3.Connection) -> dict[str, str]:
+    """Nom → fonction des invités retenus par leur fonction politique (recherches des 8 derniers
+    jours ; la plus récente l'emporte)."""
+    resultat: dict[str, str] = {}
+    for (fonctions,) in connexion.execute("SELECT fonctions FROM recherches_invites ORDER BY derniere"):
+        resultat.update(json.loads(fonctions or "{}"))
+    return resultat
 
 
 def inconnus_recents(connexion: sqlite3.Connection, maintenant: datetime,

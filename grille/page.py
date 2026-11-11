@@ -52,7 +52,9 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
         "logos": logos,
         # Directs des stations de radio : « Écouter en direct », les autres liens radio menant à l'émission.
         "directs": sorted({d for c in config.chaines if c.plateforme == "radio" for d in c.direct}),
-        "sigles": {p["nom"]: p["sigle"] for p in config.candidats + config.personnalites if p.get("sigle")},
+        # Sigle de politique.yaml, sinon fonction donnée par la recherche web (« ministre de… »).
+        "sigles": {**db.fonctions_trouvees(connexion),
+                   **{p["nom"]: p["sigle"] for p in config.candidats + config.personnalites if p.get("sigle")}},
         # Service de notifications (vide : la page ne les propose pas).
         "notifications": config.notifications,
         "emissions": emissions,

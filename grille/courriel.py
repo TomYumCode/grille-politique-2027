@@ -134,8 +134,11 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
     ]
     classer = Campagne(config).motif
 
+    fonctions = db.fonctions_trouvees(connexion)
+
     def nommer(e: dict) -> dict:
-        return dict(e, invites_affiches=config.nommer(e["invites"]), cites_affiches=config.nommer(e.get("cites") or []),
+        return dict(e, invites_affiches=config.nommer(e["invites"], fonctions),
+                    cites_affiches=config.nommer(e.get("cites") or []),
                     presentation=affichage.presentation(e))
 
     return {
