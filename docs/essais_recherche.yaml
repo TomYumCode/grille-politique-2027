@@ -23,3 +23,17 @@ essais:
      fin: "2026-11-10T09:00:00+01:00", attendu: ["Dominique de Villepin"]}
   - {titre: "L'invité politique Sud Radio", chaine: "Sud Radio", plateforme: radio,
      debut: "2026-11-10T08:30:00+01:00", fin: "2026-11-10T08:50:00+01:00", attendu: ["Marie-Hélène Thoraval"]}
+  # Matinales du 11 novembre 2026 (jour férié). Face à face : invité signalé par le propriétaire
+  # de la grille. RTL : Dominique Sopo (SOS Racisme, grille de RTL), hors liste : aucun invité
+  # politique attendu. franceinfo, Europe 1, Sud Radio : invités non vérifiés (sites et moteurs
+  # de recherche sans réponse le matin même).
+  - {titre: "Face à face", chaine: "BFMTV", plateforme: tv, debut: "2026-11-11T08:30:00+01:00",
+     fin: "2026-11-11T09:00:00+01:00", attendu: ["Édouard Geffray"]}
+  - {titre: "L'invité RTL de 7h40", chaine: "RTL", plateforme: radio, debut: "2026-11-11T07:43:00+01:00",
+     fin: "2026-11-11T07:55:00+01:00", attendu: []}
+  - {titre: "L'invité politique", chaine: "franceinfo", plateforme: tv, debut: "2026-11-11T07:40:00+01:00",
+     fin: "2026-11-11T07:55:00+01:00"}
+  - {titre: "La Grande interview Europe 1 - CNews", chaine: "Europe 1", plateforme: radio,
+     debut: "2026-11-11T08:10:00+01:00", fin: "2026-11-11T08:30:00+01:00"}
+  - {titre: "L'invité politique Sud Radio", chaine: "Sud Radio", plateforme: radio,
+     debut: "2026-11-11T08:30:00+01:00", fin: "2026-11-11T08:50:00+01:00"}
