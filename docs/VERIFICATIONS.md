@@ -452,6 +452,31 @@ voir. Surveillance des 20 h de TF1 et France 2 : deux questions par émission et
 recherche de base (`web_search_20250305`) et pas de modèle de repli (`fallbacks` réservé à
 Opus, Sonnet et Fable).
 
+## Comparaison Haiku 5.5 et Sonnet 5.5 (11 novembre 2026, 8 h 42 – 8 h 48)
+
+`python -m grille comparer-modeles` (tâche « Essai des modèles Claude ») sur les 14 essais de
+`docs/essais_recherche.yaml`, une question par essai et par modèle, 1,80 $ au total (Haiku 0,35 $, Sonnet 1,45 $) :
+
+| Modèle | Justes (invité connu) | Coût moyen par question |
+| --- | --- | --- |
+| `claude-haiku-5-5` | 6 sur 10 | 0,025 $ |
+| `claude-sonnet-5-5` | 4 sur 10 | 0,104 $ |
+
+- Trouvés après coup par Haiku, manqués en direct le 10 novembre : Dominique de Villepin
+  (Face à face), Marie-Hélène Thoraval (Sud Radio, absente de la liste ce matin-là).
+- Manqués par les deux modèles, même après coup : les invités de 7 h 40 (franceinfo, RTL) et de
+  8 h 10 (Europe 1) du 10 novembre. Le 10 au matin, la recherche en direct avait pourtant trouvé
+  Charles Alloncle (RTL) : d'un essai à l'autre, les réponses varient.
+- Face à face du 11 novembre : Édouard Geffray trouvé par Sonnet seul (message de
+  @BFMTV_Inside), pendant l'émission.
+- Sud Radio du 11 novembre : Haiku répond Marion Maréchal (message de sa part, publié la veille
+  à 12 h 14), non vérifié ; la recherche en direct de 8 h 45 n'a rien trouvé.
+- Recherche web directe le matin même (moteur de recherche) : aucune des matinales du jour
+  n'est encore indexée ; les sites de franceinfo, Europe 1, Sud Radio, RTL et RMC ne sont pas
+  joignables depuis l'environnement de développement.
+
+Décision : Haiku 5.5 reste le modèle de la recherche (plus juste et quatre fois moins cher).
+
 ## Flux RSS (9 novembre 2026)
 
 Relevé par une sonde GitHub (33 adresses essayées). Répondent avec un flux lisible : franceinfo
