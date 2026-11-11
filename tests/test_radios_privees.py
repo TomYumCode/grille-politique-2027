@@ -138,7 +138,8 @@ def test_collecte(conf, tmp_path):
     assert "https://www.sudradio.fr/programmes?week=1" in session.appels
     titres = {(e["chaine"], e["titre"]) for e in rapport.retenues}
     assert ("RTL", "L'invité RTL de 7h40") in titres
-    assert ("RTL", "Face à Fogiel") in titres
+    # Face à Fogiel sans invité nommé n'est plus retenue d'emblée (11 novembre 2026).
+    assert ("RTL", "Face à Fogiel") not in titres
     assert ("Europe 1", "La Grande interview Europe 1 - CNews") in titres
     assert ("Sud Radio", "L'invité politique Sud Radio") in titres
     assert ("RMC", "Face à Face") in titres
