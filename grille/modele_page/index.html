@@ -33,11 +33,17 @@
 <script>
 // Écran d'ouverture : seulement au lancement, pas quand on arrive par une notification
 // (#emission=…) ni avec le réglage « Réduire les animations ». L'animation (ouverture.json,
-// lue par lottie_light.min.js) se charge tout de suite ; en attendant, son image fixe
-// (ouverture.svg) est déjà affichée.
+// lue par lottie_light.min.js) se charge tout de suite ; en attendant, sa première image (fond
+// et logo, dans style.css) est déjà affichée.
 if (/#emission=/.test(location.hash) || matchMedia("(prefers-reduced-motion: reduce)").matches) {
   document.documentElement.classList.add("sans-ouverture");
 } else {
+  // Page installée sur iPhone, en portrait : l'écran d'ouverture prend la taille de l'écran,
+  // comme l'image de démarrage d'iOS (la zone d'affichage peut être plus petite au lancement).
+  if (navigator.standalone && screen.height > screen.width) {
+    document.documentElement.style.setProperty("--hauteur-ecran", screen.height + "px");
+    document.documentElement.classList.add("ecran-fixe");
+  }
   window.animationOuverture = fetch("ouverture.json").then((r) => r.json()).catch(() => null);
   const lecteur = document.createElement("script");
   lecteur.src = "lottie_light.min.js";
@@ -48,7 +54,6 @@ if (/#emission=/.test(location.hash) || matchMedia("(prefers-reduced-motion: red
 </head>
 <body>
 <div id="ouverture" class="ouverture" aria-hidden="true" style="background-color:#1d3a5f">
-  <img src="ouverture.svg" alt="">
   <div class="ouverture-anim"></div>
 </div>
 <header class="entete">

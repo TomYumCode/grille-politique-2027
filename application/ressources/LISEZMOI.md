@@ -17,17 +17,14 @@ est converti en tracés : les fichiers s'affichent à l'identique sans police in
 - `grille/modele_page/ouverture.json` : copie de `ecran-ouverture-anime.json`, lue par
   `lottie_light.min.js` (lottie-web 5.12.2, licence MIT : `LICENCE-lottie-web.txt`) ; la
   recopier après tout changement ;
-- `grille/modele_page/ouverture.svg` : première image de l'animation, affichée tout de suite le
-  temps que l'animation se charge (à refaire si la première image change) ;
-- le fond est `fond-ouverture.webp`, intégré dans `.ouverture` de `grille/modele_page/style.css`
-  (image en base64, affichée dès la première image) ; à réintégrer après tout changement ;
-  le logo fixe `TypoLogo_V2.ai` du propriétaire correspond au pixel près à la première image
-  de l'animation.
-
+- `ouverture-depart.webp` : fond et logo réunis, identique à la première image de l'animation ;
+  affiché dès le lancement, puis remplacé par `fond-ouverture.webp` sous l'animation. Les deux
+  sont intégrés (base64) dans `.ouverture` de `grille/modele_page/style.css` : à réintégrer après
+  tout changement. Même cadrage partout (« cover » : l'image remplit l'écran) ;
 - `grille/modele_page/demarrage/` : écrans de démarrage de la page installée sur iPhone
   (`apple-touch-startup-image`), affichés par iOS pendant l'agrandissement de l'icône au lieu
-  d'un écran blanc (noir en mode sombre) ; en JPEG, faits par `ecrans_demarrage.js` (à relancer après un
-  changement de `ouverture.svg` ou du fond).
+  d'un écran blanc (noir en mode sombre) ; en JPEG, faits par `ecrans_demarrage.js` à partir de
+  l'image de départ (à relancer après un changement).
 
 Les SVG « C bleue » ci-dessus restent la référence du logo (première version, logo à 100 %).
 

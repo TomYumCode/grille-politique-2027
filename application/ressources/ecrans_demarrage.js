@@ -1,7 +1,8 @@
 // Écrans de démarrage de la page installée sur iPhone (apple-touch-startup-image) : la première
-// image de l'animation d'ouverture sur son fond, une image par taille d'écran. iOS l'affiche
+// image de l'animation d'ouverture sur son fond (image de départ de .ouverture, style.css), une
+// image par taille d'écran. iOS l'affiche
 // pendant l'agrandissement de l'icône, à la place de l'écran blanc (ou noir en mode sombre).
-// À relancer après un changement de ouverture.svg ou du fond (.ouverture de style.css) :
+// À relancer après un changement de l'image de départ (.ouverture de style.css) :
 //   node application/ressources/ecrans_demarrage.js
 // (Playwright et Chromium nécessaires ; écrit grille/modele_page/demarrage/*.jpg et affiche les
 // lignes <link> à recopier dans index.html.) JPEG plutôt que PNG : le dégradé tricolore du fond
@@ -23,7 +24,7 @@ const ECRANS = [
   // Page de rendu en fichier (une page vide ne peut pas lire les fichiers du disque).
   const rendu = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "demarrage-")), "rendu.html");
   fs.writeFileSync(rendu, `<!doctype html><html><head><link rel="stylesheet" href="file://${MODELE}/style.css"></head>
-    <body><div class="ouverture"><img src="file://${MODELE}/ouverture.svg" alt=""></div></body></html>`);
+    <body><div class="ouverture"></div></body></html>`);
   const liens = [];
   for (const [l, h, d] of ECRANS) {
     const page = await navigateur.newPage({ viewport: { width: l, height: h }, deviceScaleFactor: d });
