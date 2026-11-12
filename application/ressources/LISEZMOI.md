@@ -21,6 +21,11 @@ est converti en tracés : les fichiers s'affichent à l'identique sans police in
 - le fond (bleu éclairci en haut, assombri en bas) est en CSS (`.ouverture` de
   `grille/modele_page/style.css`), d'après la maquette du propriétaire.
 
+- `grille/modele_page/demarrage/` : écrans de démarrage de la page installée sur iPhone
+  (`apple-touch-startup-image`), affichés par iOS pendant l'agrandissement de l'icône au lieu
+  d'un écran blanc (noir en mode sombre) ; faits par `ecrans_demarrage.js` (à relancer après un
+  changement de `ouverture.svg` ou du fond).
+
 Les SVG « C bleue » ci-dessus restent la référence du logo (première version, logo à 100 %).
 
 Point rouge : 45 % de la case centrale (réduit par le propriétaire le 10 novembre 2026). Couleurs : bleu du fond `#1f3a5f` (`#1f3b5f` dans l'animation et son fond), bleu du drapeau `#2f63d6`, rouge `#d32f2f`, blanc `#ffffff`,
