@@ -212,6 +212,9 @@ presidentielle:
     - "parrainages"
     - "réunion publique"
     - "2027 raisons de voter"
+    # BFMTV : un candidat par soirée (« Vous Président : Bruno Retailleau », « Vous Présidente »).
+    - "Vous Président"
+    - "Vous Présidente"
 
 # Filtre 1 : liste blanche.
 liste_blanche:
@@ -254,6 +257,10 @@ liste_blanche:
     # (le guide ne nomme pas l'invité). Le début du titre suffit (« 100% Politique Week-End »).
     - {titre: "BFM Politique", chaine: "BFMTV"}
     - {titre: "Le grand oral 2027", chaine: "BFMTV"}
+    # Un candidat par soirée (« Vous Président : Bruno Retailleau », « Vous Présidente »,
+    # 3 et 12 novembre 2026). Le début du titre suffit ; les deux formes (mots entiers).
+    - {titre: "Vous Président", chaine: "BFMTV"}
+    - {titre: "Vous Présidente", chaine: "BFMTV"}
     - {titre: "100% Politique", chaine: "CNews"}
     - {titre: "L'invité politique", chaine: "franceinfo"}
     - {titre: "C politique", chaine: "France 5"}
@@ -336,6 +343,9 @@ cas_douteux:
     - "Le Grand Matin"
     - "Parlons vrai chez Bourdin"
     - "L'invité"
+    # Invité (un candidat) cherché par Claude si le guide ne le nomme pas.
+    - "Vous Président"
+    - "Vous Présidente"
     # Retirée des émissions toujours retenues le 11 novembre 2026 : invités souvent hors
     # politique (Ginette Kolinka, Maxime Gleizes). Retenue quand le résumé de RTL nomme une
     # personnalité de la liste ou lui donne une fonction politique.

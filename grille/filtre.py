@@ -32,7 +32,9 @@ _INDICES_CATEGORIE = [
                    # « Marine Tondelier… sera interrogée sur son programme » (« Vous Présidente »,
                    # BFMTV, 12 novembre 2026).
                    "sera interroge", "sera interrogee", "seront interroges", "repondra aux questions",
-                   "repondront aux questions"]),
+                   "repondront aux questions",
+                   # BFMTV, un candidat par soirée (« Vous Président : Bruno Retailleau »).
+                   "vous president", "vous presidente"]),
 ]
 
 
