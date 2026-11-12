@@ -78,6 +78,15 @@ def test_emission_limitee_a_une_chaine(politique):
         ("France 5", "C à vous", "Avec Gabriel Attal et Marine Tondelier, puis Bruno Retailleau en duplex.", "",
          ["Gabriel Attal", "Bruno Retailleau", "Marine Tondelier"], []),
         ("BFMTV", "Face à face", "Apolline de Malherbe reçoit Jordan Bardella.", "", ["Jordan Bardella"], []),
+        # Précision entre virgules avant « sera interrogée » (« Vous Présidente », BFMTV, 12 novembre 2026).
+        ("BFMTV", "Vous Présidente",
+         "Marine Tondelier, candidate Les Ecologistes à l'élection présidentielle, sera interrogée sur les grandes "
+         "orientations de son programme, sa conception du pouvoir, les ressorts de son engagement.", "",
+         ["Marine Tondelier"], []),
+        # Une précision suivie d'autre chose qu'un signe : seulement citée.
+        ("France 5", "C pas si loin",
+         "Marine Tondelier, candidate Les Ecologistes, a visité la Guadeloupe la semaine dernière.", "",
+         [], ["Marine Tondelier"]),
         # Émission d'interview sans nom dans le titre : la première personne du résumé.
         ("Radio Classique", "L’invité de la matinale", "Marine Tondelier, candidate des Écologistes", "",
          ["Marine Tondelier"], []),
