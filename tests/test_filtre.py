@@ -52,6 +52,21 @@ def test_chaine_de_parti_toujours_retenue(politique):
     assert decision.filtre == "liste blanche"
 
 
+@pytest.mark.parametrize("titre", ["Vous Présidente", "Vous Président : Bruno Retailleau", "Vous Président"])
+def test_vous_president_toujours_dans_la_grille_et_la_campagne(politique, titre):
+    """BFMTV, un candidat par soirée : retenue même sans description, interview, et dans le
+    bouton « Présidentielle 2027 » (12 novembre 2026)."""
+    from grille.campagne import Campagne
+    from grille import invites_web
+    f, chaines = politique
+    d = f.decider(chaines["BFMTV"], titre, "")
+    assert (d.filtre, d.categorie) == ("liste blanche", "interview")
+    e = {"titre": titre, "invites": d.invites, "cites": d.cites, "categorie": d.categorie, "chaine": "BFMTV",
+         "plateforme": "tv", "filtre": d.filtre, "nature": ""}
+    assert Campagne(config.charger()).motif(e)
+    assert invites_web.emission_a_invite(e, config.charger())  # invité cherché par Claude si inconnu
+
+
 def test_emission_limitee_a_une_chaine(politique):
     f, chaines = politique
     assert f.decider(chaines["BFMTV"], "Face-à-Face", "").filtre == "liste blanche"
