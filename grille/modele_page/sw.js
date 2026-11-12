@@ -1,7 +1,10 @@
-// Mode hors connexion : réseau d'abord, dernière version enregistrée sinon.
+// Mode hors connexion : réseau d'abord, dernière version enregistrée sinon. Fichiers appelés
+// avec leur version (« style.css?v=… », grille/page.py) : servis tout de suite depuis le
+// téléphone, sans attendre le réseau (l'écran d'ouverture s'affiche dès le lancement).
 const CACHE = "grille-2027";
-const FICHIERS = ["./", "index.html", "sources.html", "style.css", "favoris.js", "app.js", "manifest.webmanifest", "ouverture.svg", "ouverture.json", "lottie_light.min.js", "icone-180.png", "icone-192.png",
-  "icone-512.png"];
+// (style.css sans version : pour sources.html.)
+const FICHIERS = ["./", "index.html", "sources.html", "style.css", "favoris.js", "app.js", "manifest.webmanifest",
+  "icone-180.png", "icone-192.png", "icone-512.png"];
 
 self.addEventListener("install", (ev) => {
   ev.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHIERS)).then(() => self.skipWaiting()));
@@ -46,6 +49,22 @@ self.addEventListener("fetch", (ev) => {
         return reponse;
       })))
     );
+    return;
+  }
+  const adresse = new URL(ev.request.url);
+  if (adresse.searchParams.has("v")) {
+    // Version précise d'un fichier : elle ne change jamais ; les autres versions du même
+    // fichier sont effacées quand une nouvelle arrive.
+    ev.respondWith(caches.open(CACHE).then((c) => c.match(ev.request).then((r) => r || fetch(ev.request).then((reponse) => {
+      if (reponse.ok) {
+        c.keys().then((cles) => cles.filter((k) => {
+          const u = new URL(k.url);
+          return u.pathname === adresse.pathname && u.search !== adresse.search;
+        }).forEach((k) => c.delete(k)));
+        c.put(ev.request, reponse.clone());
+      }
+      return reponse;
+    }).catch(() => c.match(ev.request, { ignoreSearch: true })))));
     return;
   }
   // « no-cache » : toujours demander au serveur si la page a changé (GitHub Pages autorise

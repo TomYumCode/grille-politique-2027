@@ -7,6 +7,7 @@ serveur d'application. Elle est régénérée après chaque collecte.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 import shutil
@@ -20,6 +21,10 @@ from grille.filtre import normaliser
 from grille.tv import JOURS_AFFICHES, PARIS
 
 MODELE = Path(__file__).resolve().parent / "modele_page"
+# Fichiers appelés par index.html avec leur version (« style.css?v=… », empreinte du contenu) :
+# le téléphone les garde et les sert sans attendre le réseau (sw.js) ; une nouvelle version
+# change l'adresse, donc elle est chargée à la publication suivante.
+VERSIONNES = ("style.css", "favoris.js", "app.js", "lottie_light.min.js", "ouverture.json")
 SORTIE = Path(__file__).resolve().parent.parent / "site"
 CHAMPS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "categorie", "invites", "cites", "lien", "statut",
           "filtre", "nature")
@@ -78,6 +83,10 @@ def generer(connexion, config: Configuration, maintenant: datetime, sortie: Path
     contenu = json.dumps(tout, ensure_ascii=False, separators=(",", ":"))
     # « </ » fermerait la balise <script> qui contient les données.
     contenu = contenu.replace("</", "<\\/")
-    page = (MODELE / "index.html").read_text(encoding="utf-8").replace("__DONNEES__", contenu)
+    page = (MODELE / "index.html").read_text(encoding="utf-8")
+    for nom in VERSIONNES:
+        empreinte = hashlib.sha256((MODELE / nom).read_bytes()).hexdigest()[:10]
+        page = page.replace(f'"{nom}"', f'"{nom}?v={empreinte}"')
+    page = page.replace("__DONNEES__", contenu)
     (sortie / "index.html").write_text(page, encoding="utf-8")
     return sortie / "index.html"

@@ -690,8 +690,9 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // Écran d'ouverture : l'animation (1,5 s) puis un fondu de 0,3 s. Animation pas prête au bout de
-// 1,2 s (premier lancement sur un réseau lent, fichier absent) : l'image fixe reste 1,3 s,
-// comme avant. Retrait de toute façon au bout de 4 s.
+// 1,2 s (premier lancement sur un réseau lent, fichier absent) : l'image de départ reste 1,3 s.
+// Retrait de toute façon au bout de 4 s. « anime » : l'animation est en place, le fond seul
+// remplace l'image de départ (le logo est alors dessiné par l'animation).
 const ecranOuverture = document.getElementById("ouverture");
 if (ecranOuverture) {
   if (document.documentElement.classList.contains("sans-ouverture")) {
@@ -721,9 +722,12 @@ function lancerOuverture(ecran) {
     clearTimeout(secours);
     const anim = window.lottie.loadAnimation({
       container: ecran.querySelector(".ouverture-anim"), renderer: "svg", loop: false, autoplay: true,
-      animationData: donnees, rendererSettings: { preserveAspectRatio: "xMidYMid meet" },
+      // Même cadrage que l'image de départ (« cover ») : l'animation se pose exactement dessus.
+      animationData: donnees, rendererSettings: { preserveAspectRatio: "xMidYMid slice" },
     });
-    anim.addEventListener("DOMLoaded", () => ecran.classList.add("anime"));
+    // Première image de l'animation dessinée : le fond seul remplace l'image de départ.
+    const enPlace = () => { anim.removeEventListener("enterFrame", enPlace); ecran.classList.add("anime"); };
+    anim.addEventListener("enterFrame", enPlace);
     anim.addEventListener("complete", finir);
     anim.addEventListener("data_failed", finir);
   });

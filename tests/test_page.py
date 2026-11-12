@@ -59,6 +59,10 @@ def test_page_generee_avec_les_emissions_du_jour_et_de_la_semaine(connexion, tmp
     images = re.findall(r'rel="apple-touch-startup-image" href="([^"]+)"', html)
     assert len(images) >= 10 and all((tmp_path / "site" / i).exists() for i in images)
     page.generer(connexion, config.charger(), MAINTENANT, tmp_path / "site")
+    # Fichiers appelés avec leur version (empreinte du contenu) : servis depuis le téléphone.
+    for nom in page.VERSIONNES:
+        assert re.search(rf'"{re.escape(nom)}\?v=[0-9a-f]{{10}}"', html), nom
+    assert '"style.css"' not in html
 
 
 def test_manifeste_et_service_worker_coherents(tmp_path):
