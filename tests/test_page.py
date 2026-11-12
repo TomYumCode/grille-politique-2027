@@ -51,8 +51,14 @@ def test_page_generee_avec_les_emissions_du_jour_et_de_la_semaine(connexion, tmp
     assert len(candidats) == len(config.charger().candidats)
     assert donnees["emissions"][1]["titre"] == "Débat </script> piégé"
     for fichier in ("app.js", "style.css", "sw.js", "manifest.webmanifest", "icone-180.png", "icone-512.png", "robots.txt",
-                    "sources.html"):
+                    "sources.html", "ouverture.json", "lottie_light.min.js"):
         assert (tmp_path / "site" / fichier).exists()
+    # Écrans de démarrage de la page installée sur iPhone : chaque image annoncée existe, et
+    # une seconde publication par-dessus la première passe.
+    html = index.read_text(encoding="utf-8")
+    images = re.findall(r'rel="apple-touch-startup-image" href="([^"]+)"', html)
+    assert len(images) >= 10 and all((tmp_path / "site" / i).exists() for i in images)
+    page.generer(connexion, config.charger(), MAINTENANT, tmp_path / "site")
 
 
 def test_manifeste_et_service_worker_coherents(tmp_path):

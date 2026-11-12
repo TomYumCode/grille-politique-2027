@@ -65,7 +65,9 @@ def generer(connexion, config: Configuration, maintenant: datetime, sortie: Path
     """Écrit le site complet dans `sortie` et renvoie le chemin de index.html."""
     sortie.mkdir(parents=True, exist_ok=True)
     for fichier in MODELE.iterdir():
-        if fichier.name != "index.html":
+        if fichier.is_dir():  # demarrage/ : écrans de démarrage de la page installée sur iPhone
+            shutil.copytree(fichier, sortie / fichier.name, dirs_exist_ok=True)
+        elif fichier.name != "index.html":
             shutil.copy2(fichier, sortie / fichier.name)
     tout = donnees(connexion, config, maintenant)
     # Version légère relue toutes les 5 minutes par le service de notifications (notifications/).
