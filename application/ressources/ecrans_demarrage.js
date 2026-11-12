@@ -3,11 +3,9 @@
 // pendant l'agrandissement de l'icône, à la place de l'écran blanc (ou noir en mode sombre).
 // À relancer après un changement de ouverture.svg ou du fond (.ouverture de style.css) :
 //   node application/ressources/ecrans_demarrage.js
-// (Playwright et Chromium nécessaires ; écrit grille/modele_page/demarrage/*.png et affiche les
-// lignes <link> à recopier dans index.html.) Puis réduire les fichiers (256 couleurs, de 450 à
-// 160 Ko environ, sans différence visible) :
-//   python3 -c "import glob; from PIL import Image; [Image.open(f).convert('RGB').quantize(256,
-//     dither=Image.Dither.FLOYDSTEINBERG).save(f, optimize=True) for f in glob.glob('grille/modele_page/demarrage/*.png')]"
+// (Playwright et Chromium nécessaires ; écrit grille/modele_page/demarrage/*.jpg et affiche les
+// lignes <link> à recopier dans index.html.) JPEG plutôt que PNG : le dégradé tricolore du fond
+// reste lisse (un PNG réduit à 256 couleurs fait des bandes) et le fichier est léger.
 const { chromium } = require("playwright");
 const fs = require("fs");
 const os = require("os");
@@ -30,8 +28,8 @@ const ECRANS = [
   for (const [l, h, d] of ECRANS) {
     const page = await navigateur.newPage({ viewport: { width: l, height: h }, deviceScaleFactor: d });
     await page.goto("file://" + rendu, { waitUntil: "load" });
-    const nom = `demarrage-${l * d}x${h * d}.png`;
-    await page.screenshot({ path: path.join(MODELE, "demarrage", nom) });
+    const nom = `demarrage-${l * d}x${h * d}.jpg`;
+    await page.screenshot({ path: path.join(MODELE, "demarrage", nom), type: "jpeg", quality: 88 });
     await page.close();
     liens.push(`<link rel="apple-touch-startup-image" href="demarrage/${nom}" media="(device-width: ${l}px) and `
       + `(device-height: ${h}px) and (-webkit-device-pixel-ratio: ${d}) and (orientation: portrait)">`);

@@ -689,7 +689,7 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-// Écran d'ouverture : l'animation (2 s) puis un fondu de 0,3 s. Animation pas prête au bout de
+// Écran d'ouverture : l'animation (1,5 s) puis un fondu de 0,3 s. Animation pas prête au bout de
 // 1,2 s (premier lancement sur un réseau lent, fichier absent) : l'image fixe reste 1,3 s,
 // comme avant. Retrait de toute façon au bout de 4 s.
 const ecranOuverture = document.getElementById("ouverture");
