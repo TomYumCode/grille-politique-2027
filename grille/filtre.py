@@ -28,7 +28,11 @@ _INDICES_CATEGORIE = [
     ("meeting", ["meeting", "discours", "declaration", "conference de presse", "allocution", "voeux",
                  "reunion publique"]),
     ("interview", ["interview", "entretien", "invite", "invitee", "l invite", "grand jury", "questions politiques",
-                   "les quatre verites", "face aux francais", "l heure de verite", "grand entretien"]),
+                   "les quatre verites", "face aux francais", "l heure de verite", "grand entretien",
+                   # « Marine Tondelier… sera interrogée sur son programme » (« Vous Présidente »,
+                   # BFMTV, 12 novembre 2026).
+                   "sera interroge", "sera interrogee", "seront interroges", "repondra aux questions",
+                   "repondront aux questions"]),
 ]
 
 
@@ -42,8 +46,11 @@ _SIGNES_EVENEMENT = ["meeting de", "meeting d", "discours de", "discours d", "al
                      "declaration de", "declaration d", "voeux de", "voeux d"]
 # Mots qui, juste après un nom, disent la même chose (« Gabriel Attal, invité de… », « … répond »).
 _SIGNES_APRES = ["invite", "invitee", "sera l invite", "sera l invitee", "est l invite", "est l invitee",
-                 "repond", "s exprime", "en meeting", "en direct", "face a", "sur le plateau", "en duplex",
-                 "en plateau"]
+                 "repond", "repondra", "s exprime", "en meeting", "en direct", "face a", "sur le plateau", "en duplex",
+                 "en plateau", "interroge", "interrogee", "sera interroge", "sera interrogee"]
+# Précision entre virgules après le nom, sautée pour trouver le signe qui suit (« Marine Tondelier,
+# candidate Les Écologistes à l'élection présidentielle, sera interrogée ») : longueur maximale.
+APPOSITION_MAX = 12
 # Titres de commentaire d'actualité : les noms qu'ils contiennent sont des sujets.
 _COMMENTAIRE = ["reaction", "reactions", "reagit", "reagir", "reagissons", "debrief", "debriefing", "decryptage",
                 "decrypte", "decryptons", "analyse", "analysons", "revue de presse", "retour sur", "commente",
@@ -235,6 +242,13 @@ class FiltrePolitique:
                         avant = avant[len(avant) - avant[::-1].index(_COUPURE):]
                     if mots[i:i + taille] == f.split() and "avec" in avant:
                         return True
+                    # « Nom, précision, sera interrogée » : le signe vient après la précision.
+                    suite = mots[i + taille:]
+                    if mots[i:i + taille] == f.split() and suite[:1] == [_COUPURE] \
+                            and _COUPURE in suite[1:APPOSITION_MAX + 2]:
+                        apres = suite[1:][suite[1:].index(_COUPURE) + 1:]
+                        if _fenetre_contient(apres[:FENETRE_APRES], _SIGNES_APRES):
+                            return True
             return False
 
         presents, cites = [], []
