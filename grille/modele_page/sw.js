@@ -52,15 +52,19 @@ self.addEventListener("fetch", (ev) => {
     return;
   }
   // Ouverture de la page : la dernière version gardée sur le téléphone, tout de suite (sinon iOS
-  // montre un écran blanc en attendant le réseau) ; app.js redemande aussitôt la grille du jour
-  // (ci-dessous, réseau d'abord) et l'affiche à la place si elle est plus récente.
+  // montre un écran blanc en attendant le réseau). La page est redemandée en même temps et gardée
+  // pour le lancement suivant (nouvelle version du code) ; app.js redemande aussitôt grille.json
+  // (ci-dessous, réseau d'abord) et affiche la grille du jour si elle est plus récente.
   if (ev.request.mode === "navigate") {
+    const reseau = fetch(new Request(ev.request.url, { cache: "no-cache" }));
+    ev.waitUntil(reseau.then((reponse) => {
+      if (!reponse.ok) return undefined;
+      const copie = reponse.clone();
+      return caches.open(CACHE).then((c) => c.put(ev.request, copie));
+    }).catch(() => {}));
     ev.respondWith(caches.open(CACHE).then((c) => c.match(ev.request, { ignoreSearch: true })
-      .then((r) => r || c.match("./")).then((r) => r || fetch(new Request(ev.request.url, { cache: "no-cache" }))
-        .then((reponse) => {
-          if (reponse.ok) c.put(ev.request, reponse.clone());
-          return reponse;
-        }))));
+      .then((r) => r || c.match("./")))
+      .then((r) => r || reseau.catch(() => caches.match("index.html"))));
     return;
   }
   const adresse = new URL(ev.request.url);

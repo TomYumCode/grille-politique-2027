@@ -29,6 +29,8 @@
 <link rel="apple-touch-startup-image" href="demarrage/demarrage-1206x2622.jpg" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="demarrage/demarrage-1260x2736.jpg" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="demarrage/demarrage-1320x2868.jpg" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<!-- Avant la feuille de style : la page reste bleue dès son tout premier affichage. -->
+<style>.ouverture-en-cours { background-color: #1d3a5f; color-scheme: dark; }</style>
 <link rel="stylesheet" href="style.css">
 <script>
 // Écran d'ouverture : seulement au lancement, pas quand on arrive par une notification
@@ -40,11 +42,22 @@ if (/#emission=/.test(location.hash) || matchMedia("(prefers-reduced-motion: red
 } else {
   // Page installée sur iPhone, en portrait : l'écran d'ouverture prend la taille de l'écran,
   // comme l'image de démarrage d'iOS (la zone d'affichage peut être plus petite au lancement).
+  const racine = document.documentElement;
   const installee = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
   if (installee && screen.height > screen.width) {
-    document.documentElement.style.setProperty("--hauteur-ecran", screen.height + "px");
-    document.documentElement.classList.add("ecran-fixe");
+    racine.style.setProperty("--hauteur-ecran", screen.height + "px");
+    racine.classList.add("ecran-fixe");
   }
+  // Fond de la page pendant l'ouverture : l'image de départ, cadrée comme l'écran d'ouverture
+  // (« cover » sur l'écran entier pour la page installée, sur la fenêtre sinon).
+  const largeur = installee ? screen.width : innerWidth;
+  const hauteur = installee && screen.height > screen.width ? screen.height : innerHeight;
+  const echelle = Math.max(largeur / 1170, hauteur / 2532);
+  racine.style.setProperty("--fond-largeur", 1170 * echelle + "px");
+  racine.style.setProperty("--fond-hauteur", 2532 * echelle + "px");
+  racine.style.setProperty("--fond-haut", (hauteur - 2532 * echelle) / 2 + "px");
+  racine.classList.add("ouverture-en-cours");
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual"; // la page reste en haut
   window.animationOuverture = fetch("ouverture.json").then((r) => r.json()).catch(() => null);
   const lecteur = document.createElement("script");
   lecteur.src = "lottie_light.min.js";
