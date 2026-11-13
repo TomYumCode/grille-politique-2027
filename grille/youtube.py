@@ -329,7 +329,7 @@ def _emission(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: 
         return None  # direct terminé avant aujourd'hui
     fin = reel_fin or _date(details.get("scheduledEndTime"))
     titre = video["snippet"].get("title", "")
-    decision = filtre.decider(chaine, titre, video["snippet"].get("description", ""))
+    decision = filtre.decider(chaine, titre, video["snippet"].get("description", ""), debut=debut)
     if decision is None:
         filtre.noter_douteux(f"youtube:{video['id']}", "youtube", chaine, titre,
                              video["snippet"].get("description", ""), debut)
@@ -342,6 +342,8 @@ def _emission(video: dict, chaine: Chaine, filtre: FiltrePolitique, maintenant: 
         etat_emission = "annoncé"
     else:
         etat_emission = statut(debut, fin, maintenant)
+    if decision.emission:  # émission reconnue à son créneau : « À l'air libre — sujet du jour »
+        titre = f"{decision.emission} — {titre}"
     return {
         "id": f"youtube:{video['id']}",
         "titre": titre,

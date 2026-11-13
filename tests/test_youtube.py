@@ -1,7 +1,7 @@
 """Collecteur YouTube, à partir de réponses enregistrées de l'API."""
 
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -253,3 +253,18 @@ def test_episodes_mal_configures_signales(tmp_path):
     shutil.copy(Path(config.DOSSIER_CONFIG) / "politique.yaml", tmp_path / "politique.yaml")
     conf = config.charger(tmp_path)
     assert conf.chaines[0].episodes == () and "« episodes » invalide" in conf.anomalies[0]
+
+
+def test_a_l_air_libre_reconnue_a_son_creneau():
+    """Direct YouTube de Mediapart annoncé un jeudi à 19 h : retenu, titre précédé du nom de l'émission."""
+    from grille.filtre import FiltrePolitique
+    conf = config.charger()
+    mediapart = next(c for c in conf.chaines if c.nom == "Mediapart" and c.plateforme == "youtube")
+    maintenant = datetime(2026, 11, 12, 18, 0, tzinfo=PARIS)
+    video = {"id": "abc", "snippet": {"title": "Trump face à ses promesses", "description": "",
+                                      "liveBroadcastContent": "upcoming"},
+             "liveStreamingDetails": {"scheduledStartTime": "2026-11-12T18:00:00Z"}}
+    e = youtube._emission(video, mediapart, FiltrePolitique(conf), maintenant,
+                          maintenant.replace(hour=0), maintenant + timedelta(days=8))
+    assert (e["titre"], e["filtre"], e["statut"]) == ("À l'air libre — Trump face à ses promesses", "liste blanche",
+                                                      "annoncé")

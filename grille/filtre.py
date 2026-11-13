@@ -16,8 +16,12 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass, field
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
-from grille.config import Chaine, Configuration
+from grille.config import JOURS_SEMAINE, Chaine, Configuration
+
+PARIS = ZoneInfo("Europe/Paris")
 
 LISTE_BLANCHE = "liste blanche"
 MOTS_CLES = "mots-clés"
@@ -121,6 +125,7 @@ class Decision:
     invites: list[str] = field(default_factory=list)  # personnes présentes
     motif: str = ""  # ce qui a déclenché le filtre, pour comprendre un faux positif
     cites: list[str] = field(default_factory=list)  # personnes seulement citées
+    emission: str = ""  # nom de l'émission reconnue à son créneau (« À l'air libre »), à mettre en tête du titre
 
 
 class FiltrePolitique:
@@ -129,6 +134,11 @@ class FiltrePolitique:
         self._chaines_blanches = {normaliser(n) for n in lb.get("chaines") or []}
         self._categories_blanches = [normaliser(c) for c in lb.get("categories_de_chaine") or []]
         # (titre normalisé, chaîne normalisée ou "" pour toutes les chaînes)
+        # Émissions reconnues à leur créneau (titre du direct = sujet du jour, sans le nom de
+        # l'émission) : « À l'air libre », Mediapart, en direct le soir.
+        self._creneaux = [dict(c, chaine_n=normaliser(c["chaine"]),
+                               jours_n=[JOURS_SEMAINE.index(j) for j in c["jours"]])
+                          for c in lb.get("creneaux") or []]
         self._emissions_blanches = [
             (normaliser(e), "") if isinstance(e, str) else (normaliser(e["titre"]), normaliser(e.get("chaine", "")))
             for e in lb.get("emissions") or []
@@ -340,10 +350,25 @@ class FiltrePolitique:
                                  "description": " ".join((description or "").split())[:500],
                                  "debut": debut.isoformat(timespec="seconds"), "motif": motif})
 
-    def decider(self, chaine: Chaine, titre: str, description: str = "", sous_titre: str = "") -> Decision | None:
+    def creneau(self, chaine: Chaine, debut: datetime | None) -> str:
+        """Nom de l'émission de la liste blanche que cette chaîne diffuse à cette heure (créneau
+        « debut »–« fin », heure de Paris, jours donnés), sinon texte vide."""
+        if debut is None:
+            return ""
+        local = debut.astimezone(PARIS)
+        heure = f"{local:%H:%M}"
+        for c in self._creneaux:
+            if (c["chaine_n"] == normaliser(chaine.nom) and local.weekday() in c["jours_n"]
+                    and c["debut"] <= heure <= c["fin"]):
+                return c["nom"]
+        return ""
+
+    def decider(self, chaine: Chaine, titre: str, description: str = "", sous_titre: str = "",
+                debut: datetime | None = None) -> Decision | None:
         """Renvoie la décision si l'émission est politique, None sinon. Le sous-titre d'un
         guide TV (« L'interview » — « Jean-Luc Mélenchon ») compte avec la description pour
-        les mots-clés, et avec le titre pour repérer qui est présent."""
+        les mots-clés, et avec le titre pour repérer qui est présent. `debut` : heure du direct,
+        pour les émissions reconnues à leur créneau (liste blanche, « creneaux: »)."""
         titre, sous_titre, description = self.sans_homonymes(titre), self.sans_homonymes(sous_titre), \
             self.sans_homonymes(description)
         titre_complet = f"{titre} — {sous_titre}" if sous_titre else titre
@@ -360,9 +385,15 @@ class FiltrePolitique:
             _commence_par(titre_n, t) and (not c or c == normaliser(chaine.nom)) for t, c in self._emissions_blanches
         ):
             motif = f"émission « {titre} »"
+        emission = self.creneau(chaine, debut)
+        if emission and not motif:
+            motif = f"émission « {emission} » (créneau)"
+
         def decision(filtre: str, motif: str) -> Decision:
             presents, cites = self.presences(chaine, titre_complet, description, motif.startswith("émission"))
-            return Decision(filtre, self.categorie(titre_complet, description), presents, motif, cites)
+            # Nom de l'émission à mettre en tête du titre, s'il n'y est pas déjà.
+            en_tete = emission if emission and not _contient(normaliser(titre), normaliser(emission)) else ""
+            return Decision(filtre, self.categorie(titre_complet, description), presents, motif, cites, en_tete)
 
         if motif:
             return decision(LISTE_BLANCHE, motif)
