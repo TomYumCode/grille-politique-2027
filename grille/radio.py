@@ -19,6 +19,7 @@ la requête sans lui et le signale.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 
@@ -126,6 +127,63 @@ def sans_parties_incluses(retenues: list[dict]) -> list[dict]:
     return gardees
 
 
+# Anciens domaines des stations : l'API donne encore « www.franceinter.fr/franceinter/podcasts/… »,
+# redirigé vers « www.radiofrance.fr/franceinter/podcasts/… ». L'adresse radiofrance.fr est celle
+# que l'application Radio France peut ouvrir directement (application iPhone et Android).
+ANCIENS_DOMAINES = re.compile(
+    r"^https?://www\.(franceinter|franceculture|francemusique|fip|mouv|francebleu|ici)\.fr/(?=\1/|[a-z]+/podcasts/)")
+
+
+def adresse_radiofrance(url: str) -> str:
+    """« https://www.franceinter.fr/franceinter/… » → « https://www.radiofrance.fr/franceinter/… »."""
+    return ANCIENS_DOMAINES.sub("https://www.radiofrance.fr/", url or "")
+
+
+# Matinale annoncée en entier (« Le 6/9 », 6 h – 9 h) dont le résumé donne l'heure de passage
+# d'une personnalité : « François Ruffin, président du parti Debout ! à 7h50 » (13 novembre 2026).
+EMISSION_LONGUE = timedelta(minutes=90)
+DUREE_PASSAGE = timedelta(minutes=10)  # le passage lui-même, faute de mieux (l'invité de 7h50 : 8 min)
+ECART_PASSAGE = timedelta(minutes=15)  # la séquence publiée par la grille le remplace dans cet écart
+
+
+def passages_annonces(retenues: list[dict], filtre: FiltrePolitique, maintenant: datetime) -> list[dict]:
+    """Remplace une longue émission retenue seulement pour des personnes dont son résumé donne
+    l'heure de passage par ces passages (« Le 6/9 accompagne votre matinée — François Ruffin à
+    7h50 », 10 minutes, invité). Un passage que la grille publie déjà comme séquence (« L'invité
+    de 7h50 — François Ruffin », 7 h 48, publiée au moment de la diffusion) n'est pas ajouté.
+    Une émission retenue pour autre chose (liste blanche, mot de campagne, autre personne) est
+    gardée, avec ses passages en plus."""
+    resultat = []
+    for e in retenues:
+        debut = datetime.fromisoformat(e["debut"])
+        fin = datetime.fromisoformat(e["fin"]) if e["fin"] else None
+        heures = filtre.heures_annoncees(e["resume"]) if fin and fin - debut >= EMISSION_LONGUE else []
+        couverts, passages = set(), []
+        for nom, h, m in heures:
+            moment = debut.replace(hour=h, minute=m, second=0)
+            if not debut <= moment < fin:
+                continue
+            couverts.add(nom)
+            deja = any(x is not e and x["chaine"] == e["chaine"] and nom in x["invites"]
+                       and abs(datetime.fromisoformat(x["debut"]) - moment) <= ECART_PASSAGE for x in retenues)
+            if deja:
+                continue
+            fin_passage = min(moment + DUREE_PASSAGE, fin)
+            passages.append(dict(
+                e, id=f"{e['id']}:{moment:%H%M}", titre=f"{e['titre']} — {nom} à {moment.hour}h{moment:%M}",
+                debut=moment.isoformat(timespec="seconds"), fin=fin_passage.isoformat(timespec="seconds"),
+                categorie="interview", invites=[nom], cites=[], statut=statut(moment, fin_passage, maintenant),
+                motif=f"heure de passage dans le résumé de « {e['titre']} »", _emission=""))
+        personnes = set(e["invites"]) | set(e["cites"])
+        mot = e.get("motif", "")[2:-2] if e.get("motif", "").startswith("« ") and e["motif"].endswith(" »") else ""
+        retenue_pour_eux = (e["filtre"] == "mots-clés" and personnes and personnes <= couverts
+                            and any(normaliser(mot) in filtre.formes(n) for n in couverts))
+        if not retenue_pour_eux:
+            resultat.append(e)
+        resultat += passages
+    return resultat
+
+
 def emissions_par_heure(etapes: list[dict]) -> dict[str, str]:
     """Nom de l'émission de chaque créneau, par heure de début à Paris (« 18:20 »)."""
     noms = {}
@@ -222,8 +280,9 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
                 continue
             # Direct de la station d'abord, puis la page de la diffusion (réécoute).
             liens = list(chaine.direct)
-            if diffusion.get("url") and diffusion["url"] not in liens:
-                liens.append(diffusion["url"])
+            page = adresse_radiofrance(diffusion.get("url") or "")
+            if page and page not in liens:
+                liens.append(page)
             rapport.retenues.append({
                 "id": f"radio:{station}:{debut:%Y%m%d%H%M}",
                 "titre": titre_complet,
@@ -242,7 +301,7 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
                 "_emission": normaliser(emission),
             })
 
-    rapport.retenues = sans_parties_incluses(rapport.retenues)
+    rapport.retenues = passages_annonces(sans_parties_incluses(rapport.retenues), filtre, maintenant)
     rapport.douteux = db.noter_douteux(connexion, filtre.douteux, maintenant)
     if not couvertes:
         rapport.interrompu = "API Radio France inaccessible : " + "; ".join(rapport.anomalies)

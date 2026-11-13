@@ -1,0 +1,31 @@
+{
+ "_note": "Grille de France Inter du 13 novembre 2026 (matinale « Le 6/9 » et séquence « L'invité de 7h50 »), recomposée au format de l'API d'après les champs enregistrés par la collecte de 7 h 45 (titre, résumé, adresse, heures) ; la séquence n'est publiée par l'API qu'au moment de la diffusion.",
+ "matinale": {
+  "id": "le-6-9-20261113",
+  "start": 1794546000,
+  "end": 1794557170,
+  "diffusion": {
+   "id": "le-6-9-20261113-d",
+   "title": "Le 6/9 accompagne votre matinée",
+   "standFirst": "Le 6/9 reçoit Bruno Bobkiewicz, secrétaire général du Syndicat national des personnels de direction de l'Éducation nationale, à 6h20, François Ruffin, président du parti Debout ! à 7h50 et à 8h20, Antoine Foucher, président du cabinet Quintet et Sylvie Grandjean, directrice générale de Redex.",
+   "url": "https://www.franceinter.fr/franceinter/podcasts/le-6-9/le-6-9-du-vendredi-13-novembre-2026-5666195",
+   "show": {
+    "title": "Le 6/9"
+   }
+  }
+ },
+ "sequence": {
+  "id": "invite-7h50-20261113",
+  "start": 1794552495,
+  "end": 1794553005,
+  "diffusion": {
+   "id": "invite-7h50-20261113-d",
+   "title": "François Ruffin",
+   "standFirst": "François Ruffin, député de la Somme, président du parti Debout ! Auteur de \"Au boulot ! 40 chantiers pour remettre le pays debout\" (Ed. Les liens qui libèrent)",
+   "url": "https://www.franceinter.fr/franceinter/podcasts/l-invite-de-7h50/l-invite-de-7h50-du-we-du-vendredi-13-novembre-2026-2849338",
+   "show": {
+    "title": "L'invité de 7h50"
+   }
+  }
+ }
+}

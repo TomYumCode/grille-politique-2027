@@ -78,6 +78,8 @@ _MOT_MAJUSCULE = re.compile(r"(?<![\w'’-])([A-ZÀ-Ý][a-zà-ÿ]+(?:-[A-ZÀ-Ý]
 # « avec » sert à tout (« vainqueur avec près de 66 % des voix, Raphaël Glucksmann… ») :
 # il ne compte que dans le même membre de phrase que le nom (pas de virgule ni de point entre).
 _COUPURE = "0coupure0"
+# Heure de passage annoncée dans un résumé : « à 7h50 », « À 8h20 », « à 9 h 10 ».
+_HEURE_TEXTE = re.compile(r"(?<![\w'’])[àÀ]\s*(\d{1,2})\s*h\s*(\d{2})?(?!\w)")
 
 
 def normaliser(texte: str) -> str:
@@ -199,6 +201,46 @@ class FiltrePolitique:
         """Personnes de politique.yaml nommées dans un texte (homonymes écartés), dans l'ordre de la liste."""
         texte_n = normaliser(self.sans_homonymes(texte))
         return [nom for nom, formes in self._personnes if any(_contient(texte_n, f) for f in formes)]
+
+    def formes(self, nom: str) -> list[str]:
+        """Formes normalisées (nom complet, alias) d'une personne de politique.yaml."""
+        return next((formes for n, formes in self._personnes if n == nom), [])
+
+    def heures_annoncees(self, texte: str) -> list[tuple[str, int, int]]:
+        """(nom, heure, minute) des personnes de politique.yaml dont le texte annonce l'heure de
+        passage. Les heures découpent le texte en morceaux ; chaque heure va au morceau qu'elle
+        ferme ou à celui qu'elle ouvre, et le passage à la première personne de ce morceau :
+        - « Bobkiewicz, …, à 6h20, François Ruffin, président du parti Debout ! à 7h50 et à
+          8h20, Antoine Foucher » : heure suivie d'une virgule, d'un « et » ou d'un point, elle
+          ferme le morceau précédent (13 novembre 2026) ;
+        - « à 6h20 Matthieu Lartot, … et à 8h20 Laure Lavalette » : heure suivie directement d'un
+          nom, elle ouvre le morceau suivant (23 octobre 2026) ; de même en début de phrase
+          (« À 8h20, Gabriel Attal… »).
+        La première personne du morceau seulement : « Clémence Guetté, …, co-responsable du
+        programme de Jean-Luc Mélenchon à 7h50 » est le passage de Clémence Guetté."""
+        texte = texte or ""
+        heures = list(_HEURE_TEXTE.finditer(texte))
+        resultat: list[tuple[str, int, int]] = []
+        for i, m in enumerate(heures):
+            h, mn = int(m.group(1)), int(m.group(2) or 0)
+            if h > 23 or mn > 59:
+                continue
+            avant = texte[heures[i - 1].end() if i else 0:m.start()]
+            avant = re.split(r"[.;?]\s", avant)[-1]  # dans la même phrase
+            apres = texte[m.end():heures[i + 1].start() if i + 1 < len(heures) else len(texte)]
+            apres = re.split(r"[.;?](\s|$)", apres)[0]
+            suite = texte[m.end():].lstrip(" \u00a0")
+            ouvre = m.group(0)[0] == "À" or bool(re.match(r"[:–-]?\s*[A-ZÀ-Ý]", suite) and not suite.startswith(","))
+            morceau = apres if ouvre else avant
+            nom = self._premiere_personne(morceau)
+            if nom and all(n != nom for n, _, _ in resultat):
+                resultat.append((nom, h, mn))
+        return resultat
+
+    def _premiere_personne(self, texte: str) -> str | None:
+        t = f" {normaliser(self.sans_homonymes(texte))} "
+        places = [(t.find(f" {f} "), nom) for nom, formes in self._personnes for f in formes if f" {f} " in t]
+        return min(places)[1] if places else None
 
     def presences(self, chaine: Chaine, titre: str, description: str, emission_blanche: bool = False
                   ) -> tuple[list[str], list[str]]:
