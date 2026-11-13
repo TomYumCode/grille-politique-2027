@@ -50,6 +50,42 @@ function ecrireFavoris() {
 // la page ajoutée à l'écran d'accueil (iOS 16.4 ou plus).
 const SERVICE = DONNEES.notifications || "";
 const notif = { actif: false, attente: false, message: "" };
+
+// Mesure d'audience anonyme (notifications/src/mesures.js) : la page compte ses interactions
+// (« lien:France Inter » : un clic sur Regarder ou Écouter) et envoie ses totaux une fois par
+// visite, quand elle passe en arrière-plan. Aucun identifiant ni heure : des totaux par jour.
+const CLE_MESURES = "grille-2027-mesures";
+let mesures = {};
+try { mesures = JSON.parse(localStorage.getItem(CLE_MESURES) || "{}") || {}; } catch (e) { mesures = {}; }
+function mesurer(evenement, precision) {
+  if (!SERVICE) return;
+  const cle = precision ? evenement + ":" + String(precision).slice(0, 40) : evenement;
+  mesures[cle] = (mesures[cle] || 0) + 1;
+  try { localStorage.setItem(CLE_MESURES, JSON.stringify(mesures)); } catch (e) { /* stockage plein ou bloqué */ }
+}
+function envoyerMesures() {
+  if (!SERVICE || !Object.keys(mesures).length || !navigator.sendBeacon) return;
+  const parti = navigator.sendBeacon(SERVICE + "mesure",
+    new Blob([JSON.stringify({ compteurs: mesures })], { type: "text/plain" }));
+  if (!parti) return;
+  mesures = {};
+  try { localStorage.removeItem(CLE_MESURES); } catch (e) { /* rien */ }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") envoyerMesures(); });
+window.addEventListener("pagehide", envoyerMesures);
+// Un seul écouteur pour les clics, avant ceux des boutons (qui arrêtent parfois leur propagation).
+document.addEventListener("click", (ev) => {
+  const cible = ev.target instanceof Element ? ev.target.closest("a, button") : null;
+  if (!cible) return;
+  if (cible.matches("a.regarder")) mesurer("lien", cible.dataset.chaine);
+  else if (cible.matches(".choix-favori")) mesurer(cible.getAttribute("aria-pressed") === "true" ? "favori_retire" : "favori_ajoute");
+  else if (cible.matches("#favori-presidentielle")) mesurer("favori_presidentielle");
+  else if (cible.matches("[data-perimetre]")) mesurer("onglet", cible.dataset.perimetre);
+  else if (cible.matches("button.jour")) mesurer("jour");
+  else if (cible.matches(".puce")) mesurer("filtre", cible.dataset.type);
+  else if (cible.matches("button.logo")) mesurer("filtre", "chaine");
+  else if (cible.matches("#bouton-filtres")) mesurer("filtres_ouverts");
+}, true);
 let minuterieFavoris = null;
 
 function surIPhone() {
@@ -119,6 +155,7 @@ async function activerNotifications() {
   const reg = await serviceWorkerPret();
   const abonnement = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: depuisB64(cle) });
   await appelerService("abonnement", { abonnement: abonnement.toJSON(), favoris, essai: true });
+  mesurer("notifications_activees");
   notif.actif = true;
   notif.message = "Activées : une notification d'essai arrive.";
 }
@@ -322,8 +359,10 @@ function carte(e, maintenant) {
     for (const url of x.lien) {
       if (vus.has(url)) continue;
       vus.add(url);
-      bas.append(el("a", { classe: "regarder", href: url, target: "_blank", rel: "noopener",
-        texte: episode ? "Voir l'épisode" : libelleLien(url, x, s.length > 1, fini) }));
+      const lien = el("a", { classe: "regarder", href: url, target: "_blank", rel: "noopener",
+        texte: episode ? "Voir l'épisode" : libelleLien(url, x, s.length > 1, fini) });
+      lien.dataset.chaine = x.chaine;
+      bas.append(lien);
     }
   }
   // Carte ouverte depuis une notification : l'animation reprend où elle en était si la grille est
@@ -670,13 +709,15 @@ const idDemande = emissionDansAdresse(location.hash);
 if (idDemande) {
   history.replaceState(null, "", location.pathname + location.search); // un rechargement rouvre sur l'heure actuelle
   ouvrirEmission(idDemande);
+  mesurer("notification_ouverte");
 } else {
   afficher(true);
 }
+mesurer("ouverture", navigator.standalone || matchMedia("(display-mode: standalone)").matches ? "installee" : "navigateur");
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.addEventListener("message", (ev) => {
     const id = ev.data && ev.data.type === "ouvrir" && emissionDansAdresse(ev.data.url);
-    if (id) ouvrirEmission(id);
+    if (id) { ouvrirEmission(id); mesurer("notification_ouverte"); }
   });
 }
 window.addEventListener("hashchange", () => {
@@ -709,6 +750,7 @@ setInterval(() => afficher(), 60000); // les directs et la fraîcheur évoluent 
 // Application rouverte après une pause d'au moins 30 minutes : retour au jour et à l'heure actuels.
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
+  mesurer("retour");
   if (Date.now() - derniereMiseEnPlace > 30 * 60000) {
     etat.jour = aujourdhuiParis();
     afficher(true);

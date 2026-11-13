@@ -139,3 +139,41 @@ def test_un_seul_envoi_par_jour(connexion):
     assert not db.deja_envoye(connexion, "2027-03-15")
     db.noter_envoi(connexion, "2027-03-15", MAINTENANT)
     assert db.deja_envoye(connexion, "2027-03-15")
+
+
+def test_utilisation_de_la_veille(connexion):
+    """Mesure anonyme lue auprès du service de notifications : section de l'email."""
+    from types import SimpleNamespace
+    compteurs = {"ouverture:installee": 9, "ouverture:navigateur": 2, "lien:France Inter": 3, "lien:BFMTV": 5,
+                 "onglet:favoris": 1, "notification_ouverte": 2, "inconnu": 4}
+
+    class Session:
+        def __init__(self, reponse=None, erreur=None):
+            self.reponse, self.erreur, self.appels = reponse, erreur, []
+
+        def get(self, url, params=None, timeout=None):
+            self.appels.append((url, params))
+            if self.erreur:
+                raise self.erreur
+            return SimpleNamespace(raise_for_status=lambda: None, json=lambda: self.reponse)
+
+    s = Session({"jour": "2027-03-14", "compteurs": compteurs})
+    assert courriel.lire_audience("https://service.example/", "2027-03-14", s) == compteurs
+    assert s.appels == [("https://service.example/mesures", {"jour": "2027-03-14"})]
+    assert courriel.lire_audience("https://service.example/", "2027-03-14", Session(erreur=OSError("panne"))) is None
+    assert courriel.lire_audience("", "2027-03-14", s) is None
+
+    lignes = courriel.resume_audience(compteurs)
+    assert [(l["libelle"], l["total"]) for l in lignes] == [
+        ("Ouvertures de la grille", 11), ("Clics sur Regarder ou Écouter", 8), ("Notifications touchées", 2),
+        ("Onglets choisis", 1)]
+    assert lignes[0]["details"] == [("page installée", 9), ("navigateur", 2)]
+    assert lignes[1]["details"] == [("BFMTV", 5), ("France Inter", 3)]
+
+    c = courriel.contenu(connexion, config.charger(), MAINTENANT, compteurs)
+    assert "UTILISATION DE LA GRILLE HIER" in courriel.texte(c)
+    assert "Clics sur Regarder ou Écouter : 8 (BFMTV 5, France Inter 3)" in courriel.texte(c)
+    assert "Utilisation de la grille hier" in courriel.page_html(c)
+    assert "Aucune visite." in courriel.texte(courriel.contenu(connexion, config.charger(), MAINTENANT, {}))
+    # Service injoignable : pas de section.
+    assert "UTILISATION" not in courriel.texte(courriel.contenu(connexion, config.charger(), MAINTENANT))
