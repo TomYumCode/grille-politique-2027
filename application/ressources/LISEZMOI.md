@@ -12,6 +12,7 @@ est converti en tracés : les fichiers s'affichent à l'identique sans police in
 | `trait-tricolore.svg` | Trait bleu-blanc-rouge cerné de blanc |
 | `ecran-ouverture-anime.json` | Animation d'ouverture V2 du 12 novembre 2026 (After Effects, export Lottie, 1,5 s à 30 images/s, fond transparent ; V1 du 11 novembre : 2 s) |
 | `fond-ouverture-source.png` | Fond V2 exporté d'Illustrator par le propriétaire (13 novembre 2026), bords à demi transparents retirés, 1290 × 2796 : bleu nuit en haut, lueur tricolore en bas. La conversion de `BG_V2.ai` faisait des « écailles » (dégradé découpé en facettes) |
+| `trame-ouverture.png` | Trame (128 × 128, gris à 0–3 % d'opacité) posée sur le fond à l'affichage : casse les paliers du dégradé (« banding ») ; intégrée à `style.css` |
 | `fond-ouverture.webp` | Ce fond, cadré comme l'animation (1170 × 2532 agrandi à 1290 × 2792), qualité 92 |
 
 Écran d'ouverture de la grille (et donc de l'application), depuis le 11 novembre 2026 :
@@ -24,7 +25,7 @@ est converti en tracés : les fichiers s'affichent à l'identique sans police in
   tout changement. Même cadrage partout (« cover » : l'image remplit l'écran) ;
 - `grille/modele_page/demarrage/` : écrans de démarrage de la page installée sur iPhone
   (`apple-touch-startup-image`), affichés par iOS pendant l'agrandissement de l'icône au lieu
-  d'un écran blanc (noir en mode sombre) ; en JPEG, faits par `ecrans_demarrage.js` à partir de
+  d'un écran blanc (noir en mode sombre) ; en JPEG qualité 95 (pour garder la trame), faits par `ecrans_demarrage.js` à partir de
   l'image de départ (à relancer après un changement).
 
 Les SVG « C bleue » ci-dessus restent la référence du logo (première version, logo à 100 %).
