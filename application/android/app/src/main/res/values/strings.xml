@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Grille politique 2027</string>
     <string name="title_activity_main">Grille politique 2027</string>
-    <string name="package_name">io.github.tomyumcode.grillepolitique</string>
-    <string name="custom_url_scheme">io.github.tomyumcode.grillepolitique</string>
+    <string name="package_name">fr.grillepolitique.app</string>
+    <string name="custom_url_scheme">fr.grillepolitique.app</string>
 </resources>

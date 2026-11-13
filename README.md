@@ -81,7 +81,7 @@ Deux tâches tournent toutes seules sur GitHub (onglet **Actions** du dépôt) :
 
 - **Collecte horaire**, chaque heure vers :17 (seconde occasion à :47 si GitHub a sauté
   celle de :17) : télévision, radio, YouTube, Twitch, puis
-  publication de la page sur `https://tomyumcode.github.io/grille-politique-2027/`.
+  publication de la page sur `https://grillepolitique.fr/`.
 - **Email du matin**, à 7 h (heure de Paris ; occasions de démarrer toutes les 20 minutes
   jusqu'à 18 h si GitHub saute des déclenchements : mieux vaut en retard que jamais ; collecte juste avant l'envoi) : émissions du jour sur la présidentielle,
   puis les autres émissions politiques du jour, temps forts de la présidentielle des 3 jours
@@ -396,9 +396,9 @@ une chaîne (`{titre: "Face à face", chaine: "BFMTV"}`).
 ## Application iPhone et Android (en préparation)
 
 Le dossier `application/` contient l'application (Capacitor 8) : elle affiche la grille publiée
-(`https://tomyumcode.github.io/grille-politique-2027/`) ; les changements de la grille et de son
+(`https://grillepolitique.fr/`) ; les changements de la grille et de son
 design arrivent donc sans republier l'application. Sans connexion, elle montre
-`www/hors-connexion.html`. Identifiant : `io.github.tomyumcode.grillepolitique` (définitif une fois
+`www/hors-connexion.html`. Identifiant : `fr.grillepolitique.app` (définitif une fois
 publiée) ; nom affiché : « Grille politique 2027 ».
 
 - **Android** : la tâche GitHub « Application Android » construit une version d'essai à chaque
