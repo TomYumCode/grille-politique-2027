@@ -232,6 +232,13 @@ liste_blanche:
     - "Débats parlementaires"
     - "Personnalité politique"
     - "Interviews politiques"
+  # Émissions reconnues à leur créneau : tout direct de la chaîne (YouTube, Twitch) qui commence
+  # entre « debut » et « fin » (heure de Paris), les jours donnés, est retenu, et son titre (le
+  # sujet du jour) précédé du nom de l'émission. Pour une émission dont les directs ne portent
+  # pas son nom.
+  creneaux:
+    # Mediapart, en direct du lundi au jeudi à 19 h (ajoutée le 13 novembre 2026).
+    - {nom: "À l'air libre", chaine: "Mediapart", jours: [lundi, mardi, mercredi, jeudi], debut: "18:30", fin: "19:45"}
   # Émissions toujours politiques. Le titre du guide doit commencer par ce texte
   # (majuscules, accents, tirets et ponctuation ignorés : « Franc-jeu » = « Franc jeu »).
   # Forme {titre: "…", chaine: "…"} pour limiter l'émission à une chaîne.

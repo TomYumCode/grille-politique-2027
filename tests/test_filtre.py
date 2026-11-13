@@ -220,3 +220,35 @@ def test_sigle_court_douteux(politique):
 def test_heures_annoncees(politique, texte, attendu):
     f, _ = politique
     assert f.heures_annoncees(texte) == attendu
+
+
+def test_emission_reconnue_a_son_creneau(politique):
+    """« À l'air libre » (Mediapart) : les directs du soir portent seulement le sujet du jour."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    paris = ZoneInfo("Europe/Paris")
+    f, chaines = politique
+    mediapart = chaines["Mediapart"]
+    jeudi_19h = datetime(2026, 11, 12, 19, 2, tzinfo=paris)
+    d = f.decider(mediapart, "Trump face à ses promesses : le bilan", "", debut=jeudi_19h)
+    assert (d.filtre, d.emission) == ("liste blanche", "À l'air libre")
+    # Nom déjà dans le titre : rien à ajouter en tête.
+    assert f.decider(mediapart, "À l'air libre : spéciale présidentielle", "", debut=jeudi_19h).emission == ""
+    # Hors créneau (vendredi, ou 21 h), ou autre chaîne : règle ordinaire.
+    assert f.decider(mediapart, "Trump face à ses promesses : le bilan", "",
+                     debut=datetime(2026, 11, 13, 19, 2, tzinfo=paris)) is None
+    assert f.decider(mediapart, "Trump face à ses promesses : le bilan", "",
+                     debut=datetime(2026, 11, 12, 21, 0, tzinfo=paris)) is None
+    assert f.decider(chaines["Tocsin"], "Trump face à ses promesses", "", debut=jeudi_19h).emission == ""
+
+
+def test_creneau_mal_ecrit_refuse(tmp_path):
+    import shutil
+    from pathlib import Path
+    for nom in ("chaines.yaml", "politique.yaml"):
+        shutil.copy(Path(config.DOSSIER_CONFIG) / nom, tmp_path / nom)
+    p = tmp_path / "politique.yaml"
+    p.write_text(p.read_text(encoding="utf-8").replace("jours: [lundi, mardi, mercredi, jeudi]", "jours: [lundy]"),
+                 encoding="utf-8")
+    with pytest.raises(config.ErreurConfig, match="créneau"):
+        config.charger(tmp_path)

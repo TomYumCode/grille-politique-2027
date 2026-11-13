@@ -228,6 +228,7 @@ def _lire_notifications(chemin: Path, anomalies: list[str]) -> str:
 RECHERCHE_DEFAUT = {"actif": False, "modele": "claude-opus-5-5", "recherches_par_jour": 12, "avant_debut": 10,
                     "apres_debut": 35, "heure_annonces": "17:00", "accepter_fonctions": False, "a_surveiller": []}
 _HEURE = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
+JOURS_SEMAINE = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 
 def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
@@ -335,6 +336,15 @@ def charger(dossier: Path = DOSSIER_CONFIG) -> Configuration:
     if not isinstance(mots_presidentielle, list) or not all(isinstance(m, str) for m in mots_presidentielle):
         raise ErreurConfig("politique.yaml : « presidentielle: mots: » doit être une liste de textes")
     noms_chaines = {c.nom for c in chaines}
+    for i, c in enumerate(liste_blanche.get("creneaux") or [], 1):
+        jours = c.get("jours") if isinstance(c, dict) else None
+        if not (isinstance(c, dict) and c.get("nom") and c.get("chaine") and isinstance(jours, list)
+                and all(j in JOURS_SEMAINE for j in jours)
+                and _HEURE.fullmatch(str(c.get("debut"))) and _HEURE.fullmatch(str(c.get("fin")))):
+            raise ErreurConfig(f"politique.yaml, liste blanche, créneau n° {i} : « nom », « chaine », « jours » "
+                               "(lundi…dimanche), « debut » et « fin » (19:00) sont obligatoires")
+        if c["chaine"] not in noms_chaines:
+            anomalies.append(f"politique.yaml, créneau « {c['nom']} » : chaîne « {c['chaine']} » absente de chaines.yaml")
     for nom in liste_blanche.get("chaines") or []:
         if nom not in noms_chaines:
             anomalies.append(f"politique.yaml, liste blanche : chaîne « {nom} » absente de chaines.yaml")

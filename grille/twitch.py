@@ -140,10 +140,12 @@ def collecter(config: Configuration, session: requests.Session, connexion, maint
 
 def _retenir(rapport: Rapport, filtre: FiltrePolitique, chaine: Chaine, id_: str, titre: str, categorie_jeu: str,
              debut: datetime, fin: datetime | None, etat: str) -> None:
-    decision = filtre.decider(chaine, titre, categorie_jeu)
+    decision = filtre.decider(chaine, titre, categorie_jeu, debut=debut)
     if decision is None:
         filtre.noter_douteux(id_, "twitch", chaine, titre, categorie_jeu, debut)
         return
+    if decision.emission:  # émission reconnue à son créneau : « À l'air libre — sujet du jour »
+        titre = f"{decision.emission} — {titre}"
     rapport.retenues.append({
         "id": id_,
         "titre": titre,

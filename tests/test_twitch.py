@@ -112,3 +112,16 @@ def test_sans_identifiants(conf, connexion, monkeypatch):
 def test_logos_twitch(conf, connexion):
     _collecter(conf, connexion, Session(routeur()))
     assert db.logos(connexion)["BackSeat (Jean Massiet)"].endswith("jeanmassiet-profile_image-300x300.png")
+
+
+def test_a_l_air_libre_reconnue_a_son_creneau():
+    """Direct de Mediapart un jeudi à 19 h : retenu, titre précédé du nom de l'émission."""
+    from grille.filtre import FiltrePolitique
+    conf = config.charger()
+    mediapart = next(c for c in conf.chaines if c.nom == "Mediapart" and c.plateforme == "twitch")
+    rapport = twitch.Rapport()
+    debut = datetime(2026, 11, 12, 19, 1, tzinfo=PARIS)
+    twitch._retenir(rapport, FiltrePolitique(conf), mediapart, "twitch:direct:1", "Trump face à ses promesses",
+                    "Just Chatting", debut, None, "en direct")
+    (e,) = rapport.retenues
+    assert (e["titre"], e["filtre"]) == ("À l'air libre — Trump face à ses promesses", "liste blanche")
