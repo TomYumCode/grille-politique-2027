@@ -56,6 +56,8 @@ if (/#emission=/.test(location.hash) || matchMedia("(prefers-reduced-motion: red
   racine.style.setProperty("--fond-largeur", 1170 * echelle + "px");
   racine.style.setProperty("--fond-hauteur", 2532 * echelle + "px");
   racine.style.setProperty("--fond-haut", (hauteur - 2532 * echelle) / 2 + "px");
+  // Trame : un point par pixel de l'écran (tuile de 128 points).
+  racine.style.setProperty("--trame-taille", 128 / (devicePixelRatio || 1) + "px");
   racine.classList.add("ouverture-en-cours");
   if ("scrollRestoration" in history) history.scrollRestoration = "manual"; // la page reste en haut
   window.animationOuverture = fetch("ouverture.json").then((r) => r.json()).catch(() => null);

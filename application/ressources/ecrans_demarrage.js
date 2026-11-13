@@ -29,8 +29,11 @@ const ECRANS = [
   for (const [l, h, d] of ECRANS) {
     const page = await navigateur.newPage({ viewport: { width: l, height: h }, deviceScaleFactor: d });
     await page.goto("file://" + rendu, { waitUntil: "load" });
+    // Trame du fond (style.css) : un point par pixel de l'écran, comme sur la page.
+    await page.addStyleTag({ content: `:root { --trame-taille: ${128 / d}px; }` });
     const nom = `demarrage-${l * d}x${h * d}.jpg`;
-    await page.screenshot({ path: path.join(MODELE, "demarrage", nom), type: "jpeg", quality: 88 });
+    // Qualité 95 : la trame qui casse les paliers du dégradé survit en partie à la compression.
+    await page.screenshot({ path: path.join(MODELE, "demarrage", nom), type: "jpeg", quality: 95 });
     await page.close();
     liens.push(`<link rel="apple-touch-startup-image" href="demarrage/${nom}" media="(device-width: ${l}px) and `
       + `(device-height: ${h}px) and (-webkit-device-pixel-ratio: ${d}) and (orientation: portrait)">`);
