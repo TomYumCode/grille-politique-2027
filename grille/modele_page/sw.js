@@ -55,16 +55,20 @@ self.addEventListener("fetch", (ev) => {
   // montre un écran blanc en attendant le réseau). La page est redemandée en même temps et gardée
   // pour le lancement suivant (nouvelle version du code) ; app.js redemande aussitôt grille.json
   // (ci-dessous, réseau d'abord) et affiche la grille du jour si elle est plus récente.
+  // Une redirection (ancienne adresse tomyumcode.github.io → grillepolitique.fr, 13 novembre
+  // 2026) n'est jamais suivie ici : Safari refuse une page « servie par le service worker avec
+  // redirections » ; « manual » rend la redirection au navigateur, qui la suit lui-même. Seule
+  // une page arrivée sans redirection est gardée, et servie.
   if (ev.request.mode === "navigate") {
-    const reseau = fetch(new Request(ev.request.url, { cache: "no-cache" }));
+    const reseau = fetch(new Request(ev.request.url, { cache: "no-cache", redirect: "manual" }));
     ev.waitUntil(reseau.then((reponse) => {
-      if (!reponse.ok) return undefined;
+      if (!reponse.ok || reponse.redirected || reponse.type !== "basic") return undefined;
       const copie = reponse.clone();
       return caches.open(CACHE).then((c) => c.put(ev.request, copie));
     }).catch(() => {}));
     ev.respondWith(caches.open(CACHE).then((c) => c.match(ev.request, { ignoreSearch: true })
       .then((r) => r || c.match("./")))
-      .then((r) => r || reseau.catch(() => caches.match("index.html"))));
+      .then((r) => (r && !r.redirected ? r : reseau.catch(() => caches.match("index.html")))));
     return;
   }
   const adresse = new URL(ev.request.url);
