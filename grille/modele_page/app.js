@@ -679,17 +679,18 @@ window.addEventListener("hashchange", () => {
   const id = emissionDansAdresse(location.hash);
   if (id) { history.replaceState(null, "", location.pathname + location.search); ouvrirEmission(id); }
 });
-// La page s'ouvre sur la dernière version gardée sur le téléphone (sw.js) : la grille du jour est
-// redemandée aussitôt (et au retour sur l'application), puis affichée si elle est plus récente.
-// Pendant l'écran d'ouverture, la grille est replacée sur l'heure actuelle.
+// La page s'ouvre sur la dernière version gardée sur le téléphone (sw.js) : la grille du jour
+// (grille.json, docs/GRILLE_JSON.md) est redemandée aussitôt, et au retour sur l'application,
+// puis affichée si elle est plus récente. Pendant l'écran d'ouverture, la grille est replacée
+// sur l'heure actuelle.
+const FORMAT_GRILLE = 1;
 async function rafraichir() {
   try {
-    const reponse = await fetch(location.pathname, { cache: "no-cache" });
+    const reponse = await fetch("grille.json", { cache: "no-cache" });
     if (!reponse.ok) return;
-    const page = new DOMParser().parseFromString(await reponse.text(), "text/html");
-    const bloc = page.getElementById("donnees");
-    if (!bloc) return;
-    const nouvelles = JSON.parse(bloc.textContent);
+    const nouvelles = await reponse.json();
+    // Format plus récent que ce code : la page elle-même se met à jour au prochain lancement.
+    if ((nouvelles.format || 1) > FORMAT_GRILLE) return;
     if (!nouvelles.genere_le || nouvelles.genere_le <= DONNEES.genere_le) return;
     for (const cle of Object.keys(DONNEES)) delete DONNEES[cle];
     Object.assign(DONNEES, nouvelles);

@@ -33,6 +33,11 @@ CHAMPS_NOTIFICATIONS = ("id", "titre", "debut", "fin", "plateforme", "chaine", "
                         "nature")
 
 
+# Format de grille.json (docs/GRILLE_JSON.md) : à augmenter quand un champ change de sens ou
+# disparaît ; un champ ajouté ne change pas le format.
+FORMAT_GRILLE = 1
+
+
 def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     """Émissions non annulées d'aujourd'hui (depuis minuit) et des 7 jours suivants."""
     maintenant = maintenant.astimezone(PARIS)
@@ -49,6 +54,7 @@ def donnees(connexion, config: Configuration, maintenant: datetime) -> dict:
     logos = {nom: url for nom, url in db.logos(connexion).items() if nom in chaines}
     logos.update({c.nom: c.logo for c in config.chaines if c.logo and c.nom in chaines})
     return {
+        "format": FORMAT_GRILLE,
         "genere_le": maintenant.isoformat(timespec="seconds"),
         "jours": [(maintenant.date() + timedelta(days=i)).isoformat() for i in range(JOURS_AFFICHES)],
         # Le filtre « candidat » propose tous les candidats suivis, avec leur nombre d'émissions.
@@ -81,6 +87,9 @@ def generer(connexion, config: Configuration, maintenant: datetime, sortie: Path
     (sortie / "notifications.json").write_text(json.dumps(legere, ensure_ascii=False, separators=(",", ":")),
                                                encoding="utf-8")
     contenu = json.dumps(tout, ensure_ascii=False, separators=(",", ":"))
+    # La grille seule (docs/GRILLE_JSON.md) : relue par la page à chaque ouverture, et demain par
+    # l'application qui embarque la page (mode B).
+    (sortie / "grille.json").write_text(contenu, encoding="utf-8")
     # « </ » fermerait la balise <script> qui contient les données.
     contenu = contenu.replace("</", "<\\/")
     page = (MODELE / "index.html").read_text(encoding="utf-8")

@@ -63,6 +63,10 @@ def test_page_generee_avec_les_emissions_du_jour_et_de_la_semaine(connexion, tmp
     for nom in page.VERSIONNES:
         assert re.search(rf'"{re.escape(nom)}\?v=[0-9a-f]{{10}}"', html), nom
     assert '"style.css"' not in html
+    # La grille seule, pour la page (rafraîchissement) et l'application (docs/GRILLE_JSON.md).
+    grille = json.loads((tmp_path / "site" / "grille.json").read_text(encoding="utf-8"))
+    assert grille == _donnees_de(index) and grille["format"] == page.FORMAT_GRILLE
+    assert set(grille) >= {"genere_le", "jours", "candidats", "logos", "directs", "sigles", "emissions"}
 
 
 def test_manifeste_et_service_worker_coherents(tmp_path):
