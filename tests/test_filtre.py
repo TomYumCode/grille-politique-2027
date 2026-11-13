@@ -195,3 +195,28 @@ def test_sigle_court_douteux(politique):
     f, _ = politique
     assert f.motif_douteux("Meeting de R! à Paris") == "« R! » dans le titre"
     assert f.motif_douteux("Le meilleur du R&B") is None
+
+
+@pytest.mark.parametrize("texte, attendu", [
+    # Matinale de France Inter du 13 novembre 2026 : l'heure qui suit le nom.
+    ("Le 6/9 reçoit Bruno Bobkiewicz, secrétaire général du Syndicat national des personnels de direction de "
+     "l'Éducation nationale, à 6h20, François Ruffin, président du parti Debout ! à 7h50 et à 8h20, Antoine "
+     "Foucher, président du cabinet Quintet.", [("François Ruffin", 7, 50)]),
+    # L'heure juste avant le nom ; « 9 h 10 » avec espaces.
+    ("À 8h20, Gabriel Attal répond aux questions. Puis Marine Tondelier à 9 h 10.",
+     [("Gabriel Attal", 8, 20), ("Marine Tondelier", 9, 10)]),
+    # Heure avant le nom (23 octobre 2026).
+    ("Retrouvez vos rendez-vous. Et aujourd'hui à 6h20 Matthieu Lartot, journaliste sportif sur France "
+     "Télévision à 7h50 Romain Boulet, co-président de l’ADAP, et à 8h20 Laure Lavalette, porte-parole du "
+     "Rassemblement National, députée du Var.", [("Laure Lavalette", 8, 20)]),
+    # La première personne du morceau : Jean-Luc Mélenchon n'est que cité (6 novembre 2026).
+    ("Alexis Morel à la présentation du 6/9 reçoit Marie-Hélène Poingt, rédactrice en chef de La vie du rail "
+     "à 6h20, Clémence Guetté, députée du Val-de-Marne, co-responsable du programme de Jean-Luc Mélenchon à "
+     "7h50 et à 8h20, les auteurs du livre \"La nouvelle Armée des ombres\", enquête sur la DGSE.",
+     [("Clémence Guetté", 7, 50)]),
+    # Pas d'heure de passage (« le journal de 8 h »).
+    ("François Ruffin publie un livre. Le journal de 8 h.", []),
+])
+def test_heures_annoncees(politique, texte, attendu):
+    f, _ = politique
+    assert f.heures_annoncees(texte) == attendu

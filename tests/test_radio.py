@@ -237,3 +237,50 @@ def test_chronique_d_un_autre_nom_gardee():
     chronique = dict(matinale, debut="2026-10-26T06:46:00+01:00", fin="2026-10-26T06:53:00+01:00",
                      _emission="les chantiers de la recherche")
     assert len(radio.sans_parties_incluses([chronique, matinale])) == 2
+
+
+MATINALE = charger("radiofrance_matinale_heure_annoncee.json")
+
+
+def _collecte_france_inter(tmp_path, connexion, etapes, maintenant):
+    (tmp_path / "chaines.yaml").write_text(CHAINES, encoding="utf-8")
+    shutil.copy(Path(config.DOSSIER_CONFIG) / "politique.yaml", tmp_path / "politique.yaml")
+    conf = config.charger(tmp_path)
+
+    def repondre(methode, url, corps):
+        debut = datetime.fromtimestamp(int(re.search(r"start: (\d+)", corps["query"]).group(1)), PARIS)
+        inter = "FRANCEINTER" in corps["query"] and debut.date() == date(2026, 11, 13)
+        return Reponse(corps={"data": {"grid": etapes if inter else []}})
+
+    return radio.collecter(conf, Session(repondre), connexion, maintenant, cle=CLE)
+
+
+def test_matinale_remplacee_par_le_passage_annonce(tmp_path, connexion):
+    """13 novembre 2026, 6 h 30 : « Le 6/9 » (6 h – 9 h) n'était retenu que parce que son résumé
+    annonce « François Ruffin, président du parti Debout ! à 7h50 » : la grille montre ce passage."""
+    rapport = _collecte_france_inter(tmp_path, connexion, [MATINALE["matinale"]],
+                                     datetime(2026, 11, 13, 6, 30, tzinfo=PARIS))
+    (e,) = rapport.retenues
+    assert (e["id"], e["titre"]) == ("radio:FRANCEINTER:202611130600:0750",
+                                     "Le 6/9 accompagne votre matinée — François Ruffin à 7h50")
+    assert (e["debut"], e["fin"]) == ("2026-11-13T07:50:00+01:00", "2026-11-13T08:00:00+01:00")
+    assert (e["categorie"], e["invites"], e["cites"]) == ("interview", ["François Ruffin"], [])
+    # Direct de la station, puis la page de la matinale sur radiofrance.fr (et non plus franceinter.fr).
+    assert e["lien"] == ["https://www.radiofrance.fr/franceinter",
+                         "https://www.radiofrance.fr/franceinter/podcasts/le-6-9/le-6-9-du-vendredi-13-novembre-2026-5666195"]
+
+
+def test_sequence_publiee_remplace_le_passage_annonce(tmp_path, connexion):
+    """7 h 45 : la grille publie la séquence « L'invité de 7h50 » ; elle seule reste."""
+    rapport = _collecte_france_inter(tmp_path, connexion, [MATINALE["matinale"], MATINALE["sequence"]],
+                                     datetime(2026, 11, 13, 7, 45, tzinfo=PARIS))
+    assert [(e["titre"], e["invites"]) for e in rapport.retenues] == [
+        ("L'invité de 7h50 — François Ruffin", ["François Ruffin"])]
+
+
+def test_matinale_retenue_pour_autre_chose_gardee_avec_le_passage(tmp_path, connexion):
+    matinale = {**MATINALE["matinale"], "diffusion": {
+        **MATINALE["matinale"]["diffusion"], "title": "Le 6/9 spécial présidentielle"}}
+    rapport = _collecte_france_inter(tmp_path, connexion, [matinale], datetime(2026, 11, 13, 6, 30, tzinfo=PARIS))
+    assert [e["titre"] for e in rapport.retenues] == [
+        "Le 6/9 spécial présidentielle", "Le 6/9 spécial présidentielle — François Ruffin à 7h50"]
