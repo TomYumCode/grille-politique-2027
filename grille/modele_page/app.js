@@ -4,6 +4,7 @@
 // on les affiche telles quelles, quel que soit le fuseau du téléphone.
 
 const DONNEES = JSON.parse(document.getElementById("donnees").textContent);
+const DEMARRAGE = Date.now();
 const CATEGORIES = ["débat", "interview", "meeting", "analyse"];
 const PLATEFORMES = { tv: "TV", radio: "Radio", youtube: "YouTube", twitch: "Twitch", web: "Agenda" };
 // Plateformes connues avant que les filtres mémorisés ne retiennent la liste (sans la radio).
@@ -678,15 +679,36 @@ window.addEventListener("hashchange", () => {
   const id = emissionDansAdresse(location.hash);
   if (id) { history.replaceState(null, "", location.pathname + location.search); ouvrirEmission(id); }
 });
-window.addEventListener("online", () => afficher());
+// La page s'ouvre sur la dernière version gardée sur le téléphone (sw.js) : la grille du jour est
+// redemandée aussitôt (et au retour sur l'application), puis affichée si elle est plus récente.
+// Pendant l'écran d'ouverture, la grille est replacée sur l'heure actuelle.
+async function rafraichir() {
+  try {
+    const reponse = await fetch(location.pathname, { cache: "no-cache" });
+    if (!reponse.ok) return;
+    const page = new DOMParser().parseFromString(await reponse.text(), "text/html");
+    const bloc = page.getElementById("donnees");
+    if (!bloc) return;
+    const nouvelles = JSON.parse(bloc.textContent);
+    if (!nouvelles.genere_le || nouvelles.genere_le <= DONNEES.genere_le) return;
+    for (const cle of Object.keys(DONNEES)) delete DONNEES[cle];
+    Object.assign(DONNEES, nouvelles);
+    // Replacée sur l'heure actuelle juste après l'ouverture, sauf si on vient d'une notification.
+    afficher(document.getElementById("ouverture") !== null || (!idDemande && Date.now() - DEMARRAGE < 4000));
+  } catch (e) { /* hors connexion : la grille gardée reste affichée */ }
+}
+rafraichir();
+window.addEventListener("online", () => { afficher(); rafraichir(); });
 window.addEventListener("offline", () => afficher());
 setInterval(() => afficher(), 60000); // les directs et la fraîcheur évoluent avec l'heure
 // Application rouverte après une pause d'au moins 30 minutes : retour au jour et à l'heure actuels.
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && Date.now() - derniereMiseEnPlace > 30 * 60000) {
+  if (document.visibilityState !== "visible") return;
+  if (Date.now() - derniereMiseEnPlace > 30 * 60000) {
     etat.jour = aujourdhuiParis();
     afficher(true);
   }
+  rafraichir();
 });
 
 // Écran d'ouverture : l'animation (1,5 s) puis un fondu de 0,3 s. Animation pas prête au bout de
