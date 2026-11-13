@@ -141,15 +141,39 @@ PRECISIONS_AUDIENCE = {"installee": "page installée", "navigateur": "navigateur
                        "tout": "Toute la politique", "favoris": "Favoris"}
 
 
-def lire_audience(service: str, jour: str, session) -> dict | None:
-    """Totaux anonymes d'un jour, lus auprès du service de notifications ; None s'il ne répond pas."""
-    if not service:
+# Stockage du service de notifications (.github/scripts/notifications.sh) et nombre de parts
+# des totaux du jour (PARTS dans notifications/src/mesures.js).
+ESPACE_KV = "grille-2027-etat"
+PARTS_MESURES = 8
+
+
+def lire_audience(jour: str, session, compte: str | None = None, jeton: str | None = None) -> dict | None:
+    """Totaux anonymes d'un jour, lus directement dans le stockage Cloudflare du service de
+    notifications (le service ne les montre à personne). None sans clé Cloudflare ou si l'API
+    ne répond pas : l'email part alors sans cette section."""
+    compte = compte if compte is not None else os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+    jeton = jeton if jeton is not None else os.environ.get("CLOUDFLARE_API_TOKEN", "")
+    if not compte or not jeton:
         return None
+    api = f"https://api.cloudflare.com/client/v4/accounts/{compte}/storage/kv/namespaces"
+    entetes = {"Authorization": f"Bearer {jeton}"}
     try:
-        r = session.get(service.rstrip("/") + "/mesures", params={"jour": jour}, timeout=15)
+        r = session.get(api, params={"per_page": 100}, headers=entetes, timeout=15)
         r.raise_for_status()
-        return r.json().get("compteurs") or {}
-    except Exception:  # service injoignable : l'email part sans cette section
+        espace = next((e["id"] for e in r.json().get("result") or [] if e.get("title") == ESPACE_KV), None)
+        if not espace:
+            return None
+        totaux: dict[str, int] = {}
+        for part in range(PARTS_MESURES):
+            r = session.get(f"{api}/{espace}/values/mesures:{jour}:{part}", headers=entetes, timeout=15)
+            if r.status_code == 404:  # personne n'a écrit dans cette part
+                continue
+            r.raise_for_status()
+            for cle, n in r.json().items():
+                if isinstance(n, int):
+                    totaux[cle] = totaux.get(cle, 0) + n
+        return totaux
+    except Exception:  # API injoignable ou réponse inattendue : l'email part sans cette section
         return None
 
 

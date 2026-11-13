@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import service from "../src/index.js";
-import { enregistrer, jourParis, lire, nettoyerCompteurs } from "../src/mesures.js";
+import { enregistrer, jourParis, nettoyerCompteurs } from "../src/mesures.js";
 
 const PAGE = "https://grillepolitique.fr/";
 const ORIGINE = "https://grillepolitique.fr";
@@ -27,19 +27,19 @@ test("jour de Paris (minuit à Paris, pas en UTC)", () => {
   assert.equal(jourParis(Date.parse("2026-11-13T22:30:00Z")), "2026-11-13");
 });
 
-test("totaux du jour, additionnés sur toutes les parts", async () => {
+test("totaux du jour, répartis sur plusieurs parts", async () => {
   const s = stockage();
   const midi = Date.parse("2026-11-13T11:00:00Z");
   await enregistrer(s, { "ouverture:installée": 1, "lien:France Inter": 2 }, midi, 0);
   await enregistrer(s, { "ouverture:installée": 1 }, midi, 5);
   await enregistrer(s, { "ouverture:navigateur": 1 }, midi, 0);
-  assert.deepEqual(await lire(s, "2026-11-13"),
-    { "ouverture:installée": 2, "lien:France Inter": 2, "ouverture:navigateur": 1 });
-  assert.deepEqual(await lire(s, "2026-11-12"), {});
+  assert.deepEqual(JSON.parse(s.kv.get("mesures:2026-11-13:0")),
+    { "ouverture:installée": 1, "lien:France Inter": 2, "ouverture:navigateur": 1 });
+  assert.deepEqual(JSON.parse(s.kv.get("mesures:2026-11-13:5")), { "ouverture:installée": 1 });
   assert.equal(await enregistrer(s, { rien: 0 }, midi), false);
 });
 
-test("service : envoi depuis la page, lecture des totaux ; autre origine refusée", async () => {
+test("service : envoi depuis la page accepté, autre origine refusée, totaux jamais montrés", async () => {
   const env = { PAGE, ETAT: stockage() };
   const envoi = (origine) => service.fetch(new Request("https://service.example/mesure", {
     method: "POST", headers: { Origin: origine, "Content-Type": "text/plain;charset=UTF-8" },
@@ -47,8 +47,8 @@ test("service : envoi depuis la page, lecture des totaux ; autre origine refusé
   }), env);
   assert.deepEqual(await (await envoi(ORIGINE)).json(), { ok: true });
   assert.equal((await envoi("https://ailleurs.example")).status, 403);
+  assert.equal(env.ETAT.kv.size, 1);
   const jour = jourParis(Date.now());
   const r = await service.fetch(new Request("https://service.example/mesures?jour=" + jour), env);
-  assert.deepEqual(await r.json(), { jour, compteurs: { "ouverture:installée": 1, "onglet:favoris": 2 } });
-  assert.equal((await service.fetch(new Request("https://service.example/mesures?jour=hier"), env)).status, 400);
+  assert.equal(r.status, 404, "aucune lecture publique des totaux");
 });

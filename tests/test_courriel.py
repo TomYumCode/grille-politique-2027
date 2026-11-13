@@ -142,26 +142,36 @@ def test_un_seul_envoi_par_jour(connexion):
 
 
 def test_utilisation_de_la_veille(connexion):
-    """Mesure anonyme lue auprès du service de notifications : section de l'email."""
+    """Mesure anonyme lue dans le stockage Cloudflare du service de notifications : section de l'email."""
     from types import SimpleNamespace
     compteurs = {"ouverture:installee": 9, "ouverture:navigateur": 2, "lien:France Inter": 3, "lien:BFMTV": 5,
                  "onglet:favoris": 1, "notification_ouverte": 2, "inconnu": 4}
 
-    class Session:
-        def __init__(self, reponse=None, erreur=None):
-            self.reponse, self.erreur, self.appels = reponse, erreur, []
+    api = "https://api.cloudflare.com/client/v4/accounts/compte/storage/kv/namespaces"
+    reponses = {
+        api: {"success": True, "result": [{"id": "autre", "title": "autre-espace"},
+                                          {"id": "e1", "title": "grille-2027-etat"}]},
+        f"{api}/e1/values/mesures:2027-03-14:0": {k: v for k, v in compteurs.items() if k != "lien:BFMTV"},
+        f"{api}/e1/values/mesures:2027-03-14:6": {"lien:BFMTV": 5},
+    }
 
-        def get(self, url, params=None, timeout=None):
-            self.appels.append((url, params))
+    class Session:
+        def __init__(self, erreur=None):
+            self.erreur, self.appels = erreur, []
+
+        def get(self, url, params=None, headers=None, timeout=None):
+            self.appels.append((url, headers))
             if self.erreur:
                 raise self.erreur
-            return SimpleNamespace(raise_for_status=lambda: None, json=lambda: self.reponse)
+            statut = 200 if url in reponses else 404
+            return SimpleNamespace(status_code=statut, raise_for_status=lambda: None, json=lambda: reponses[url])
 
-    s = Session({"jour": "2027-03-14", "compteurs": compteurs})
-    assert courriel.lire_audience("https://service.example/", "2027-03-14", s) == compteurs
-    assert s.appels == [("https://service.example/mesures", {"jour": "2027-03-14"})]
-    assert courriel.lire_audience("https://service.example/", "2027-03-14", Session(erreur=OSError("panne"))) is None
-    assert courriel.lire_audience("", "2027-03-14", s) is None
+    s = Session()
+    assert courriel.lire_audience("2027-03-14", s, "compte", "jeton") == compteurs
+    assert len(s.appels) == 9, "liste des espaces puis les 8 parts du jour"
+    assert all(h == {"Authorization": "Bearer jeton"} for _, h in s.appels)
+    assert courriel.lire_audience("2027-03-14", Session(erreur=OSError("panne")), "compte", "jeton") is None
+    assert courriel.lire_audience("2027-03-14", s, "", "") is None, "sans clé Cloudflare : pas de section"
 
     lignes = courriel.resume_audience(compteurs)
     assert [(l["libelle"], l["total"]) for l in lignes] == [

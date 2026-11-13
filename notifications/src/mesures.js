@@ -3,13 +3,14 @@
 // La page compte ses interactions (ouverture, clic sur « Regarder » par chaîne, favori ajouté…)
 // et envoie ses totaux une fois par visite (POST /mesure). Le service les ajoute aux totaux du
 // jour (heure de Paris), gardés 90 jours. Aucun identifiant, aucune adresse IP, aucune heure :
-// impossible de relier deux visites ou de reconnaître quelqu'un. L'email du matin lit les
-// totaux de la veille (GET /mesures?jour=AAAA-MM-JJ).
+// impossible de relier deux visites ou de reconnaître quelqu'un. Le service ne les montre à
+// personne : seul l'email du matin les lit, directement dans le stockage avec la clé Cloudflare
+// du propriétaire (lire_audience dans grille/courriel.py).
 //
 // Écritures réparties sur plusieurs clés (« parts ») : deux visites envoyées au même moment
 // écrivent rarement la même clé, sans quoi l'une effacerait l'autre (stockage sans verrou).
 
-const PARTS = 8;
+const PARTS = 8; // aussi dans grille/courriel.py (PARTS_MESURES)
 const CONSERVATION = 90 * 24 * 3600; // secondes
 const MAX_CLES = 40;
 const MAX_PAR_CLE = 200;
@@ -42,13 +43,4 @@ export async function enregistrer(stockage, compteurs, maintenant = Date.now(), 
   for (const [k, n] of Object.entries(propres)) totaux[k] = (totaux[k] || 0) + n;
   await stockage.put(cle, JSON.stringify(totaux), { expirationTtl: CONSERVATION });
   return true;
-}
-
-export async function lire(stockage, jour) {
-  const totaux = {};
-  for (let part = 0; part < PARTS; part += 1) {
-    const morceau = (await stockage.get(`mesures:${jour}:${part}`, "json")) || {};
-    for (const [k, n] of Object.entries(morceau)) totaux[k] = (totaux[k] || 0) + n;
-  }
-  return totaux;
 }

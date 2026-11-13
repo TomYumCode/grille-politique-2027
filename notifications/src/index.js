@@ -4,7 +4,7 @@
 // relit la grille publiée (notifications.json, écrit à chaque collecte) et envoie les
 // notifications dues. Rien d'autre n'est gardé : l'abonnement du téléphone (adresse et clés
 // fournies par Apple ou Google), ses favoris et la trace des notifications déjà envoyées.
-import { enregistrer as enregistrerMesures, lire as lireMesures } from "./mesures.js";
+import { enregistrer as enregistrerMesures } from "./mesures.js";
 import { aEnvoyer, marquerConnues, nettoyerFavoris } from "./regles.js";
 import { clesVapid, envoyer } from "./webpush.js";
 
@@ -78,12 +78,6 @@ async function recevoir(requete, env) {
     return json(env, { cle: (await clesVapid(env.ETAT)).publique });
   }
   if (requete.method === "GET" && url.pathname === "/") return json(env, { service: "Grille politique 2027", ok: true });
-  // Totaux anonymes d'un jour (mesures.js), lus par l'email du matin.
-  if (requete.method === "GET" && url.pathname === "/mesures") {
-    const jour = url.searchParams.get("jour") || "";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(jour)) return json(env, { erreur: "jour attendu : AAAA-MM-JJ" }, 400);
-    return json(env, { jour, compteurs: await lireMesures(env.ETAT, jour) });
-  }
   if (requete.method !== "POST") return json(env, { erreur: "inconnu" }, 404);
   if (requete.headers.get("Origin") !== new URL(env.PAGE).origin) return json(env, { erreur: "origine refusée" }, 403);
   const texte = await requete.text();
