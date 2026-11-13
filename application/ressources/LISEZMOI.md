@@ -11,13 +11,14 @@ est converti en tracés : les fichiers s'affichent à l'identique sans police in
 | `logo-grille.svg` | Logo seul, cases blanches sur fond transparent |
 | `trait-tricolore.svg` | Trait bleu-blanc-rouge cerné de blanc |
 | `ecran-ouverture-anime.json` | Animation d'ouverture V2 du 12 novembre 2026 (After Effects, export Lottie, 1,5 s à 30 images/s, fond transparent ; V1 du 11 novembre : 2 s) |
-| `fond-ouverture.webp` | Fond V2 de l'écran d'ouverture (1170 × 2532, d'après `BG_V2.ai` du propriétaire) : bleu nuit en haut, lueur tricolore en bas |
+| `fond-ouverture-source.png` | Fond V2 exporté d'Illustrator par le propriétaire (13 novembre 2026), bords à demi transparents retirés, 1290 × 2796 : bleu nuit en haut, lueur tricolore en bas. La conversion de `BG_V2.ai` faisait des « écailles » (dégradé découpé en facettes) |
+| `fond-ouverture.webp` | Ce fond, cadré comme l'animation (1170 × 2532 agrandi à 1290 × 2792), qualité 92 |
 
 Écran d'ouverture de la grille (et donc de l'application), depuis le 11 novembre 2026 :
 - `grille/modele_page/ouverture.json` : copie de `ecran-ouverture-anime.json`, lue par
   `lottie_light.min.js` (lottie-web 5.12.2, licence MIT : `LICENCE-lottie-web.txt`) ; la
   recopier après tout changement ;
-- `ouverture-depart.webp` : fond et logo réunis, identique à la première image de l'animation ;
+- `ouverture-depart.webp` : fond et logo réunis (1290 × 2792), identique à la première image de l'animation ;
   affiché dès le lancement, puis remplacé par `fond-ouverture.webp` sous l'animation. Les deux
   sont intégrés (base64) dans `.ouverture` de `grille/modele_page/style.css` : à réintégrer après
   tout changement. Même cadrage partout (« cover » : l'image remplit l'écran) ;
