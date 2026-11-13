@@ -92,6 +92,9 @@ jobs:
           EMAIL_EXPEDITEUR: ${{ secrets.EMAIL_EXPEDITEUR }}
           EMAIL_DESTINATAIRE: ${{ secrets.EMAIL_DESTINATAIRE }}
           ADRESSE_PAGE: https://grillepolitique.fr/
+          # Lecture de la mesure d'audience de la veille (stockage du service de notifications).
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: python -m grille courriel ${{ inputs.forcer && '--forcer' || '' }}
       - name: Enregistrer la base (date d'envoi)
         env:

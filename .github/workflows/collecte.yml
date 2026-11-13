@@ -69,6 +69,16 @@ jobs:
       - name: Générer la page
         if: steps.utile.outputs.faite == 'true'
         run: python -m grille page
+      # Hébergement chez Scaleway (Object Storage + Edge Services, www.grillepolitique.fr) :
+      # actif dès que la variable SCW_BUCKET existe (Settings > Secrets and variables > Actions >
+      # Variables). Une panne n'empêche pas la publication sur GitHub Pages.
+      - name: Publier sur Scaleway
+        if: steps.utile.outputs.faite == 'true' && vars.SCW_BUCKET != ''
+        env:
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_BUCKET: ${{ vars.SCW_BUCKET }}
+        run: .github/scripts/scaleway.sh || echo "::warning::Publication sur Scaleway impossible, voir le détail ci-dessus."
       - name: Enregistrer la base
         if: steps.utile.outputs.faite == 'true'
         env:

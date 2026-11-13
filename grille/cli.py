@@ -544,7 +544,9 @@ def cmd_courriel(args: argparse.Namespace) -> int:
     if not args.apercu and not args.forcer and db.deja_envoye(connexion, jour):
         print(f"Email du {jour} déjà envoyé : rien à faire.")
         return 0
-    contenu = courriel.contenu(connexion, conf, maintenant)
+    hier = (maintenant - timedelta(days=1)).date().isoformat()
+    audience = courriel.lire_audience(hier, requests.Session())
+    contenu = courriel.contenu(connexion, conf, maintenant, audience)
     print(f"Email du {contenu['titre_jour']} : {len(contenu['aujourdhui'])} émission(s) aujourd'hui, "
           f"{len(contenu['temps_forts'])} temps fort(s), {len(contenu['alertes'])} alerte(s) sur les sources")
     if args.apercu:

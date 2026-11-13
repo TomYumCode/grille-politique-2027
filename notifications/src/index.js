@@ -4,6 +4,7 @@
 // relit la grille publiée (notifications.json, écrit à chaque collecte) et envoie les
 // notifications dues. Rien d'autre n'est gardé : l'abonnement du téléphone (adresse et clés
 // fournies par Apple ou Google), ses favoris et la trace des notifications déjà envoyées.
+import { enregistrer as enregistrerMesures } from "./mesures.js";
 import { aEnvoyer, marquerConnues, nettoyerFavoris } from "./regles.js";
 import { clesVapid, envoyer } from "./webpush.js";
 
@@ -83,6 +84,8 @@ async function recevoir(requete, env) {
   if (texte.length > TAILLE_MAX) return json(env, { erreur: "trop long" }, 413);
   let corps;
   try { corps = JSON.parse(texte); } catch (e) { return json(env, { erreur: "JSON illisible" }, 400); }
+  // Totaux d'une visite (envoyés en texte simple par navigator.sendBeacon).
+  if (url.pathname === "/mesure") return json(env, { ok: await enregistrerMesures(env.ETAT, corps.compteurs) });
   const etat = await lireEtat(env);
 
   if (url.pathname === "/desabonnement") {

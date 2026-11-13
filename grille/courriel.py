@@ -122,7 +122,87 @@ def _repartition(d: dict) -> str:
     return ", ".join(f"{n} {NOMS_SOURCES.get(s, s)}" for s, n in sorted(d["par_source"].items(), key=lambda x: -x[1]))
 
 
-def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
+# Mesure d'audience anonyme (notifications/src/mesures.js) : libellés de l'email, dans cet ordre.
+LIBELLES_AUDIENCE = {
+    "ouverture": "Ouvertures de la grille",
+    "retour": "Retours sur la grille (déjà ouverte)",
+    "lien": "Clics sur Regarder ou Écouter",
+    "notification_ouverte": "Notifications touchées",
+    "notifications_activees": "Notifications activées",
+    "favori_ajoute": "Favoris ajoutés",
+    "favori_retire": "Favoris retirés",
+    "favori_presidentielle": "Favori « Présidentielle 2027 » basculé",
+    "onglet": "Onglets choisis",
+    "jour": "Changements de jour",
+    "filtres_ouverts": "Panneau des filtres ouvert",
+    "filtre": "Filtres utilisés",
+}
+PRECISIONS_AUDIENCE = {"installee": "page installée", "navigateur": "navigateur", "campagne": "Présidentielle 2027",
+                       "tout": "Toute la politique", "favoris": "Favoris"}
+
+
+# Stockage du service de notifications (.github/scripts/notifications.sh) et nombre de parts
+# des totaux du jour (PARTS dans notifications/src/mesures.js).
+ESPACE_KV = "grille-2027-etat"
+PARTS_MESURES = 8
+
+
+def lire_audience(jour: str, session, compte: str | None = None, jeton: str | None = None) -> dict | None:
+    """Totaux anonymes d'un jour, lus directement dans le stockage Cloudflare du service de
+    notifications (le service ne les montre à personne). None sans clé Cloudflare ou si l'API
+    ne répond pas : l'email part alors sans cette section."""
+    compte = compte if compte is not None else os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+    jeton = jeton if jeton is not None else os.environ.get("CLOUDFLARE_API_TOKEN", "")
+    if not compte or not jeton:
+        return None
+    api = f"https://api.cloudflare.com/client/v4/accounts/{compte}/storage/kv/namespaces"
+    entetes = {"Authorization": f"Bearer {jeton}"}
+    try:
+        r = session.get(api, params={"per_page": 100}, headers=entetes, timeout=15)
+        r.raise_for_status()
+        espace = next((e["id"] for e in r.json().get("result") or [] if e.get("title") == ESPACE_KV), None)
+        if not espace:
+            return None
+        totaux: dict[str, int] = {}
+        for part in range(PARTS_MESURES):
+            r = session.get(f"{api}/{espace}/values/mesures:{jour}:{part}", headers=entetes, timeout=15)
+            if r.status_code == 404:  # personne n'a écrit dans cette part
+                continue
+            r.raise_for_status()
+            for cle, n in r.json().items():
+                if isinstance(n, int):
+                    totaux[cle] = totaux.get(cle, 0) + n
+        return totaux
+    except Exception:  # API injoignable ou réponse inattendue : l'email part sans cette section
+        return None
+
+
+def resume_audience(compteurs: dict) -> list[dict]:
+    """[{libelle, total, details: [(précision, nombre)…]}] dans l'ordre de LIBELLES_AUDIENCE ; les
+    précisions (chaînes, onglets…) par ordre décroissant."""
+    lignes = []
+    for evenement, libelle in LIBELLES_AUDIENCE.items():
+        details: dict[str, int] = {}
+        total = 0
+        for cle, n in compteurs.items():
+            nom, _, precision = cle.partition(":")
+            if nom != evenement:
+                continue
+            total += n
+            if precision:
+                p = PRECISIONS_AUDIENCE.get(precision, precision)
+                details[p] = details.get(p, 0) + n
+        if total:
+            lignes.append({"libelle": libelle, "total": total,
+                           "details": sorted(details.items(), key=lambda x: (-x[1], x[0]))})
+    return lignes
+
+
+def _audience_detail(ligne: dict) -> str:
+    return ", ".join(f"{p} {n}" for p, n in ligne["details"][:8]) + (" …" if len(ligne["details"]) > 8 else "")
+
+
+def contenu(connexion, config: Configuration, maintenant: datetime, audience: dict | None = None) -> dict:
     maintenant = maintenant.astimezone(PARIS)
     minuit = datetime.combine(maintenant.date(), datetime.min.time(), PARIS)
     candidats = config.candidats_officiels() | config.equipes_de_campagne()
@@ -153,6 +233,8 @@ def contenu(connexion, config: Configuration, maintenant: datetime) -> dict:
         "rss": mesure_rss(connexion, maintenant),
         "candidats_possibles": candidats_possibles(connexion, config, maintenant),
         "adresse_page": os.environ.get("ADRESSE_PAGE", ""),
+        # Utilisation de la veille (None : service injoignable ; {} : aucune visite).
+        "audience": None if audience is None else resume_audience(audience),
     }
 
 
@@ -205,6 +287,10 @@ def texte(c: dict) -> str:
         parties += [f"  {'NOUVEAU ' if not a['deja_en_grille'] else ''}{a['titre']} ({a['flux']} ; "
                     f"{', '.join(a['personnes'])} ; {', '.join(a['chaines'])} ; {_heure_rss(a)})  {a['lien']}"
                     for a in r["exemples"]]
+    if c.get("audience") is not None:
+        parties += ["", "UTILISATION DE LA GRILLE HIER (mesure anonyme)"]
+        parties += [f"  {l['libelle']} : {l['total']}" + (f" ({_audience_detail(l)})" if l["details"] else "")
+                    for l in c["audience"]] or ["  Aucune visite."]
     if c["alertes"]:
         parties += ["", "ÉTAT DES SOURCES"] + [f"  ! {a}" for a in c["alertes"]]
     if c["adresse_page"]:
@@ -301,6 +387,16 @@ def page_html(c: dict) -> str:
                       f"{html.escape(', '.join(a['personnes']))} ; {html.escape(', '.join(a['chaines']))} ; "
                       f"{html.escape(_heure_rss(a))})</span></li>" for a in r["exemples"])
             + "</ul>")
+    if c.get("audience") is not None:
+        morceaux.append(
+            '<h2 style="font-size:15px;text-transform:uppercase;color:#5b6470;margin:24px 0 4px">'
+            "Utilisation de la grille hier</h2>"
+            '<p style="font-size:13px;color:#5b6470;margin:0 0 6px">Mesure anonyme : des totaux, sans identifiant.</p>'
+            + ('<ul style="font-size:13px;padding-left:18px">'
+               + "".join(f"<li>{html.escape(l['libelle'])} : <b>{l['total']}</b>"
+                         + (f" <span style=\"color:#5b6470\">({html.escape(_audience_detail(l))})</span>" if l["details"] else "")
+                         + "</li>" for l in c["audience"]) + "</ul>"
+               if c["audience"] else '<p style="font-size:13px">Aucune visite.</p>'))
     if c["alertes"]:
         morceaux.append('<h2 style="font-size:15px;text-transform:uppercase;color:#b3261e;margin:24px 0 4px">État des sources</h2><ul>'
                         + "".join(f"<li>{html.escape(a)}</li>" for a in c["alertes"]) + "</ul>")
