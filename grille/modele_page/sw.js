@@ -51,6 +51,18 @@ self.addEventListener("fetch", (ev) => {
     );
     return;
   }
+  // Ouverture de la page : la dernière version gardée sur le téléphone, tout de suite (sinon iOS
+  // montre un écran blanc en attendant le réseau) ; app.js redemande aussitôt la grille du jour
+  // (ci-dessous, réseau d'abord) et l'affiche à la place si elle est plus récente.
+  if (ev.request.mode === "navigate") {
+    ev.respondWith(caches.open(CACHE).then((c) => c.match(ev.request, { ignoreSearch: true })
+      .then((r) => r || c.match("./")).then((r) => r || fetch(new Request(ev.request.url, { cache: "no-cache" }))
+        .then((reponse) => {
+          if (reponse.ok) c.put(ev.request, reponse.clone());
+          return reponse;
+        }))));
+    return;
+  }
   const adresse = new URL(ev.request.url);
   if (adresse.searchParams.has("v")) {
     // Version précise d'un fichier : elle ne change jamais ; les autres versions du même
