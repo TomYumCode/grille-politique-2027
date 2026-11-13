@@ -5,8 +5,8 @@ import { test } from "node:test";
 import service, { adresseNotification, tournee } from "../src/index.js";
 import { versB64 } from "../src/webpush.js";
 
-const PAGE = "https://tomyumcode.github.io/grille-politique-2027/";
-const ORIGINE = "https://tomyumcode.github.io";
+const PAGE = "https://grillepolitique.fr/";
+const ORIGINE = "https://grillepolitique.fr";
 const APPLE = "https://web.push.apple.com/abc123";
 
 function environnement() {

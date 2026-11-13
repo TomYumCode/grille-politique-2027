@@ -1,4 +1,4 @@
-package io.github.tomyumcode.grillepolitique;
+package fr.grillepolitique.app;
 
 import com.getcapacitor.BridgeActivity;
 

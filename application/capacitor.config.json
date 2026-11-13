@@ -1,10 +1,10 @@
 {
-  "appId": "io.github.tomyumcode.grillepolitique",
+  "appId": "fr.grillepolitique.app",
   "appName": "Grille politique 2027",
   "webDir": "www",
   "appendUserAgent": "GrillePolitiqueApp",
   "server": {
-    "url": "https://tomyumcode.github.io/grille-politique-2027/",
+    "url": "https://grillepolitique.fr/",
     "errorPath": "hors-connexion.html"
   },
   "plugins": {

@@ -1,7 +1,7 @@
 # grille.json
 
 La grille seule, publiée à chaque collecte (toutes les 15 minutes) à côté de la page :
-`https://tomyumcode.github.io/grille-politique-2027/grille.json`. Écrite par `grille/page.py`
+`https://grillepolitique.fr/grille.json`. Écrite par `grille/page.py`
 (les mêmes données sont aussi intégrées dans `index.html`, pour le premier affichage).
 
 Lue par la page à chaque ouverture et à chaque retour sur l'application (`rafraichir` dans

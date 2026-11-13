@@ -10,7 +10,7 @@ workers_dev = true
 crons = ["*/5 * * * *"]
 
 [vars]
-PAGE = "https://tomyumcode.github.io/grille-politique-2027/"
+PAGE = "https://grillepolitique.fr/"
 
 [[kv_namespaces]]
 binding = "ETAT"
