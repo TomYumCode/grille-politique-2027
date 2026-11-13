@@ -468,7 +468,11 @@ function afficherGrille(aujourdhui) {
 }
 
 // Place le repère « Maintenant » juste sous l'en-tête fixe.
+// Pendant l'écran d'ouverture, la page reste en haut : son fond (l'image de départ, style.css)
+// doit rester aligné sur l'écran d'ouverture. La grille est placée à la fin de l'ouverture.
+let placementAttendu = false;
 function positionner(cible) {
+  if (document.documentElement.classList.contains("ouverture-en-cours")) { placementAttendu = true; return; }
   if (!cible) { window.scrollTo({ top: 0 }); return; }
   const entete = document.querySelector(".entete");
   const haut = cible.getBoundingClientRect().top + window.scrollY - (entete ? entete.offsetHeight : 0) - 8;
@@ -730,6 +734,8 @@ function lancerOuverture(ecran) {
   const finir = () => {
     if (fini) return;
     fini = true;
+    document.documentElement.classList.remove("ouverture-en-cours");
+    if (placementAttendu) { placementAttendu = false; afficher(true); } // encore couvert : rien ne se voit
     ecran.classList.add("fin");
     setTimeout(() => ecran.remove(), 350);
   };
