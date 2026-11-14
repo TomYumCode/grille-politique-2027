@@ -17,7 +17,10 @@
 #                         trouve un invité politique (de politique.yaml, ou par sa fonction) (deux essais par jour : à
 #                         heure_annonces, puis juste avant l'émission). Chaîne : nom exact de
 #                         chaines.yaml, ou une liste pour une émission diffusée sur plusieurs
-#                         chaînes ; heure : début habituel ; duree : minutes (45 par défaut).
+#                         chaînes ; heure : début habituel ; duree : minutes (45 par défaut) ;
+#                         jours : jours de diffusion ([lundi, mardi, …], tous par défaut).
+#                         Déjà dans la grille avec son invité (Radio France a publié un nom de
+#                         la liste) : rien n'est cherché, et la recherche ne fait pas de seconde carte.
 actif: true
 modele: claude-haiku-5-5
 recherches_par_jour: 20
@@ -30,3 +33,7 @@ a_surveiller:
   - {titre: "Le 20h", chaine: "France 2", heure: "20:00", duree: 45}
   - {titre: "L'heure des pros", chaine: ["CNews", "Europe 1"], heure: "09:00", duree: 90}
   - {titre: "L'heure des pros 2", chaine: "CNews", heure: "20:05", duree: 55}
+  # France Inter : Radio France ne publie pas toujours le nom de l'invité, ou un nom absent de
+  # politique.yaml (Jean-Philippe Tanguy, 5 novembre 2026, vu seulement dans l'agenda du RN).
+  - {titre: "L'invité de 8h20 : le grand entretien", chaine: "France Inter", heure: "08:20", duree: 25,
+     jours: [lundi, mardi, mercredi, jeudi, vendredi]}

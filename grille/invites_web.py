@@ -25,6 +25,9 @@ Claude vérifie deux fois par jour s'il y a un invité politique : à l'heure de
 (`heure_annonces`, 17 h) puis juste avant l'émission. L'émission n'entre dans la grille
 (identifiant « recherche:… », jamais annulé par les autres sources) que si un invité politique
 (de politique.yaml, ou retenu par sa fonction) est confirmé par une page des résultats.
+Déjà dans la grille avec son invité (L'invité de 8h20 de France Inter, quand Radio France a
+publié un nom de la liste) : rien n'est cherché ; trouvée puis publiée par la chaîne, elle ne
+fait qu'une carte (grille/fusion.py).
 """
 
 from __future__ import annotations
@@ -35,8 +38,8 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-from grille import affichage, db
-from grille.config import Configuration
+from grille import affichage, db, fusion
+from grille.config import JOURS_SEMAINE, Configuration
 from grille.filtre import CRENEAU_INVITE, LISTE_BLANCHE, normaliser
 from grille.tv import PARIS, statut
 
@@ -261,6 +264,8 @@ def emissions_surveillees(config: Configuration, maintenant: datetime) -> list[d
     # Télévision et radio seulement : « CNews » est aussi le nom d'une chaîne YouTube.
     chaines = {c.nom: c for c in config.chaines if c.plateforme in ("tv", "radio")}
     for s in config.recherche.get("a_surveiller") or []:
+        if JOURS_SEMAINE[jour.weekday()] not in (s.get("jours") or JOURS_SEMAINE):
+            continue
         h, m = map(int, s["heure"].split(":"))
         debut = datetime(jour.year, jour.month, jour.day, h, m, tzinfo=PARIS)
         fin = debut + timedelta(minutes=int(s.get("duree") or 45))
@@ -337,11 +342,13 @@ def collecter(config: Configuration, connexion, maintenant: datetime, client=Non
         rapport.interrompu = "recherche arrêtée (config/recherche.yaml)"
         return rapport
     maintenant = maintenant.astimezone(PARIS)
-    candidates = [(e, False) for e in affichage.emissions(connexion, maintenant - timedelta(hours=2),
-                                                           maintenant + timedelta(hours=1))
-                  if a_chercher(e, config, connexion, maintenant)]
+    deja_la = affichage.emissions(connexion, maintenant - timedelta(hours=2), maintenant + timedelta(hours=1))
+    candidates = [(e, False) for e in deja_la if a_chercher(e, config, connexion, maintenant)]
+    # Une émission surveillée déjà dans la grille avec son invité (L'invité de 8h20 de France Inter,
+    # quand Radio France a publié un nom de politique.yaml) : rien à chercher.
     candidates += [(e, True) for e in emissions_surveillees(config, maintenant)
-                   if surveillance_due(e, config, connexion, maintenant)]
+                   if surveillance_due(e, config, connexion, maintenant)
+                   and not any(fusion.complete(e, x) for x in deja_la)]
     if not candidates:
         return rapport
     if client is None:
