@@ -187,12 +187,19 @@ def test_reglages_a_surveiller(tmp_path):
         'actif: true\nheure_annonces: "17h"\na_surveiller:\n'
         '  - {titre: "Le 20h", chaine: "TF1", heure: "20:00"}\n'
         '  - {titre: "Le 20h", chaine: "Chaîne inconnue", heure: "20:00"}\n'
-        '  - {titre: "Sans heure", chaine: "TF1"}\n', encoding="utf-8")
+        '  - {titre: "Sans heure", chaine: "TF1"}\n'
+        '  - {titre: "Le 8h20", chaine: "France Inter", heure: "08:20", jours: [lundi, vendredi]}\n'
+        '  - {titre: "Le 7h", chaine: "France Inter", heure: "07:00", jours: [lun]}\n', encoding="utf-8")
     c = module_config.charger(tmp_path)
-    assert c.recherche["a_surveiller"] == [{"titre": "Le 20h", "chaine": "TF1", "chaines": ["TF1"], "heure": "20:00",
-                                            "duree": 45}]
+    tous = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+    assert c.recherche["a_surveiller"] == [
+        {"titre": "Le 20h", "chaine": "TF1", "chaines": ["TF1"], "heure": "20:00", "duree": 45, "jours": tous},
+        {"titre": "Le 8h20", "chaine": "France Inter", "chaines": ["France Inter"], "heure": "08:20", "duree": 45,
+         "jours": ["lundi", "vendredi"]},
+        {"titre": "Le 7h", "chaine": "France Inter", "chaines": ["France Inter"], "heure": "07:00", "duree": 45,
+         "jours": tous}]
     assert c.recherche["heure_annonces"] == "17:00"
-    assert len([a for a in c.anomalies if "recherche.yaml" in a]) == 3
+    assert len([a for a in c.anomalies if "recherche.yaml" in a]) == 4
 
 
 def test_comparer_les_modeles(conf):
@@ -296,4 +303,52 @@ def test_grande_emission_ajoutee_avec_invite_retenu_par_sa_fonction(conf, tmp_pa
     assert rapport.trouvees == [("Le 20h (TF1)", ["Paul Nouveau"])]
     (e,) = [x for x in affichage.emissions(connexion, soir, soir.replace(hour=23)) if x["chaine"] == "TF1"]
     assert e["titre"] == "Le 20h — Paul Nouveau" and e["invites"] == ["Paul Nouveau"]
+    connexion.close()
+
+
+HUIT_VINGT = [{"titre": "L'invité de 8h20 : le grand entretien", "chaine": "France Inter",
+               "chaines": ["France Inter"], "heure": "08:20", "duree": 25,
+               "jours": ["lundi", "mardi", "mercredi", "jeudi", "vendredi"]}]
+
+
+def _entretien_radio_france(invite: str, jour: datetime) -> dict:
+    """L'entretien tel que Radio France le publie (grille/radio.py), retenu pour son invité."""
+    debut = jour.replace(hour=8, minute=22, second=10)
+    return {"id": f"radio:FRANCEINTER:{debut:%Y%m%d%H%M}", "titre": f"L'Invité de 8h20\u00a0: le grand entretien — {invite}",
+            "debut": debut.isoformat(), "fin": debut.replace(minute=45).isoformat(), "plateforme": "radio",
+            "chaine": "France Inter", "categorie": "interview", "invites": [invite], "cites": [], "resume": "",
+            "lien": ["https://www.radiofrance.fr/franceinter/podcasts/l-invite-de-8h20"], "statut": "annoncé",
+            "filtre": "mots-clés", "nature": ""}
+
+
+def test_entretien_de_8h20_de_france_inter(conf, tmp_path):
+    """Surveillé du lundi au vendredi : Claude cherche l'invité à 8 h 15 sauf si Radio France l'a déjà
+    donné ; trouvé, puis publié par Radio France, il ne fait qu'une carte."""
+    conf.recherche["a_surveiller"] = HUIT_VINGT
+    connexion = db.ouvrir(tmp_path / "g.sqlite")
+    samedi = datetime(2026, 11, 14, 8, 15, tzinfo=PARIS)
+    assert invites_web.collecter(conf, connexion, samedi, client=Client()).cherchees == 0
+
+    # Mardi : Radio France a déjà publié Gabriel Attal, rien à chercher.
+    mardi = datetime(2026, 11, 10, 8, 15, tzinfo=PARIS)
+    db.enregistrer_collecte(connexion, [_entretien_radio_france("Gabriel Attal", mardi)], "radio", set(),
+                            mardi.replace(hour=7))
+    assert invites_web.collecter(conf, connexion, mardi, client=Client()).cherchees == 0
+
+    # Jeudi : aucun nom publié ; Claude trouve Florian Philippot à 8 h 15.
+    jeudi = datetime(2026, 11, 12, 8, 15, tzinfo=PARIS)
+    contenu = [dict(b) for b in REPONSES["trouve"]["content"]]
+    contenu[-1]["text"] = contenu[-1]["text"].replace("Raphaël Glucksmann", "Florian Philippot")
+    client = Client(reponse("trouve", content=contenu))
+    rapport = invites_web.collecter(conf, connexion, jeudi, client=client)
+    assert rapport.trouvees == [("L'invité de 8h20 : le grand entretien (France Inter)", ["Florian Philippot"])]
+    assert "France Inter (radio)" in client.appels[0]["messages"][0]["content"]
+    (carte,) = affichage.emissions(connexion, jeudi, jeudi.replace(hour=10))
+    assert (carte["titre"], carte["debut"], carte["plateforme"]) == (
+        "L'invité de 8h20 : le grand entretien — Florian Philippot", "2026-11-12T08:20:00+01:00", "radio")
+    # Radio France publie ensuite la même diffusion : une seule carte, celle de Radio France.
+    db.enregistrer_collecte(connexion, [_entretien_radio_france("Florian Philippot", jeudi)], "radio", set(),
+                            jeudi.replace(minute=30))
+    (carte,) = affichage.emissions(connexion, jeudi, jeudi.replace(hour=10))
+    assert carte["id"].startswith("radio:FRANCEINTER:") and carte["invites"] == ["Florian Philippot"]
     connexion.close()

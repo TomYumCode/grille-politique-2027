@@ -263,8 +263,14 @@ def _lire_recherche(chemin: Path, anomalies: list[str]) -> dict:
         # « chaine » : un nom, ou une liste pour une émission diffusée en même temps sur plusieurs
         # chaînes (« L'heure des pros » sur CNews et Europe 1) : une seule question, une ligne par chaîne.
         noms = [str(c) for c in s["chaine"]] if isinstance(s["chaine"], list) else [str(s["chaine"])]
+        # « jours » : jours de diffusion (tous par défaut), par exemple du lundi au vendredi.
+        jours = s.get("jours") or JOURS_SEMAINE
+        if not (isinstance(jours, list) and all(j in JOURS_SEMAINE for j in jours)):
+            anomalies.append(f"recherche.yaml, émission à surveiller n° {i} : « jours » illisible (écrire "
+                             "[lundi, mardi, …]), tous les jours gardés")
+            jours = JOURS_SEMAINE
         surveillees.append({"titre": str(s["titre"]), "chaine": noms[0], "chaines": noms, "heure": str(s["heure"]),
-                            "duree": int(s.get("duree") or 45)})
+                            "duree": int(s.get("duree") or 45), "jours": list(jours)})
     reglages["a_surveiller"] = surveillees
     return reglages
 

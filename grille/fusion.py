@@ -26,6 +26,10 @@ from grille.filtre import normaliser
 
 ECART_MAX = timedelta(minutes=20)
 PREFIXE_EVENEMENT = "evenement:"  # config/evenements.yaml (grille/evenements.py)
+# Émissions ajoutées par-dessus les collecteurs : événements écrits à la main, grandes émissions
+# surveillées dont Claude a trouvé l'invité (grille/invites_web.py). Quand la même diffusion est
+# déjà dans la grille, elles la complètent au lieu de faire une deuxième carte.
+PREFIXES_COMPLEMENTS = (PREFIXE_EVENEMENT, "recherche:")
 ECART_EMETTEUR = timedelta(minutes=10)
 # Ordre de préférence pour l'émission qui porte la carte (chaîne, logo, titre).
 PRIORITE = {"tv": 0, "radio": 1, "youtube": 2, "twitch": 3, "web": 4}
@@ -84,27 +88,28 @@ def _representant(groupe: list[dict]) -> dict:
                                       len(e["titre"]), e["debut"]))
 
 
-def _complete(evenement: dict, e: dict) -> bool:
-    """L'événement écrit à la main annonce l'invité d'une émission déjà dans la grille, sur la
-    même chaîne : « Franc-jeu — Laurent Wauquiez » pour « Franc-jeu du dimanche 08 novembre » ou
-    « Le député Laurent Wauquiez, invité de Franc-Jeu »."""
-    if (e["chaine"], e["plateforme"]) != (evenement["chaine"], evenement["plateforme"]) \
-            or str(e["id"]).startswith(PREFIXE_EVENEMENT):
+def complete(complement: dict, e: dict) -> bool:
+    """L'ajout (événement écrit à la main, émission surveillée) annonce l'invité d'une émission déjà
+    dans la grille, sur la même chaîne : « Franc-jeu — Laurent Wauquiez » pour « Franc-jeu du
+    dimanche 08 novembre » ou « Le député Laurent Wauquiez, invité de Franc-Jeu » ; « L'invité de
+    8h20 : le grand entretien — Gabriel Attal » (recherche) et la même diffusion vue par Radio France."""
+    if (e["chaine"], e["plateforme"]) != (complement["chaine"], complement["plateforme"]) \
+            or str(e["id"]).startswith(PREFIXES_COMPLEMENTS):
         return False
-    ecart = abs(datetime.fromisoformat(e["debut"]) - datetime.fromisoformat(evenement["debut"]))
-    nom = normaliser(evenement["titre"].split(" — ")[0])
+    ecart = abs(datetime.fromisoformat(e["debut"]) - datetime.fromisoformat(complement["debut"]))
+    nom = normaliser(complement["titre"].split(" — ")[0])
     # Le nom de l'émission n'importe où dans le titre : Radio France renomme parfois la diffusion
     # une fois l'invité connu (« Le député Laurent Wauquiez, invité de Franc-Jeu »).
     return ecart <= ECART_MAX and bool(nom) and f" {nom} " in f" {normaliser(e['titre'])} "
 
 
 def avec_evenements(emissions: list[dict]) -> list[dict]:
-    """Un événement qui complète une émission déjà connue (son invité annoncé en direct) ne fait
-    pas une deuxième carte : ses invités et son résumé passent sur l'émission."""
-    reste = [e for e in emissions if not str(e["id"]).startswith(PREFIXE_EVENEMENT)]
+    """Un ajout qui complète une émission déjà connue (son invité annoncé en direct, ou trouvé par
+    Claude) ne fait pas une deuxième carte : ses invités et son résumé passent sur l'émission."""
+    reste = [e for e in emissions if not str(e["id"]).startswith(PREFIXES_COMPLEMENTS)]
     resultat = list(reste)
-    for ev in (e for e in emissions if str(e["id"]).startswith(PREFIXE_EVENEMENT)):
-        cible = next((i for i, e in enumerate(resultat) if _complete(ev, e)), None)
+    for ev in (e for e in emissions if str(e["id"]).startswith(PREFIXES_COMPLEMENTS)):
+        cible = next((i for i, e in enumerate(resultat) if complete(ev, e)), None)
         if cible is None or ev["statut"] == "annulé":
             if cible is None:
                 resultat.append(ev)
